@@ -30,7 +30,7 @@ const user = computed(() => page.props.auth.user);
 const collabUrl = props.collab?.url ?? null;
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Notulen', href: '/notulen' },
+    { title: 'Dokumen', href: '/notulen' },
     { title: props.meeting.title, href: `/notulen/${props.meeting.id}` },
     { title: 'Sunting', href: `/notulen/${props.meeting.id}/sunting` },
 ];
@@ -146,7 +146,10 @@ function submit() {
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <form class="flex flex-col gap-6 p-4" @submit.prevent="submit">
-            <PageHeader title="Sunting notulen" description="Perubahan akan tercatat di audit log. Notulen final hanya dapat diubah oleh admin.">
+            <PageHeader
+                :title="props.meeting.document_type === 'meeting' ? 'Sunting notulen' : 'Sunting dokumen'"
+                description="Perubahan akan tercatat di audit log. Dokumen final hanya dapat diubah oleh admin."
+            >
                 <template #actions>
                     <span class="text-xs" :class="autosaveState === 'error' ? 'text-rose-600' : 'text-muted-foreground'">{{ autosaveLabel }}</span>
                     <Button variant="outline" as-child>
@@ -170,7 +173,10 @@ function submit() {
                     </div>
 
                     <div class="space-y-2">
-                        <Label>Isi notulen</Label>
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <Label>Isi dokumen</Label>
+                            <span v-if="!props.collab" class="text-xs text-muted-foreground">Mode tunggal: layanan kolaborasi tidak aktif.</span>
+                        </div>
                         <MeetingEditor
                             v-model="form.content"
                             :users="props.users"
@@ -200,7 +206,7 @@ function submit() {
                             </span>
                         </div>
                         <p v-else class="text-sm text-muted-foreground">Belum ada tag.</p>
-                        <p class="text-xs text-muted-foreground">Tag disinkronkan otomatis dari mention di dalam isi notulen saat disimpan.</p>
+                        <p class="text-xs text-muted-foreground">Tag disinkronkan otomatis dari mention di dalam isi dokumen saat disimpan.</p>
                     </div>
                 </div>
             </div>

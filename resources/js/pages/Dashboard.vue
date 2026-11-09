@@ -6,7 +6,7 @@ import StatusBadge from '@/components/StatusBadge.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { formatDate, formatDateTime, meetingTypeLabels } from '@/lib/labels';
+import { documentTypeLabels, formatDate, formatDateTime, meetingTypeLabels } from '@/lib/labels';
 import { type ActionItem, type BreadcrumbItem, type Meeting, type SharedData } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { AlertTriangle, CalendarDays, Hash, ListChecks, Plus } from 'lucide-vue-next';
@@ -44,13 +44,13 @@ const today = new Intl.DateTimeFormat('id-ID', {
         <div class="flex flex-col gap-6 p-4">
             <PageHeader
                 :title="`Selamat datang, ${user.name.split(' ')[0]}`"
-                :description="`${today} · ${user.division?.name ?? 'Belum ada divisi'}`"
+                :description="`${today} Â· ${user.division?.name ?? 'Belum ada divisi'}`"
             >
                 <template #actions>
                     <Button v-if="user.role === 'admin' || user.role === 'notulis'" as-child>
                         <Link :href="route('meetings.create')">
                             <Plus class="size-4" />
-                            Buat notulen
+                            Buat dokumen
                         </Link>
                     </Button>
                 </template>
@@ -62,7 +62,7 @@ const today = new Intl.DateTimeFormat('id-ID', {
                     label="Action item terbuka"
                     :value="props.stats.open_tasks"
                     :icon="ListChecks"
-                    hint="Seluruh notulen yang dapat Anda akses"
+                    hint="Seluruh dokumen yang dapat Anda akses"
                 />
                 <StatCard
                     label="Terlambat"
@@ -93,7 +93,7 @@ const today = new Intl.DateTimeFormat('id-ID', {
                                 <p class="font-medium leading-tight">{{ meeting.title }}</p>
                                 <p class="text-xs text-muted-foreground">
                                     {{ formatDateTime(meeting.scheduled_at) }}
-                                    <span v-if="meeting.division">· {{ meeting.division.name }}</span>
+                                    <span v-if="meeting.division">Â· {{ meeting.division.name }}</span>
                                 </p>
                             </div>
                             <StatusBadge kind="meeting" :value="meeting.status" />
@@ -118,7 +118,7 @@ const today = new Intl.DateTimeFormat('id-ID', {
                         >
                             <div class="space-y-1">
                                 <p class="font-medium leading-tight">{{ task.title }}</p>
-                                <p class="text-xs text-muted-foreground">{{ task.meeting?.title }} · tenggat {{ formatDate(task.due_date) }}</p>
+                                <p class="text-xs text-muted-foreground">{{ task.meeting?.title }} Â· tenggat {{ formatDate(task.due_date) }}</p>
                             </div>
                             <span v-if="task.is_overdue" class="text-xs font-medium text-rose-600">Terlambat</span>
                             <StatusBadge v-else kind="action" :value="task.status" />
@@ -129,7 +129,7 @@ const today = new Intl.DateTimeFormat('id-ID', {
 
             <Card>
                 <CardHeader class="flex-row items-center justify-between space-y-0">
-                    <CardTitle class="text-base">Notulen terbaru</CardTitle>
+                    <CardTitle class="text-base">Dokumen terbaru</CardTitle>
                     <Button variant="ghost" size="sm" as-child>
                         <Link :href="route('meetings.index')">Buka daftar</Link>
                     </Button>
@@ -137,8 +137,8 @@ const today = new Intl.DateTimeFormat('id-ID', {
                 <CardContent>
                     <EmptyState
                         v-if="props.recent.length === 0"
-                        title="Belum ada notulen"
-                        description="Mulai dengan membuat notulen rapat pertama."
+                        title="Belum ada dokumen"
+                        description="Mulai dengan membuat dokumen pertama."
                     />
                     <div class="divide-y">
                         <Link
@@ -150,7 +150,7 @@ const today = new Intl.DateTimeFormat('id-ID', {
                             <div>
                                 <p class="font-medium">{{ meeting.title }}</p>
                                 <p class="text-xs text-muted-foreground">
-                                    {{ meetingTypeLabels[meeting.meeting_type] }} · {{ formatDate(meeting.scheduled_at) }} ·
+                                    {{ documentTypeLabels[meeting.document_type] ?? meetingTypeLabels[meeting.meeting_type] }} Â· {{ formatDate(meeting.scheduled_at) }} Â·
                                     {{ meeting.division?.name ?? 'Tanpa divisi' }}
                                 </p>
                             </div>
@@ -165,3 +165,4 @@ const today = new Intl.DateTimeFormat('id-ID', {
         </div>
     </AppLayout>
 </template>
+

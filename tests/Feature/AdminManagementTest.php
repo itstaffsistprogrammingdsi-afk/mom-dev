@@ -36,6 +36,7 @@ class AdminManagementTest extends TestCase
         $this->actingAs($admin)
             ->post(route('admin.templates.store'), [
                 'name' => 'Template Uji',
+                'document_type' => 'meeting',
                 'meeting_type' => 'weekly',
                 'description' => 'Deskripsi template uji.',
                 'is_active' => true,

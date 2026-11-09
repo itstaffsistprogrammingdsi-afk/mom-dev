@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\AttendanceStatus;
 use App\Enums\Confidentiality;
+use App\Enums\DocumentType;
 use App\Enums\MeetingType;
 use App\Models\Division;
 use App\Models\Meeting;
@@ -13,11 +14,13 @@ use App\Models\Topic;
 use App\Models\User;
 use App\Notifications\MeetingFinalizedNotification;
 use App\Services\AuditLogger;
+use App\Services\CollabAvailability;
 use App\Services\CollabTokenService;
 use App\Services\MeetingContentParser;
 use App\Services\MeetingTagSynchronizer;
 use App\Services\MeetingVersionService;
 use App\Services\Notifications\MeetingRecipientResolver;
+use App\Services\TemplateContentFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -33,7 +36,7 @@ class MeetingController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
-        $filters = $request->only(['search', 'division', 'topic', 'status', 'type', 'from', 'to']);
+        $filters = $request->only(['search', 'division', 'topic', 'status', 'type', 'document_type', 'from', 'to']);
 
         if (filled($filters['search'] ?? null)) {
             $meetings = Meeting::search($filters['search'])
@@ -48,7 +51,7 @@ class MeetingController extends Controller
                 ->visibleTo($user)
                 ->filter($filters)
                 ->select([
-                    'id', 'title', 'meeting_type', 'division_id', 'created_by',
+                    'id', 'title', 'document_type', 'meeting_type', 'division_id', 'created_by',
                     'scheduled_at', 'status', 'confidentiality',
                 ])
                 ->with(['division:id,name', 'creator:id,name'])
@@ -64,6 +67,10 @@ class MeetingController extends Controller
             'filters' => $filters,
             'divisions' => Division::query()->orderBy('name')->get(['id', 'name']),
             'topics' => Topic::query()->where('status', 'active')->orderBy('name')->get(['id', 'name']),
+            'documentTypes' => collect(DocumentType::cases())->map(fn (DocumentType $type) => [
+                'value' => $type->value,
+                'label' => $type->label(),
+            ]),
             'canCreate' => $user->canWriteMinutes(),
         ]);
     }
@@ -72,12 +79,28 @@ class MeetingController extends Controller
     {
         $this->authorize('create', Meeting::class);
 
+        $contentFactory = app(TemplateContentFactory::class);
+
+        $templates = MeetingTemplate::query()
+            ->where('is_active', true)
+            ->orderBy('document_type')
+            ->orderBy('name')
+            ->get()
+            ->each(function (MeetingTemplate $template) use ($contentFactory) {
+                $template->content ??= $contentFactory->default($template->document_type);
+            });
+
         return Inertia::render('Meetings/Create', [
-            'templates' => MeetingTemplate::query()->where('is_active', true)->orderBy('name')->get(),
+            'templates' => $templates,
             'divisions' => Division::query()->orderBy('name')->get(['id', 'name']),
             'users' => User::query()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'email', 'division_id']),
             'topics' => Topic::query()->where('status', 'active')->orderBy('name')->get(['id', 'name']),
-            'defaultContent' => $this->defaultContent($request->user()->name),
+            'defaultContent' => $contentFactory->default(DocumentType::Meeting),
+            'documentTypes' => collect(DocumentType::cases())->map(fn (DocumentType $type) => [
+                'value' => $type->value,
+                'label' => $type->label(),
+                'description' => $type->description(),
+            ]),
         ]);
     }
 
@@ -104,10 +127,19 @@ class MeetingController extends Controller
             'content' => ['nullable', 'array'],
         ]);
 
-        $content = $validated['content'] ?? $this->defaultContent($request->user()->name);
+        $template = filled($validated['meeting_template_id'] ?? null)
+            ? MeetingTemplate::query()->find($validated['meeting_template_id'])
+            : null;
+
+        $documentType = $template?->document_type ?? DocumentType::Meeting;
+
+        $content = $validated['content']
+            ?? $template?->content
+            ?? app(TemplateContentFactory::class)->default($documentType);
 
         $meeting = Meeting::create([
             ...collect($validated)->except(['participant_ids', 'content'])->all(),
+            'document_type' => $documentType->value,
             'created_by' => $request->user()->id,
             'content' => $content,
             'content_text' => $parser->parse($content)['text'],
@@ -140,7 +172,7 @@ class MeetingController extends Controller
             'division:id,name',
             'creator:id,name',
             'approvedBy:id,name',
-            'template:id,name',
+            'template:id,name,document_type',
             'participants.user:id,name,email',
             'tags',
             'decisions.topic:id,name,slug',
@@ -171,18 +203,19 @@ class MeetingController extends Controller
         $meeting->load(['division:id,name', 'participants.user:id,name', 'tags']);
 
         $tokens = app(CollabTokenService::class);
+        $collabAvailable = app(CollabAvailability::class)->isAvailable();
 
         return Inertia::render('Meetings/Edit', [
             'meeting' => $meeting,
             'users' => User::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'divisions' => Division::query()->orderBy('name')->get(['id', 'name']),
             'topics' => Topic::query()->where('status', 'active')->orderBy('name')->get(['id', 'name']),
-            'collab' => [
+            'collab' => $collabAvailable ? [
                 'url' => config('collab.url'),
                 'document' => "meeting-{$meeting->id}",
                 'token' => $tokens->issue($meeting, $request->user(), true),
                 'user' => $request->user()->name,
-            ],
+            ] : null,
         ]);
     }
 
@@ -365,33 +398,5 @@ class MeetingController extends Controller
         $audit->log('meeting.version_restored', $meeting, "Memulihkan versi {$version->version}", meetingId: $meeting->id);
 
         return back()->with('success', "Versi {$version->version} dipulihkan.");
-    }
-
-    private function defaultContent(string $author): array
-    {
-        $heading = fn (string $text) => [
-            'type' => 'heading',
-            'attrs' => ['level' => 2],
-            'content' => [['type' => 'text', 'text' => $text]],
-        ];
-
-        return [
-            'type' => 'doc',
-            'content' => [
-                ['type' => 'paragraph', 'content' => [
-                    ['type' => 'text', 'marks' => [['type' => 'italic']], 'text' => "Notulis: {$author}"],
-                ]],
-                $heading('Agenda'),
-                ['type' => 'paragraph'],
-                $heading('Pembahasan'),
-                ['type' => 'paragraph'],
-                $heading('Keputusan'),
-                ['type' => 'bulletList', 'content' => [
-                    ['type' => 'listItem', 'content' => [['type' => 'paragraph']]],
-                ]],
-                $heading('Action Item'),
-                ['type' => 'paragraph'],
-            ],
-        ];
     }
 }

@@ -68,7 +68,7 @@ npm run dev
 | Staf IT | staff@mom.test | password |
 | Direksi | direksi@mom.test | password |
 
-Registrasi publik dinonaktifkan. Pengguna baru dibuat dari menu Admin > Pengguna.
+Registrasi publik aktif; pengguna baru otomatis mendapat peran Anggota. Admin dapat mengubah peran dan menonaktifkan akun dari menu Admin > Pengguna.
 
 ## AI
 
@@ -94,7 +94,7 @@ npm --prefix collab install
 npm --prefix collab start
 ```
 
-Service kolaborasi membaca `.env` dari root proyek secara otomatis. Konfigurasi default: `ws://localhost:1234`.
+Service kolaborasi membaca `.env` dari root proyek secara otomatis. Konfigurasi default: `ws://127.0.0.1:1234`.
 
 ```env
 COLLAB_SECRET=change-me-in-production
@@ -124,6 +124,66 @@ Jalankan scheduler produksi:
 ```bash
 php artisan schedule:work
 ```
+
+## Template Dokumen
+
+Admin dapat mengelola template di `/admin/template`. Template mendukung beberapa jenis dokumen:
+
+- Notulen Rapat
+- Proposal Proyek
+- Laporan
+- Brosur
+- Dokumen lain
+
+Setiap template memiliki struktur Tiptap sendiri. Saat pengguna memilih template di halaman buat dokumen, isi editor otomatis mengikuti struktur template tersebut.
+
+## Peran dan Hak Akses
+
+Penjelasan peran dan matriks hak akses tersedia di `/admin/peran`.
+
+| Peran | Ringkasan |
+|---|---|
+| Admin | Akses penuh ke dokumen, pengguna, divisi, topik, template, dan audit. |
+| Notulis | Membuat/menyunting draf, memfinalkan, mengelola action item, menjalankan AI. |
+| Anggota | Membaca sesuai akses, memperbarui status tugas sebagai PIC. |
+| Pembaca | Membaca sesuai akses tanpa menyunting. |
+
+Kepala divisi tidak memakai peran terpisah; ia memakai peran Notulis atau Anggota dan ditetapkan sebagai kepala divisi pada data divisi.
+
+Dikte suara memerlukan Chrome/Edge, izin mikrofon, dan HTTPS (atau `localhost`). Audio tidak disimpan oleh aplikasi.
+
+## Ekspor dan Bagikan
+
+- Dari halaman dokumen, gunakan **Ekspor > PDF** atau **Ekspor > Word (.docx)**.
+- Tombol **Bagikan** mengirim email ke maksimal 10 penerima, dengan opsi melampirkan salinan PDF.
+- Untuk dokumen berlabel terbatas/rahasia, pengirim wajib mengonfirmasi bahwa penerima berhak.
+- Lokal default memakai `MAIL_MAILER=log`; atur SMTP di `.env` untuk pengiriman nyata.
+
+## Halaman Login
+
+Halaman login/register memakai view referensi dari `resources/notula-login-source` yang diadaptasi ke brand MoM. Aset visual hasil rebranding disimpan di `public/images/mom-auth-visual.webp`, dengan style terisolasi di `resources/css/auth.css`.
+
+## Google Login (opsional)
+
+Login Google memakai OAuth 2.0 langsung tanpa dependency tambahan. Isi `.env`:
+
+```env
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+GOOGLE_REDIRECT_URI=http://localhost:8100/auth/google/callback
+```
+
+Daftarkan redirect URI yang sama di Google Cloud Console. Jika kredensial kosong, tombol Google tampil nonaktif dengan label “belum aktif”.
+
+## Tema
+
+Pilih **Terang**, **Gelap**, atau **Ikuti sistem** dari menu tema di header, halaman Pengaturan > Tampilan, atau halaman login. Pilihan disimpan di browser dan mode sistem mengikuti perubahan tema perangkat.
+
+## Tagging dan Dikte Suara
+
+- Ketik `@` di editor untuk memilih orang atau divisi.
+- Ketik `#` untuk memilih topik.
+- Tombol mikrofon di toolbar editor menjalankan dikte suara (Chrome/Edge, bahasa Indonesia). Audio tidak disimpan oleh aplikasi.
 
 ## Perintah Verifikasi
 

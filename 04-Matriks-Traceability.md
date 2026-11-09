@@ -42,7 +42,7 @@ Dokumen ini menghubungkan kebutuhan produk (PRD), proses bisnis, entitas data (E
 | F-05 | Tabel action item | P2, P4 | `action_items` | Sudah | CRUD, update status, dan board |
 | F-06 | Draf, final, kunci | P4 | `meetings.status` | Sudah | Final, lock/unlock admin, dan validasi finalisasi |
 | F-07 | Lampiran file & tautan | P2 | `attachments` | Sudah | Upload file/link, unduh dengan policy, dan hapus |
-| F-08 | Ekspor PDF/Word | P5 | `meetings`, `ai_summaries` | Belum | Rencana fase lanjutan |
+| F-08 | Ekspor PDF/Word | P5 | `meetings`, `ai_summaries` | Sudah | Ekspor PDF (mPDF) dan Word (PhpWord), plus bagikan via email dengan lampiran PDF |
 | F-10 | Tag orang | P2 | `tags` | Sudah | Mention + sinkronisasi |
 | F-11 | Tag divisi | P2 | `tags` | Sudah | Mention + sinkronisasi |
 | F-12 | Tag topik | P2 | `tags`, `topics` | Sudah | Mention + halaman topik |
@@ -114,7 +114,6 @@ Dokumen ini menghubungkan kebutuhan produk (PRD), proses bisnis, entitas data (E
 | Prioritas | Kesenjangan | Dampak | Rekomendasi |
 | --- | --- | --- | --- |
 | P1 | Meilisearch produksi | Pencarian masih memakai Scout driver database | Aktifkan Scout driver Meilisearch dan indeks |
-| P1 | Ekspor PDF/Word | Distribusi dokumen final belum tersedia | Gunakan generator dokumen dan template ekspor |
 | P1 | Penerapan saran tag AI | Saran AI belum bisa diterapkan langsung | Tambahkan aksi terima/tolak saran tag |
 | P1 | Q&A dan rekap lintas notulen | Belum tersedia | Rilis fase berikutnya dengan sitasi sumber |
 | P2 | Persistensi Yjs ke database | State kolaborasi masih disimpan di disk | Pindahkan snapshot Yjs ke `collab_documents` |

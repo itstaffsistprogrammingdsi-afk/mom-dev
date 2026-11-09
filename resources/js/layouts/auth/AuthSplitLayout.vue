@@ -1,41 +1,54 @@
 <script setup lang="ts">
-import AppLogoIcon from '@/components/AppLogoIcon.vue';
-import type { SharedData } from '@/types';
-import { Link, usePage } from '@inertiajs/vue3';
-
-const page = usePage<SharedData>();
-const name = page.props.name;
-const quote = page.props.quote;
+import ThemeToggle from '@/components/ThemeToggle.vue';
+import { Link } from '@inertiajs/vue3';
 
 defineProps<{
     title?: string;
     description?: string;
+    kicker?: string;
 }>();
 </script>
 
 <template>
-    <div class="relative grid h-dvh flex-col items-center justify-center px-8 sm:px-0 lg:max-w-none lg:grid-cols-2 lg:px-0">
-        <div class="relative hidden h-full flex-col bg-muted p-10 text-white dark:border-r lg:flex">
-            <div class="absolute inset-0 bg-zinc-900" />
-            <Link :href="route('home')" class="relative z-20 flex items-center text-lg font-medium">
-                <AppLogoIcon class="mr-2 size-8 fill-current text-white" />
-                {{ name }}
-            </Link>
-            <div v-if="quote" class="relative z-20 mt-auto">
-                <blockquote class="space-y-2">
-                    <p class="text-lg">&ldquo;{{ quote.message }}&rdquo;</p>
-                    <footer class="text-sm text-neutral-300">{{ quote.author }}</footer>
-                </blockquote>
-            </div>
+    <div class="mom-auth">
+        <div class="sky" aria-hidden="true">
+            <span class="cloud cloud-one"></span>
+            <span class="cloud cloud-two"></span>
+            <span class="cloud cloud-three"></span>
         </div>
-        <div class="lg:p-8">
-            <div class="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
-                <div class="flex flex-col space-y-2 text-center">
-                    <h1 class="text-xl font-medium tracking-tight" v-if="title">{{ title }}</h1>
-                    <p class="text-sm text-muted-foreground" v-if="description">{{ description }}</p>
-                </div>
-                <slot />
-            </div>
-        </div>
+
+        <main class="page-shell">
+            <section class="login-card" aria-label="Halaman masuk MoM">
+                <aside class="visual-panel" aria-label="MoM, sistem notulensi modern">
+                    <img
+                        src="/images/mom-auth-visual.webp"
+                        alt="Maskot MoM di atas bukit dengan ikon kalender, catatan, dan produktivitas"
+                        class="visual-art"
+                    />
+                    <div class="visual-shade" aria-hidden="true"></div>
+                </aside>
+
+                <section class="form-panel">
+                    <div class="form-content">
+                        <div class="theme-corner">
+                            <ThemeToggle />
+                        </div>
+
+                        <Link :href="route('home')" class="brand" aria-label="MoM beranda">
+                            <span class="brand-mark" aria-hidden="true"><i></i><i></i></span>
+                            <span>MoM<span class="brand-period">.</span></span>
+                        </Link>
+
+                        <div class="welcome-block">
+                            <div class="welcome-kicker">{{ kicker ?? 'SISTEM NOTULENSI' }}</div>
+                            <h1>{{ title }}</h1>
+                            <p>{{ description }}</p>
+                        </div>
+
+                        <slot />
+                    </div>
+                </section>
+            </section>
+        </main>
     </div>
 </template>

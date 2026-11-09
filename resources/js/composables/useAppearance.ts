@@ -12,6 +12,7 @@ export function updateTheme(value: Appearance) {
 }
 
 const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+let listenerRegistered = false;
 
 const handleSystemThemeChange = () => {
     const currentAppearance = localStorage.getItem('appearance') as Appearance | null;
@@ -19,12 +20,13 @@ const handleSystemThemeChange = () => {
 };
 
 export function initializeTheme() {
-    // Initialize theme from saved preference or default to system...
     const savedAppearance = localStorage.getItem('appearance') as Appearance | null;
     updateTheme(savedAppearance || 'system');
 
-    // Set up system theme change listener...
-    mediaQuery.addEventListener('change', handleSystemThemeChange);
+    if (!listenerRegistered) {
+        mediaQuery.addEventListener('change', handleSystemThemeChange);
+        listenerRegistered = true;
+    }
 }
 
 export function useAppearance() {
@@ -35,9 +37,7 @@ export function useAppearance() {
 
         const savedAppearance = localStorage.getItem('appearance') as Appearance | null;
 
-        if (savedAppearance) {
-            appearance.value = savedAppearance;
-        }
+        appearance.value = savedAppearance || 'system';
     });
 
     function updateAppearance(value: Appearance) {

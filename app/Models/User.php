@@ -17,6 +17,8 @@ class User extends Authenticatable
         'division_id',
         'name',
         'email',
+        'google_id',
+        'avatar',
         'password',
         'role',
         'job_title',

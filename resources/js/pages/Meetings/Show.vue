@@ -4,11 +4,13 @@ import PageHeader from '@/components/PageHeader.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { attendanceLabels, formatDate, formatDateTime, meetingTypeLabels } from '@/lib/labels';
+import { attendanceLabels, confidentialityLabels, documentTypeClasses, documentTypeLabels, formatDate, formatDateTime, meetingTypeLabels } from '@/lib/labels';
 import { type ActionItem, type BreadcrumbItem, type Decision, type Division, type Meeting, type Participant, type SharedData, type Tag } from '@/types';
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { CalendarClock, CheckCircle2, ExternalLink, FileUp, Lock, MapPin, Paperclip, Pencil, Plus, Sparkles, Trash2, Unlock, UserRound, X } from 'lucide-vue-next';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
+import { CalendarClock, CheckCircle2, Download, ExternalLink, FileUp, Lock, MapPin, Paperclip, Pencil, Plus, Share2, Sparkles, Trash2, Unlock, UserRound, X } from 'lucide-vue-next';
 import { computed, reactive, ref } from 'vue';
 
 interface Summary {
@@ -68,12 +70,20 @@ const user = computed(() => page.props.auth.user);
 const errors = computed(() => (page.props.errors ?? {}) as Record<string, string>);
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Notulen', href: '/notulen' },
+    { title: 'Dokumen', href: '/notulen' },
     { title: props.meeting.title, href: `/notulen/${props.meeting.id}` },
 ];
 
 const aiConsent = ref(false);
 const editingTaskId = ref<number | null>(null);
+const shareOpen = ref(false);
+
+const shareForm = useForm({
+    recipients: '',
+    message: '',
+    include_pdf: true,
+    confirm_share: false,
+});
 
 const taskForm = reactive({
     title: '',
@@ -100,6 +110,7 @@ const attachmentForm = reactive<{ file: File | null; url: string; name: string }
 });
 
 const canManage = computed(() => props.can.manage ?? props.can.update);
+const requiresShareConfirmation = computed(() => ['restricted', 'secret'].includes(props.meeting.confidentiality));
 const taskUsers = computed(() => props.users ?? []);
 const taskDivisions = computed(() => props.divisions ?? []);
 
@@ -131,6 +142,21 @@ function generateAi() {
     }
 
     router.post(route('meetings.ai.generate', props.meeting.id), { ai_consent: aiConsent.value }, { preserveScroll: true });
+}
+
+function openShare() {
+    shareForm.clearErrors();
+    shareOpen.value = true;
+}
+
+function submitShare() {
+    shareForm.post(route('meetings.share', props.meeting.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            shareOpen.value = false;
+            shareForm.reset();
+        },
+    });
 }
 
 function approveSummary(summary: Summary) {
@@ -236,6 +262,32 @@ function restoreVersion(version: Version) {
         <div class="flex flex-col gap-6 p-4">
             <PageHeader :title="props.meeting.title">
                 <template #actions>
+                    <Button variant="outline" @click="openShare">
+                        <Share2 class="size-4" />
+                        Bagikan
+                    </Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger as-child>
+                            <Button variant="outline">
+                                <Download class="size-4" />
+                                Ekspor
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" class="w-52">
+                            <DropdownMenuItem as-child>
+                                <a :href="route('meetings.export.pdf', props.meeting.id)" class="flex w-full items-center gap-2">
+                                    <Download class="size-4" />
+                                    PDF
+                                </a>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem as-child>
+                                <a :href="route('meetings.export.word', props.meeting.id)" class="flex w-full items-center gap-2">
+                                    <Download class="size-4" />
+                                    Word (.docx)
+                                </a>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                     <Button v-if="props.can.update" as-child variant="outline">
                         <Link :href="route('meetings.edit', props.meeting.id)">Sunting</Link>
                     </Button>
@@ -243,7 +295,9 @@ function restoreVersion(version: Version) {
                         <Sparkles class="size-4" />
                         Resume AI
                     </Button>
-                    <Button v-if="props.can.finalize && props.meeting.status === 'draft'" @click="finalize">Finalkan notulen</Button>
+                    <Button v-if="props.can.finalize && props.meeting.status === 'draft'" @click="finalize">
+                        {{ props.meeting.document_type === 'meeting' ? 'Finalkan notulen' : 'Finalkan dokumen' }}
+                    </Button>
                     <Button v-if="user.role === 'admin' && props.meeting.status === 'final'" variant="outline" @click="lockMeeting">
                         <Lock class="size-4" />
                         Kunci
@@ -260,6 +314,9 @@ function restoreVersion(version: Version) {
             </div>
 
             <div class="flex flex-wrap items-center gap-2">
+                <span class="rounded-full px-2 py-0.5 text-xs font-medium" :class="documentTypeClasses[props.meeting.document_type]">
+                    {{ documentTypeLabels[props.meeting.document_type] ?? props.meeting.document_type }}
+                </span>
                 <StatusBadge kind="meeting" :value="props.meeting.status" />
                 <StatusBadge kind="confidentiality" :value="props.meeting.confidentiality" />
                 <span class="rounded-full bg-muted px-2 py-0.5 text-xs font-medium">
@@ -273,7 +330,7 @@ function restoreVersion(version: Version) {
 
             <div class="grid gap-4 lg:grid-cols-3">
                 <Card>
-                    <CardHeader><CardTitle class="text-base">Informasi rapat</CardTitle></CardHeader>
+                    <CardHeader><CardTitle class="text-base">{{ props.meeting.document_type === 'meeting' ? 'Informasi rapat' : 'Informasi dokumen' }}</CardTitle></CardHeader>
                     <CardContent class="space-y-3 text-sm">
                         <div class="flex items-center gap-2">
                             <CalendarClock class="size-4 text-muted-foreground" />
@@ -291,7 +348,7 @@ function restoreVersion(version: Version) {
                         </div>
                         <div class="flex items-center gap-2">
                             <UserRound class="size-4 text-muted-foreground" />
-                            <span>Notulis: {{ props.meeting.creator?.name ?? '—' }}</span>
+                            <span>{{ props.meeting.document_type === 'meeting' ? 'Notulis' : 'Pembuat' }}: {{ props.meeting.creator?.name ?? '—' }}</span>
                         </div>
                         <p class="text-muted-foreground">Divisi: {{ props.meeting.division?.name ?? 'Tanpa divisi' }}</p>
                         <p v-if="props.meeting.template" class="text-muted-foreground">Template: {{ props.meeting.template.name }}</p>
@@ -343,7 +400,7 @@ function restoreVersion(version: Version) {
             </div>
 
             <div class="space-y-2">
-                <h2 class="text-lg font-semibold">Isi notulen</h2>
+                <h2 class="text-lg font-semibold">Isi dokumen</h2>
                 <MeetingEditor :model-value="props.meeting.content" :editable="false" />
             </div>
 
@@ -562,5 +619,68 @@ function restoreVersion(version: Version) {
                 </Card>
             </div>
         </div>
+
+        <Dialog v-model:open="shareOpen">
+            <DialogContent class="sm:max-w-lg">
+                <form class="space-y-4" @submit.prevent="submitShare">
+                    <DialogHeader>
+                        <DialogTitle>Bagikan dokumen</DialogTitle>
+                        <DialogDescription>
+                            Kirim tautan dan, jika dipilih, salinan PDF ke alamat email penerima.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div class="space-y-2">
+                        <label for="share-recipients" class="text-sm font-medium">Email penerima</label>
+                        <textarea
+                            id="share-recipients"
+                            v-model="shareForm.recipients"
+                            rows="2"
+                            class="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                            placeholder="nama@perusahaan.com, rekan@perusahaan.com"
+                        />
+                        <p class="text-xs text-muted-foreground">Pisahkan dengan koma. Maksimal 10 penerima.</p>
+                        <p v-if="shareForm.errors.recipients" class="text-xs text-rose-600">{{ shareForm.errors.recipients }}</p>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="share-message" class="text-sm font-medium">Pesan (opsional)</label>
+                        <textarea
+                            id="share-message"
+                            v-model="shareForm.message"
+                            rows="3"
+                            class="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                            placeholder="Tambahkan catatan untuk penerima…"
+                        />
+                        <p v-if="shareForm.errors.message" class="text-xs text-rose-600">{{ shareForm.errors.message }}</p>
+                    </div>
+
+                    <label class="flex items-center gap-2 text-sm">
+                        <input v-model="shareForm.include_pdf" type="checkbox" class="size-4 rounded border" />
+                        Lampirkan salinan PDF
+                    </label>
+
+                    <div v-if="requiresShareConfirmation" class="space-y-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+                        <p>
+                            Dokumen ini berlabel <strong>{{ confidentialityLabels[props.meeting.confidentiality] }}</strong>.
+                            Pastikan seluruh penerima berhak menerima dokumen.
+                        </p>
+                        <label class="flex items-center gap-2">
+                            <input v-model="shareForm.confirm_share" type="checkbox" class="size-4 rounded border" />
+                            Saya mengonfirmasi penerima berhak.
+                        </label>
+                        <p v-if="shareForm.errors.confirm_share" class="text-rose-600">{{ shareForm.errors.confirm_share }}</p>
+                    </div>
+
+                    <DialogFooter>
+                        <Button type="button" variant="outline" @click="shareOpen = false">Batal</Button>
+                        <Button type="submit" :disabled="shareForm.processing">
+                            <Share2 class="size-4" />
+                            Kirim email
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
     </AppLayout>
 </template>

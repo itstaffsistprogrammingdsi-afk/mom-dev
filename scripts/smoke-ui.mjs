@@ -41,6 +41,8 @@ const pages = [
     ['topics', '/topik'],
     ['notifications', '/notifikasi'],
     ['admin-templates', '/admin/template'],
+    ['admin-template-edit', '/admin/template/5/sunting'],
+    ['admin-roles', '/admin/peran'],
     ['admin-users', '/admin/pengguna'],
     ['admin-topics', '/admin/topik'],
     ['admin-divisions', '/admin/divisi'],

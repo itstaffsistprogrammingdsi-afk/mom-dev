@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import AuthLayout from '@/layouts/auth/AuthSimpleLayout.vue';
+import AuthSplitLayout from '@/layouts/auth/AuthSplitLayout.vue';
 
 defineProps<{
     title?: string;
     description?: string;
+    kicker?: string;
 }>();
 </script>
 
 <template>
-    <AuthLayout :title="title" :description="description">
+    <AuthSplitLayout :title="title" :description="description" :kicker="kicker">
         <slot />
-    </AuthLayout>
+    </AuthSplitLayout>
 </template>

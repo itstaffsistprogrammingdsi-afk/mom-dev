@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Division;
 use App\Models\Meeting;
+use App\Models\MeetingTemplate;
 use App\Models\Topic;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -35,6 +36,7 @@ class PageSmokeTest extends TestCase
             '/admin/topik',
             '/admin/template',
             '/admin/pengguna',
+            '/admin/peran',
             '/admin/audit',
         ];
 
@@ -60,6 +62,9 @@ class PageSmokeTest extends TestCase
 
         $person = User::query()->firstOrFail();
         $this->get(route('people.show', $person))->assertOk();
+
+        $template = MeetingTemplate::query()->firstOrFail();
+        $this->get(route('admin.templates.edit', $template))->assertOk();
     }
 
     public function test_creating_meeting_extracts_tags_from_editor_content(): void

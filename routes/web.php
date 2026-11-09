@@ -3,6 +3,7 @@
 use App\Http\Controllers\ActionItemController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\DivisionController as AdminDivisionController;
+use App\Http\Controllers\Admin\RoleController as AdminRoleController;
 use App\Http\Controllers\Admin\TemplateController as AdminTemplateController;
 use App\Http\Controllers\Admin\TopicController as AdminTopicController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
@@ -12,6 +13,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DivisionController;
 use App\Http\Controllers\MeetingAiController;
 use App\Http\Controllers\MeetingController;
+use App\Http\Controllers\MeetingExportController;
+use App\Http\Controllers\MeetingShareController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PeopleController;
 use App\Http\Controllers\RelatedController;
@@ -40,6 +43,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('notulen/{meeting}/lampiran', [AttachmentController::class, 'store'])->name('attachments.store');
     Route::get('lampiran/{attachment}', [AttachmentController::class, 'download'])->name('attachments.download');
     Route::delete('lampiran/{attachment}', [AttachmentController::class, 'destroy'])->name('attachments.destroy');
+
+    Route::get('notulen/{meeting}/ekspor/pdf', [MeetingExportController::class, 'pdf'])->name('meetings.export.pdf');
+    Route::get('notulen/{meeting}/ekspor/word', [MeetingExportController::class, 'docx'])->name('meetings.export.word');
+    Route::post('notulen/{meeting}/bagikan', [MeetingShareController::class, 'send'])
+        ->middleware('throttle:20,1')
+        ->name('meetings.share');
 
     Route::post('notulen/{meeting}/ai/resume', [MeetingAiController::class, 'generate'])->name('meetings.ai.generate');
     Route::post('ai-summaries/{aiSummary}/approve', [MeetingAiController::class, 'approve'])->name('ai-summaries.approve');
@@ -73,12 +82,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('divisi', [AdminDivisionController::class, 'index'])->name('divisions.index');
         Route::post('divisi', [AdminDivisionController::class, 'store'])->name('divisions.store');
 
+        Route::get('peran', [AdminRoleController::class, 'index'])->name('roles.index');
+
         Route::get('topik', [AdminTopicController::class, 'index'])->name('topics.index');
         Route::post('topik', [AdminTopicController::class, 'store'])->name('topics.store');
         Route::patch('topik/{topic}/status', [AdminTopicController::class, 'toggleStatus'])->name('topics.toggle');
 
         Route::get('template', [AdminTemplateController::class, 'index'])->name('templates.index');
         Route::post('template', [AdminTemplateController::class, 'store'])->name('templates.store');
+        Route::get('template/{template}/sunting', [AdminTemplateController::class, 'edit'])->name('templates.edit');
         Route::patch('template/{template}', [AdminTemplateController::class, 'update'])->name('templates.update');
         Route::patch('template/{template}/status', [AdminTemplateController::class, 'toggleStatus'])->name('templates.toggle');
 
