@@ -1,0 +1,5121 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Blueprint, PRD, dan ERD - Sistem Notulensi (MoM) Terintegrasi AI</title>
+    <style>@page {
+    size: A4;
+    margin: 16mm 14mm 18mm;
+}
+
+* { box-sizing: border-box; }
+
+html {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    font-size: 9.5pt;
+    line-height: 1.55;
+    color: #1f2937;
+    background: #ffffff;
+}
+
+h1, h2, h3, h4 {
+    color: #1F3864;
+    line-height: 1.25;
+}
+
+h1 {
+    font-size: 20pt;
+    margin: 0 0 6mm;
+    padding-bottom: 3mm;
+    border-bottom: 3px solid #2F5597;
+}
+
+h2 {
+    font-size: 13pt;
+    margin: 8mm 0 3mm;
+    padding-bottom: 1.5mm;
+    border-bottom: 1px solid #dbe3f0;
+    break-after: avoid;
+}
+
+h3 {
+    font-size: 10.5pt;
+    color: #2F5597;
+    margin: 5mm 0 2mm;
+    break-after: avoid;
+}
+
+p { margin: 0 0 2.8mm; }
+
+ul, ol { margin: 0 0 3mm; padding-left: 5mm; }
+li { margin-bottom: 1.2mm; }
+
+strong { color: #111827; }
+
+a { color: #1F3864; text-decoration: none; }
+
+.heading-anchor { display: none; }
+
+.cover {
+    min-height: 250mm;
+    padding: 26mm 18mm 18mm;
+    background: #1F3864;
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    break-after: page;
+}
+
+.cover-kicker {
+    font-size: 9pt;
+    letter-spacing: 0.22em;
+    color: #BFD0EA;
+    margin-bottom: 7mm;
+}
+
+.cover h1 {
+    font-size: 31pt;
+    color: #ffffff;
+    border: 0;
+    margin: 0 0 5mm;
+    padding: 0;
+}
+
+.cover-subtitle {
+    font-size: 12pt;
+    color: #D9E2F3;
+    margin-bottom: 10mm;
+}
+
+.cover-rule {
+    width: 45mm;
+    height: 1.2mm;
+    background: #8EAADB;
+    margin-bottom: 12mm;
+}
+
+.cover-meta {
+    width: 100%;
+    max-width: 150mm;
+    border-collapse: collapse;
+    font-size: 9pt;
+    margin: 0 0 10mm;
+}
+
+.cover-meta td {
+    border: 0;
+    border-bottom: 1px solid rgba(255,255,255,0.18);
+    padding: 2.2mm 0;
+    color: #E8EEF8;
+    background: transparent !important;
+}
+
+.cover-meta td:first-child {
+    width: 38mm;
+    color: #BFD0EA;
+}
+
+.cover-note {
+    font-size: 8.5pt;
+    color: #BFD0EA;
+    border-left: 2px solid #8EAADB;
+    padding-left: 4mm;
+    max-width: 140mm;
+}
+
+.toc-page {
+    break-after: page;
+}
+
+.toc-title {
+    font-size: 20pt;
+    margin-top: 0;
+}
+
+.toc-note {
+    color: #6b7280;
+    font-size: 8.5pt;
+    margin-bottom: 5mm;
+}
+
+.table-of-contents {
+    font-size: 8.6pt;
+}
+
+.table-of-contents > ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.table-of-contents > ul > li {
+    margin-top: 3.2mm;
+    font-weight: 600;
+    color: #1F3864;
+}
+
+.table-of-contents ul ul {
+    list-style: none;
+    padding-left: 5mm;
+    margin: 1mm 0 0;
+    font-weight: 400;
+    color: #374151;
+}
+
+.table-of-contents ul ul li {
+    margin-bottom: 0.8mm;
+}
+
+.doc {
+    break-before: page;
+}
+
+.doc:first-of-type {
+    break-before: auto;
+}
+
+.doc h1 {
+    margin-top: 0;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 3mm 0 5mm;
+    font-size: 8.1pt;
+    line-height: 1.4;
+}
+
+thead { display: table-header-group; }
+
+th {
+    background: #1F3864;
+    color: #ffffff;
+    text-align: left;
+    padding: 2.2mm 2.4mm;
+    border: 1px solid #1F3864;
+    font-weight: 600;
+}
+
+td {
+    padding: 1.8mm 2.4mm;
+    border: 1px solid #d9e2f3;
+    vertical-align: top;
+}
+
+tbody tr:nth-child(even) td {
+    background: #F7F9FC;
+}
+
+tr { break-inside: avoid; }
+
+blockquote {
+    margin: 4mm 0;
+    padding: 3mm 4mm;
+    background: #EEF3FA;
+    border-left: 3px solid #2F5597;
+    color: #1F3864;
+    break-inside: avoid;
+}
+
+blockquote p { margin: 0; }
+
+pre:not(.mermaid) {
+    background: #F6F8FA;
+    border: 1px solid #e5e7eb;
+    border-radius: 2mm;
+    padding: 3mm;
+    font-size: 8pt;
+    white-space: pre-wrap;
+    word-break: break-word;
+    break-inside: avoid;
+}
+
+code {
+    font-family: "Cascadia Mono", Consolas, monospace;
+    font-size: 8.4pt;
+    background: #F1F5F9;
+    padding: 0.2mm 1mm;
+    border-radius: 1mm;
+}
+
+pre code {
+    background: transparent;
+    padding: 0;
+}
+
+.mermaid-wrap {
+    margin: 4mm 0 5mm;
+    padding: 3mm;
+    border: 1px solid #d9e2f3;
+    border-radius: 2mm;
+    background: #ffffff;
+    text-align: center;
+    break-inside: avoid;
+}
+
+.mermaid {
+    margin: 0;
+    background: transparent;
+    border: 0;
+    padding: 0;
+    font-size: 0;
+}
+
+.mermaid svg {
+    max-width: 100%;
+    max-height: 215mm;
+    height: auto;
+    width: auto;
+}
+</style>
+</head>
+<body>
+<section class="cover">
+    <div class="cover-kicker">PAKET PRESENTASI KLIEN</div>
+    <h1>Sistem Notulensi (MoM)<br>Terintegrasi AI</h1>
+    <p class="cover-subtitle">Blueprint · Product Requirements · ERD dan Kamus Data</p>
+    <div class="cover-rule"></div>
+    <table class="cover-meta">
+        <tr><td>Kode dokumen</td><td>DOC-PKG-MOM-001</td></tr>
+        <tr><td>Versi</td><td>1.0</td></tr>
+        <tr><td>Tanggal</td><td>9 November 2026</td></tr>
+        <tr><td>Pemilik</td><td>Wafiq Lana Pradana</td></tr>
+        <tr><td>Status</td><td>Draft untuk persetujuan klien</td></tr>
+        <tr><td>Audiens</td><td>Manajemen, Product Owner, Kepala Divisi, IT, QA, Vendor</td></tr>
+    </table>
+    <p class="cover-note">Paket ini menggabungkan Blueprint (05), PRD (01), dan ERD (02). Bisnis Proses (03) dan Matriks Traceability (04) tersedia sebagai dokumen pendukung. Setiap bagian mempertahankan penomoran aslinya. Aspek komersial dan pembiayaan tidak dibahas dalam dokumen ini.</p>
+</section>
+<section class="toc-page"><h1 class="toc-title">Daftar Isi</h1><p class="toc-note">Paket terdiri dari Blueprint, PRD, dan ERD. Klik judul untuk menuju bagian terkait.</p>
+<ul class="table-of-contents">
+<li><a href="#mom-blueprint-sistem-notulensi-mom-terintegrasi-ai">Blueprint Sistem Notulensi (MoM) Terintegrasi AI</a>
+<ul>
+<li><a href="#mom-1-ringkasan-eksekutif">1. Ringkasan Eksekutif</a></li>
+<li><a href="#mom-2-masalah-utama-dan-solusi">2. Masalah Utama dan Solusi</a></li>
+<li><a href="#mom-3-tujuan-dan-metrik-keberhasilan">3. Tujuan dan Metrik Keberhasilan</a></li>
+<li><a href="#mom-4-peta-sistem">4. Peta Sistem</a></li>
+<li><a href="#mom-5-matriks-modul">5. Matriks Modul</a></li>
+<li><a href="#mom-6-matriks-fitur-per-rilis">6. Matriks Fitur per Rilis</a></li>
+<li><a href="#mom-7-matriks-peran-dan-kerahasiaan">7. Matriks Peran dan Kerahasiaan</a></li>
+<li><a href="#mom-8-matriks-proses-bisnis">8. Matriks Proses Bisnis</a></li>
+<li><a href="#mom-9-blueprint-data">9. Blueprint Data</a></li>
+<li><a href="#mom-10-blueprint-arsitektur-dan-teknologi">10. Blueprint Arsitektur dan Teknologi</a></li>
+<li><a href="#mom-11-blueprint-halaman">11. Blueprint Halaman</a></li>
+<li><a href="#mom-12-blueprint-ai">12. Blueprint AI</a></li>
+<li><a href="#mom-13-matriks-notifikasi">13. Matriks Notifikasi</a></li>
+<li><a href="#mom-14-kebutuhan-non-fungsional">14. Kebutuhan Non-Fungsional</a></li>
+<li><a href="#mom-15-rencana-rilis-dan-deliverables">15. Rencana Rilis dan Deliverables</a></li>
+<li><a href="#mom-16-kriteria-penerimaan-uat">16. Kriteria Penerimaan (UAT)</a></li>
+<li><a href="#mom-17-di-luar-lingkup">17. Di Luar Lingkup</a></li>
+<li><a href="#mom-18-risiko-dan-mitigasi">18. Risiko dan Mitigasi</a></li>
+<li><a href="#mom-19-pertanyaan-terbuka-untuk-klien">19. Pertanyaan Terbuka untuk Klien</a></li>
+<li><a href="#mom-20-persetujuan">20. Persetujuan</a></li>
+<li><a href="#mom-lampiran-a---glosarium">Lampiran A - Glosarium</a></li>
+</ul>
+</li>
+<li><a href="#mom-prd--sistem-notulensi-mom-terintegrasi-ai">PRD — Sistem Notulensi (MoM) Terintegrasi AI</a>
+<ul>
+<li><a href="#mom-riwayat-versi">Riwayat Versi</a></li>
+<li><a href="#mom-1-ringkasan-eksekutif-1">1. Ringkasan Eksekutif</a></li>
+<li><a href="#mom-2-latar-belakang--masalah">2. Latar Belakang &amp; Masalah</a></li>
+<li><a href="#mom-3-tujuan--metrik-keberhasilan">3. Tujuan &amp; Metrik Keberhasilan</a></li>
+<li><a href="#mom-4-ruang-lingkup">4. Ruang Lingkup</a></li>
+<li><a href="#mom-5-persona--peran">5. Persona &amp; Peran</a></li>
+<li><a href="#mom-6-cerita-pengguna--kriteria-penerimaan">6. Cerita Pengguna &amp; Kriteria Penerimaan</a></li>
+<li><a href="#mom-7-kebutuhan-fungsional">7. Kebutuhan Fungsional</a></li>
+<li><a href="#mom-8-aturan-bisnis">8. Aturan Bisnis</a></li>
+<li><a href="#mom-9-model-data-ringkas">9. Model Data Ringkas</a></li>
+<li><a href="#mom-10-ringkasan-bisnis-proses">10. Ringkasan Bisnis Proses</a></li>
+<li><a href="#mom-11-integrasi-ai">11. Integrasi AI</a></li>
+<li><a href="#mom-12-hak-akses--keamanan">12. Hak Akses &amp; Keamanan</a></li>
+<li><a href="#mom-13-kebutuhan-non-fungsional">13. Kebutuhan Non-Fungsional</a></li>
+<li><a href="#mom-14-arsitektur--tech-stack">14. Arsitektur &amp; Tech Stack</a></li>
+<li><a href="#mom-15-rencana-rilis">15. Rencana Rilis</a></li>
+<li><a href="#mom-16-risiko--mitigasi">16. Risiko &amp; Mitigasi</a></li>
+<li><a href="#mom-17-pertanyaan-terbuka">17. Pertanyaan Terbuka</a></li>
+<li><a href="#mom-18-persetujuan">18. Persetujuan</a></li>
+<li><a href="#mom-lampiran-a--glosarium">Lampiran A — Glosarium</a></li>
+</ul>
+</li>
+<li><a href="#mom-erd--kamus-data--sistem-notulensi-mom">ERD &amp; Kamus Data — Sistem Notulensi (MoM)</a>
+<ul>
+<li><a href="#mom-1-tujuan--ruang-lingkup">1. Tujuan &amp; Ruang Lingkup</a></li>
+<li><a href="#mom-2-notasi">2. Notasi</a></li>
+<li><a href="#mom-3-erd-inti">3. ERD Inti</a></li>
+<li><a href="#mom-4-erd-eksekusi">4. ERD Eksekusi</a></li>
+<li><a href="#mom-5-katalog-entitas">5. Katalog Entitas</a></li>
+<li><a href="#mom-6-kamus-data">6. Kamus Data</a></li>
+<li><a href="#mom-7-matriks-relasi">7. Matriks Relasi</a></li>
+<li><a href="#mom-8-enum--nilai-terkontrol">8. Enum &amp; Nilai Terkontrol</a></li>
+<li><a href="#mom-9-aturan-akses-di-level-data">9. Aturan Akses di Level Data</a></li>
+<li><a href="#mom-10-indeks-integritas--keterbatasan">10. Indeks, Integritas &amp; Keterbatasan</a></li>
+<li><a href="#mom-11-siklus-hidup-data">11. Siklus Hidup Data</a></li>
+<li><a href="#mom-12-urutan-migrasi">12. Urutan Migrasi</a></li>
+<li><a href="#mom-13-pemetaan-ke-implementasi">13. Pemetaan ke Implementasi</a></li>
+<li><a href="#mom-14-referensi">14. Referensi</a></li>
+</ul>
+</li>
+</ul>
+</section>
+<section class="doc" id="doc-0">
+<h1 id="mom-blueprint-sistem-notulensi-mom-terintegrasi-ai">Blueprint Sistem Notulensi (MoM) Terintegrasi AI<a href="#mom-blueprint-sistem-notulensi-mom-terintegrasi-ai" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h1>
+<p><strong>Kode dokumen:</strong> DOC-BLP-MOM-001<br />
+<strong>Versi:</strong> 1.0<br />
+<strong>Tanggal:</strong> 9 November 2026<br />
+<strong>Status:</strong> Draft untuk persetujuan klien<br />
+<strong>Pemilik:</strong> Wafiq Lana Pradana<br />
+<strong>Audiens:</strong> Manajemen, Product Owner, Kepala Divisi, IT, QA</p>
+<blockquote>
+<p>Dokumen ini adalah ringkasan presentasi untuk klien. Isi teknis mendalam tetap mengacu pada PRD (01), ERD (02), Bisnis Proses (03), dan Matriks Traceability (04). Aspek komersial dan pembiayaan tidak dibahas dalam dokumen ini.</p>
+</blockquote>
+<h2 id="mom-1-ringkasan-eksekutif">1. Ringkasan Eksekutif<a href="#mom-1-ringkasan-eksekutif" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<p>Sistem Notulensi (MoM) adalah aplikasi web internal untuk mencatat, merangkum, mendistribusikan, dan menindaklanjuti hasil rapat lintas divisi.</p>
+<p>Nilai utama sistem:</p>
+<ul>
+<li>Satu sumber kebenaran untuk notulen, keputusan, dan action item.</li>
+<li>Resume AI mempercepat pembacaan; manusia tetap memverifikasi sebelum notulen difinalkan.</li>
+<li>Tagging <code>@orang</code>, <code>@divisi</code>, dan <code>#topik</code> membuat distribusi, pencarian, dan halaman terkait berjalan otomatis.</li>
+<li>Action item memiliki PIC dan tenggat yang jelas, dengan pengingat dan pelacakan status.</li>
+<li>Hak akses berlapis, audit trail, dan label kerahasiaan menjaga informasi sensitif.</li>
+</ul>
+<p>Inti penawaran untuk fase pertama adalah alur lengkap dari rapat sampai tindak lanjut: buat notulen, catat keputusan dan tugas, minta resume AI, verifikasi, finalkan, distribusikan, lalu pantau penyelesaian tugas.</p>
+<h2 id="mom-2-masalah-utama-dan-solusi">2. Masalah Utama dan Solusi<a href="#mom-2-masalah-utama-dan-solusi" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Masalah</th>
+<th>Dampak</th>
+<th>Solusi dalam sistem</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Notulen tersebar di chat, email, dan dokumen pribadi</td>
+<td>Sulit dicari dan rawan hilang</td>
+<td>Pusat notulen, pencarian teks penuh, dan filter</td>
+</tr>
+<tr>
+<td>PIC dan tenggat tidak jelas</td>
+<td>Tindak lanjut rapat terlewat</td>
+<td>Tabel action item wajib PIC dan tenggat sebelum final</td>
+</tr>
+<tr>
+<td>Keputusan divisi lain tidak diketahui</td>
+<td>Silo informasi dan pekerjaan duplikatif</td>
+<td>Tagging divisi/topik dan halaman lintas divisi</td>
+</tr>
+<tr>
+<td>Notulen panjang dan tidak seragam</td>
+<td>Manajemen sulit membaca ringkasan</td>
+<td>Template standar dan resume AI</td>
+</tr>
+<tr>
+<td>Jejak akses dan perubahan tidak ada</td>
+<td>Sulit diaudit dan dipertanggungjawabkan</td>
+<td>Audit log, version history, dan label kerahasiaan</td>
+</tr>
+</tbody>
+</table>
+<h2 id="mom-3-tujuan-dan-metrik-keberhasilan">3. Tujuan dan Metrik Keberhasilan<a href="#mom-3-tujuan-dan-metrik-keberhasilan" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Tujuan</th>
+<th>Metrik</th>
+<th>Target 6 bulan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Notulen tersentralisasi</td>
+<td>Rapat resmi tercatat di sistem</td>
+<td>&gt;= 90%</td>
+</tr>
+<tr>
+<td>Distribusi cepat</td>
+<td>Waktu kirim setelah finalisasi</td>
+<td>&lt;= 24 jam, target segera</td>
+</tr>
+<tr>
+<td>Tindak lanjut jelas</td>
+<td>Action item memiliki PIC dan tenggat</td>
+<td>100%</td>
+</tr>
+<tr>
+<td>Penyelesaian tepat waktu</td>
+<td>Action item selesai sesuai tenggat</td>
+<td>&gt;= 80%</td>
+</tr>
+<tr>
+<td>Efisiensi membaca</td>
+<td>Notulen dengan resume AI yang dipakai</td>
+<td>&gt;= 70%</td>
+</tr>
+<tr>
+<td>Kualitas AI</td>
+<td>Resume disetujui tanpa koreksi besar</td>
+<td>&gt;= 80%</td>
+</tr>
+<tr>
+<td>Kinerja</td>
+<td>Waktu muat halaman dan pencarian</td>
+<td>&lt;= 2 detik dan &lt;= 3 detik</td>
+</tr>
+</tbody>
+</table>
+<h2 id="mom-4-peta-sistem">4. Peta Sistem<a href="#mom-4-peta-sistem" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<p>Alur utama:</p>
+<pre><code class="language-text">Perencanaan -&gt; Pencatatan -&gt; Resume AI -&gt; Verifikasi -&gt; Finalisasi
+     -&gt; Distribusi -&gt; Tindak Lanjut -&gt; Pelaporan dan Rekap
+</code></pre>
+<p>Arsitektur ringkas:</p>
+<pre><code class="language-text">+-------------------------------------+
+| Browser Desktop / Mobile            |
+| Vue 3 + Inertia + Tiptap Editor     |
++----------------+--------------------+
+                 | HTTPS
++----------------v--------------------+      +------------------------+
+| Laravel 13                          |&lt;----&gt;| Layanan AI (LLM API)   |
+| Auth - Policy - Notulen - Tagging   |      | Resume - Ekstraksi     |
+| Action Item - AI - Notifikasi       |      +------------------------+
++---+-------------+-------------+-----+
+    |             |             |
++---v----+   +----v-----+   +---v--------------+
+|Postgres|   |Queue dan |   |Object Storage    |
+|        |   |Scheduler |   |Lampiran          |
++--------+   +----+-----+   +------------------+
+                  |
+             +----v-----+
+             |Email/SMTP|
+             +----------+
+
++-------------------------------------+
+| Hocuspocus / Yjs                    |
+| Kolaborasi real-time dan presence   |
++-------------------------------------+
+</code></pre>
+<h2 id="mom-5-matriks-modul">5. Matriks Modul<a href="#mom-5-matriks-modul" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>No</th>
+<th>Modul</th>
+<th>Fungsi Utama</th>
+<th>Aktor</th>
+<th>Rilis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Autentikasi dan Profil</td>
+<td>Login, logout, reset password, 2FA, profil</td>
+<td>Semua pengguna</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Dashboard</td>
+<td>Statistik, rapat mendatang, tugas saya, overdue</td>
+<td>Semua pengguna</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Notulen dan Editor</td>
+<td>Buat, sunting, template, peserta, kerahasiaan, lampiran</td>
+<td>Notulis, Admin</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Tagging dan Pengetahuan</td>
+<td>Mention orang/divisi/topik, halaman terkait</td>
+<td>Notulis, pembaca</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Pencarian dan Filter</td>
+<td>Teks penuh, tanggal, divisi, topik, status</td>
+<td>Semua pengguna</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Action Item</td>
+<td>Tabel, board, PIC, tenggat, status, overdue</td>
+<td>PIC, Notulis, Admin</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>7</td>
+<td>AI Assistant</td>
+<td>Resume, keputusan, usulan tugas, saran tag</td>
+<td>Notulis, Admin</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Notifikasi dan Distribusi</td>
+<td>In-app, email, pengingat</td>
+<td>Semua penerima</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Administrasi dan Audit</td>
+<td>Pengguna, divisi, topik, template, audit</td>
+<td>Admin</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Kolaborasi Real-time</td>
+<td>Dua notulis, presence, fallback</td>
+<td>Notulis</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Laporan dan Rekap</td>
+<td>Rekap periodik, ekspor</td>
+<td>Manajer, Admin</td>
+<td>R2 dan R3</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Integrasi Perusahaan</td>
+<td>SSO, kalender, chat, transkripsi</td>
+<td>Admin, Manajer</td>
+<td>R3</td>
+</tr>
+</tbody>
+</table>
+<p>Keterangan rilis:</p>
+<ul>
+<li><strong>R1:</strong> MVP dan inti P1, siap pilot 2-3 divisi.</li>
+<li><strong>R2:</strong> penyempurnaan distribusi, pelaporan, dan ekspor.</li>
+<li><strong>R3:</strong> integrasi lanjutan dan AI tingkat lanjut.</li>
+</ul>
+<h2 id="mom-6-matriks-fitur-per-rilis">6. Matriks Fitur per Rilis<a href="#mom-6-matriks-fitur-per-rilis" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Fitur</th>
+<th>Prioritas PRD</th>
+<th>Rilis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F-01</td>
+<td>Editor dokumen kaya: heading, tabel, daftar, tautan, gambar</td>
+<td>P0</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>F-02</td>
+<td>Template notulen standar</td>
+<td>P0</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>F-03</td>
+<td>Template per jenis rapat</td>
+<td>P1</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>F-04</td>
+<td>Kolaborasi real-time dan riwayat versi</td>
+<td>P0</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>F-05</td>
+<td>Tabel action item</td>
+<td>P0</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>F-06</td>
+<td>Draf, final, dan locked</td>
+<td>P0</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>F-07</td>
+<td>Lampiran file dan tautan</td>
+<td>P1</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>F-08</td>
+<td>Ekspor PDF dan Word</td>
+<td>P1</td>
+<td>R2</td>
+</tr>
+<tr>
+<td>F-10</td>
+<td>Tag orang <code>@nama</code></td>
+<td>P0</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>F-11</td>
+<td>Tag divisi <code>@divisi</code></td>
+<td>P0</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>F-12</td>
+<td>Tag topik <code>#topik</code></td>
+<td>P0</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>F-13</td>
+<td>Tag pada level bagian dokumen</td>
+<td>P1</td>
+<td>R2</td>
+</tr>
+<tr>
+<td>F-14</td>
+<td>Notifikasi dan halaman terkait</td>
+<td>P0</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>F-15</td>
+<td>Banyak tag sekaligus</td>
+<td>P0</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>F-16</td>
+<td>Tamu eksternal</td>
+<td>P2</td>
+<td>R2</td>
+</tr>
+<tr>
+<td>F-20</td>
+<td>Halaman Terkait Saya</td>
+<td>P0</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>F-21</td>
+<td>Halaman topik</td>
+<td>P0</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>F-22</td>
+<td>Halaman divisi dan orang</td>
+<td>P1</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>F-23</td>
+<td>Pencarian teks penuh dan filter</td>
+<td>P0</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>F-24</td>
+<td>Board action item</td>
+<td>P1</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>F-25</td>
+<td>Dashboard ringkasan</td>
+<td>P2</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>F-30</td>
+<td>Notifikasi email dan in-app</td>
+<td>P0</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>F-31</td>
+<td>Pengingat H-3, H-1, dan terlambat</td>
+<td>P1</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>F-32</td>
+<td>Integrasi chat perusahaan</td>
+<td>P2</td>
+<td>R3</td>
+</tr>
+<tr>
+<td>F-33</td>
+<td>Integrasi kalender</td>
+<td>P1</td>
+<td>R3</td>
+</tr>
+<tr>
+<td>F-34</td>
+<td>Rekap mingguan otomatis</td>
+<td>P1</td>
+<td>R3</td>
+</tr>
+<tr>
+<td>F-40</td>
+<td>Resume AI per notulen</td>
+<td>P0</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>F-41</td>
+<td>Ekstraksi action item</td>
+<td>P0</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>F-42</td>
+<td>Saran tag</td>
+<td>P1</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>F-43</td>
+<td>Resume lintas notulen</td>
+<td>P1</td>
+<td>R3</td>
+</tr>
+<tr>
+<td>F-44</td>
+<td>Tanya-jawab atas notulen</td>
+<td>P1</td>
+<td>R3</td>
+</tr>
+<tr>
+<td>F-45</td>
+<td>Resume per peran</td>
+<td>P2</td>
+<td>R3</td>
+</tr>
+<tr>
+<td>F-46</td>
+<td>Transkripsi rekaman</td>
+<td>P2</td>
+<td>R3</td>
+</tr>
+<tr>
+<td>F-47</td>
+<td>Penerjemahan resume</td>
+<td>P2</td>
+<td>R3</td>
+</tr>
+<tr>
+<td>F-50</td>
+<td>Manajemen pengguna, divisi, dan peran</td>
+<td>P0</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>F-50</td>
+<td>SSO perusahaan</td>
+<td>P0</td>
+<td>R3</td>
+</tr>
+<tr>
+<td>F-51</td>
+<td>Manajemen topik</td>
+<td>P1</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>F-52</td>
+<td>Audit log</td>
+<td>P1</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>F-53</td>
+<td>Retensi dan arsip</td>
+<td>P2</td>
+<td>R3</td>
+</tr>
+</tbody>
+</table>
+<p>Catatan: SSO ditempatkan di R3 karena bergantung pada kesiapan Identity Provider perusahaan. R1 memakai login lokal dan 2FA.</p>
+<h2 id="mom-7-matriks-peran-dan-kerahasiaan">7. Matriks Peran dan Kerahasiaan<a href="#mom-7-matriks-peran-dan-kerahasiaan" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<h3 id="mom-71-hak-akses-per-peran">7.1 Hak Akses per Peran<a href="#mom-71-hak-akses-per-peran" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>Fungsi</th>
+<th>Admin</th>
+<th>Notulis</th>
+<th>Kepala Divisi</th>
+<th>Peserta</th>
+<th>Pembaca</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Dashboard</td>
+<td>Ya</td>
+<td>Ya</td>
+<td>Ya</td>
+<td>Ya</td>
+<td>Ya</td>
+</tr>
+<tr>
+<td>Buat dan sunting draf</td>
+<td>Ya</td>
+<td>Ya</td>
+<td>Tidak</td>
+<td>Tidak</td>
+<td>Tidak</td>
+</tr>
+<tr>
+<td>Finalkan notulen</td>
+<td>Ya</td>
+<td>Ya</td>
+<td>Tidak</td>
+<td>Tidak</td>
+<td>Tidak</td>
+</tr>
+<tr>
+<td>Sunting setelah final</td>
+<td>Ya</td>
+<td>Tidak</td>
+<td>Tidak</td>
+<td>Tidak</td>
+<td>Tidak</td>
+</tr>
+<tr>
+<td>Lihat sesuai kerahasiaan</td>
+<td>Ya</td>
+<td>Ya</td>
+<td>Ya</td>
+<td>Ya</td>
+<td>Ya</td>
+</tr>
+<tr>
+<td>Update status tugas</td>
+<td>Ya</td>
+<td>Ya</td>
+<td>Jika PIC</td>
+<td>Jika PIC</td>
+<td>Tidak</td>
+</tr>
+<tr>
+<td>Kelola topik, divisi, pengguna</td>
+<td>Ya</td>
+<td>Tidak</td>
+<td>Tidak</td>
+<td>Tidak</td>
+<td>Tidak</td>
+</tr>
+<tr>
+<td>Audit log</td>
+<td>Ya</td>
+<td>Tidak</td>
+<td>Tidak</td>
+<td>Tidak</td>
+<td>Tidak</td>
+</tr>
+<tr>
+<td>Resume AI</td>
+<td>Ya</td>
+<td>Ya</td>
+<td>Lihat</td>
+<td>Lihat</td>
+<td>Lihat</td>
+</tr>
+<tr>
+<td>Unduh lampiran</td>
+<td>Ya</td>
+<td>Ya</td>
+<td>Sesuai akses</td>
+<td>Sesuai akses</td>
+<td>Sesuai akses</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mom-72-tingkat-kerahasiaan">7.2 Tingkat Kerahasiaan<a href="#mom-72-tingkat-kerahasiaan" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>Tingkat</th>
+<th>Siapa yang dapat melihat</th>
+<th>AI</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Terbuka</td>
+<td>Semua pengguna terautentikasi</td>
+<td>Boleh, dengan label AI</td>
+</tr>
+<tr>
+<td>Divisi</td>
+<td>Peserta dan anggota divisi yang di-tag</td>
+<td>Boleh untuk pengguna berhak</td>
+</tr>
+<tr>
+<td>Terbatas</td>
+<td>Peserta dan orang yang di-tag</td>
+<td>Hanya jika penanya berhak</td>
+</tr>
+<tr>
+<td>Rahasia</td>
+<td>Peserta tertentu, pembuat, dan admin</td>
+<td>Dikecualikan kecuali disetujui eksplisit</td>
+</tr>
+</tbody>
+</table>
+<h2 id="mom-8-matriks-proses-bisnis">8. Matriks Proses Bisnis<a href="#mom-8-matriks-proses-bisnis" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Kode</th>
+<th>Proses</th>
+<th>Aktor Utama</th>
+<th>Output</th>
+<th>Modul</th>
+<th>SLA</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P1</td>
+<td>Perencanaan dan pembuatan notulen</td>
+<td>Notulis</td>
+<td>Draf, peserta, agenda</td>
+<td>Notulen</td>
+<td>&lt;= 5 menit</td>
+</tr>
+<tr>
+<td>P2</td>
+<td>Pencatatan rapat</td>
+<td>Notulis</td>
+<td>Isi notulen, tag, keputusan, tugas</td>
+<td>Editor dan Tagging</td>
+<td>Autosave &lt;= 2 detik</td>
+</tr>
+<tr>
+<td>P3</td>
+<td>Resume AI dan verifikasi</td>
+<td>Notulis dan AI</td>
+<td>Resume dan usulan tugas</td>
+<td>AI</td>
+<td>&lt;= 60 detik</td>
+</tr>
+<tr>
+<td>P4</td>
+<td>Finalisasi</td>
+<td>Notulis</td>
+<td>Notulen final dan versi terkunci</td>
+<td>Notulen</td>
+<td>&lt;= 3 detik</td>
+</tr>
+<tr>
+<td>P5</td>
+<td>Distribusi dan notifikasi</td>
+<td>Sistem</td>
+<td>Notifikasi in-app dan email</td>
+<td>Notifikasi</td>
+<td>&lt;= 24 jam, target segera</td>
+</tr>
+<tr>
+<td>P6</td>
+<td>Tindak lanjut</td>
+<td>PIC dan Sistem</td>
+<td>Status tugas dan pengingat</td>
+<td>Action Item</td>
+<td>Pengingat pukul 09.00</td>
+</tr>
+<tr>
+<td>P7</td>
+<td>Pelaporan dan rekap</td>
+<td>Manajer dan AI</td>
+<td>Rekap mingguan atau bulanan</td>
+<td>Laporan</td>
+<td>Senin pukul 08.00</td>
+</tr>
+<tr>
+<td>P8</td>
+<td>Administrasi dan audit</td>
+<td>Admin</td>
+<td>Pengguna, topik, divisi, audit</td>
+<td>Admin</td>
+<td>Audit &lt;= 1 detik</td>
+</tr>
+</tbody>
+</table>
+<h2 id="mom-9-blueprint-data">9. Blueprint Data<a href="#mom-9-blueprint-data" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Entitas</th>
+<th>Fungsi</th>
+<th>Relasi Kunci</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>users</code></td>
+<td>Pengguna, peran, divisi, status aktif</td>
+<td>Divisi 1 ke N Pengguna</td>
+</tr>
+<tr>
+<td><code>divisions</code></td>
+<td>Struktur divisi dan kepala divisi</td>
+<td>Divisi 1 ke N Notulen</td>
+</tr>
+<tr>
+<td><code>topics</code></td>
+<td>Taksonomi topik lintas divisi</td>
+<td>Topik 1 ke N Keputusan</td>
+</tr>
+<tr>
+<td><code>meeting_templates</code></td>
+<td>Template notulen per jenis rapat</td>
+<td>Template 1 ke N Notulen</td>
+</tr>
+<tr>
+<td><code>meetings</code></td>
+<td>Notulen, isi dokumen, status, kerahasiaan</td>
+<td>Pembuat 1 ke N Notulen</td>
+</tr>
+<tr>
+<td><code>meeting_participants</code></td>
+<td>Peserta internal/eksternal dan kehadiran</td>
+<td>Notulen N ke N Pengguna</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td>Mention orang, divisi, dan topik</td>
+<td>Notulen 1 ke N Tag</td>
+</tr>
+<tr>
+<td><code>decisions</code></td>
+<td>Keputusan rapat</td>
+<td>Notulen 1 ke N Keputusan</td>
+</tr>
+<tr>
+<td><code>action_items</code></td>
+<td>Tugas, PIC, tenggat, dan status</td>
+<td>Notulen 1 ke N Tugas</td>
+</tr>
+<tr>
+<td><code>ai_summaries</code></td>
+<td>Resume dan rekap AI</td>
+<td>Notulen 1 ke N Resume</td>
+</tr>
+<tr>
+<td><code>attachments</code></td>
+<td>Berkas, tautan, dan rekaman</td>
+<td>Notulen 1 ke N Lampiran</td>
+</tr>
+<tr>
+<td><code>audit_logs</code></td>
+<td>Jejak akses dan perubahan</td>
+<td>Pengguna 1 ke N Audit</td>
+</tr>
+<tr>
+<td><code>notifications</code></td>
+<td>Notifikasi in-app per pengguna</td>
+<td>Pengguna 1 ke N Notifikasi</td>
+</tr>
+<tr>
+<td><code>meeting_versions</code></td>
+<td>Riwayat versi dokumen</td>
+<td>Notulen 1 ke N Versi</td>
+</tr>
+<tr>
+<td><code>collab_documents</code></td>
+<td>State kolaborasi Yjs</td>
+<td>Notulen 1 ke 1 Dokumen kolaborasi</td>
+</tr>
+</tbody>
+</table>
+<h2 id="mom-10-blueprint-arsitektur-dan-teknologi">10. Blueprint Arsitektur dan Teknologi<a href="#mom-10-blueprint-arsitektur-dan-teknologi" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Lapisan</th>
+<th>Teknologi</th>
+<th>Fungsi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Backend</td>
+<td>Laravel 13 dan PHP 8.4</td>
+<td>Auth, policy, notulen, queue, scheduler</td>
+</tr>
+<tr>
+<td>Frontend</td>
+<td>Vue 3.5, TypeScript, Inertia 3</td>
+<td>Antarmuka SPA tanpa API terpisah</td>
+</tr>
+<tr>
+<td>Build</td>
+<td>Vite 8</td>
+<td>Kompilasi asset</td>
+</tr>
+<tr>
+<td>UI</td>
+<td>Tailwind 4 dan shadcn-vue</td>
+<td>Komponen konsisten dan aksesibel</td>
+</tr>
+<tr>
+<td>Editor</td>
+<td>Tiptap 3</td>
+<td>Teks kaya, tabel, mention, lampiran</td>
+</tr>
+<tr>
+<td>Kolaborasi</td>
+<td>Yjs dan Hocuspocus 4</td>
+<td>Sinkronisasi real-time dan presence</td>
+</tr>
+<tr>
+<td>Database</td>
+<td>PostgreSQL 18</td>
+<td>JSONB, full-text search, trigram</td>
+</tr>
+<tr>
+<td>Queue</td>
+<td>Laravel Queue</td>
+<td>AI, email, dan notifikasi asinkron</td>
+</tr>
+<tr>
+<td>Scheduler</td>
+<td>Laravel Scheduler</td>
+<td>Pengingat dan rekap</td>
+</tr>
+<tr>
+<td>AI</td>
+<td>Provider-agnostik (OpenAI-compatible)</td>
+<td>Resume, ekstraksi, dan saran tag</td>
+</tr>
+<tr>
+<td>Email</td>
+<td>SMTP</td>
+<td>Distribusi dan pengingat</td>
+</tr>
+<tr>
+<td>Storage</td>
+<td>Local atau S3-compatible</td>
+<td>Lampiran dan rekaman</td>
+</tr>
+<tr>
+<td>Search</td>
+<td>PostgreSQL FTS dan pg_trgm</td>
+<td>Pencarian cepat tanpa layanan tambahan</td>
+</tr>
+</tbody>
+</table>
+<p>Pilihan ini menjaga sistem tetap sederhana untuk pilot, tetapi siap ditingkatkan ke Redis, Meilisearch, dan pgvector saat volume data bertambah.</p>
+<h2 id="mom-11-blueprint-halaman">11. Blueprint Halaman<a href="#mom-11-blueprint-halaman" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Halaman</th>
+<th>Fungsi</th>
+<th>Pengguna Utama</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Login dan Reset Password</td>
+<td>Autentikasi</td>
+<td>Semua</td>
+</tr>
+<tr>
+<td>Dashboard</td>
+<td>Ringkasan aktivitas dan tugas</td>
+<td>Semua</td>
+</tr>
+<tr>
+<td>Daftar Notulen</td>
+<td>Cari, filter, dan buka notulen</td>
+<td>Semua</td>
+</tr>
+<tr>
+<td>Buat Notulen</td>
+<td>Pilih template dan isi awal</td>
+<td>Notulis, Admin</td>
+</tr>
+<tr>
+<td>Editor Notulen</td>
+<td>Menulis, tag, action item, lampiran</td>
+<td>Notulis, Admin</td>
+</tr>
+<tr>
+<td>Detail Notulen</td>
+<td>Baca, resume AI, keputusan, tugas</td>
+<td>Semua sesuai akses</td>
+</tr>
+<tr>
+<td>Terkait Saya</td>
+<td>Notulen dan tugas yang menyebut saya</td>
+<td>Semua</td>
+</tr>
+<tr>
+<td>Halaman Topik</td>
+<td>Notulen, keputusan, tugas per topik</td>
+<td>Semua</td>
+</tr>
+<tr>
+<td>Halaman Divisi</td>
+<td>Aktivitas dan notulen divisi</td>
+<td>Semua sesuai akses</td>
+</tr>
+<tr>
+<td>Halaman Orang</td>
+<td>Notulen dan tugas per orang</td>
+<td>Semua sesuai akses</td>
+</tr>
+<tr>
+<td>Tugas dan Board</td>
+<td>Daftar dan kanban action item</td>
+<td>PIC, Notulis, Admin</td>
+</tr>
+<tr>
+<td>Notifikasi</td>
+<td>Riwayat notifikasi</td>
+<td>Semua</td>
+</tr>
+<tr>
+<td>Admin Pengguna</td>
+<td>Kelola akun, peran, dan divisi</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>Admin Divisi</td>
+<td>Kelola struktur divisi</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>Admin Topik</td>
+<td>Buat, gabung, dan arsipkan topik</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>Admin Template</td>
+<td>Kelola template notulen</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>Admin Audit</td>
+<td>Jejak akses dan perubahan</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>Pengaturan</td>
+<td>Profil, keamanan, dan preferensi email</td>
+<td>Semua</td>
+</tr>
+</tbody>
+</table>
+<h2 id="mom-12-blueprint-ai">12. Blueprint AI<a href="#mom-12-blueprint-ai" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<h3 id="mom-121-keluaran-ai">12.1 Keluaran AI<a href="#mom-121-keluaran-ai" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>Keluaran</th>
+<th>Isi</th>
+<th>Tindakan Manusia</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Resume notulen</td>
+<td>Ringkasan, poin penting, keputusan</td>
+<td>Notulis menyetujui atau menyunting</td>
+</tr>
+<tr>
+<td>Ekstraksi action item</td>
+<td>Tugas, PIC, tenggat</td>
+<td>Notulis mengonfirmasi sebelum disimpan</td>
+</tr>
+<tr>
+<td>Saran tag</td>
+<td>Orang, divisi, topik</td>
+<td>Notulis menerima atau menolak</td>
+</tr>
+<tr>
+<td>Rekap lintas notulen</td>
+<td>Per topik, divisi, atau periode</td>
+<td>Manajer meninjau</td>
+</tr>
+<tr>
+<td>Tanya-jawab</td>
+<td>Jawaban dengan sitasi sumber</td>
+<td>Pengguna membaca sumber</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mom-122-guardrail">12.2 Guardrail<a href="#mom-122-guardrail" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>Guardrail</th>
+<th>Implementasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Manusia memverifikasi</td>
+<td>Hasil AI berstatus draft sampai disetujui</td>
+</tr>
+<tr>
+<td>Hak akses dihormati</td>
+<td>AI hanya membaca notulen yang boleh diakses penanya</td>
+</tr>
+<tr>
+<td>Transparan</td>
+<td>Label &quot;dibuat AI&quot; dan tautan sumber</td>
+</tr>
+<tr>
+<td>Data tidak untuk pelatihan</td>
+<td>Penyedia AI wajib memiliki kebijakan no-training</td>
+</tr>
+<tr>
+<td>Notulen sensitif</td>
+<td>Notulen rahasia dikecualikan kecuali disetujui</td>
+</tr>
+<tr>
+<td>Kegagalan layanan</td>
+<td>Retry, fallback manual, dan notifikasi admin</td>
+</tr>
+<tr>
+<td>Kuota</td>
+<td>Pemantauan token dan kuota per divisi</td>
+</tr>
+</tbody>
+</table>
+<h2 id="mom-13-matriks-notifikasi">13. Matriks Notifikasi<a href="#mom-13-matriks-notifikasi" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Penerima</th>
+<th>Kanal</th>
+<th>Waktu</th>
+<th>Syarat</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Notulen difinalkan</td>
+<td>Peserta, tag orang, anggota divisi tag</td>
+<td>In-app dan email</td>
+<td>Setelah final</td>
+<td>Penerima berhak melihat</td>
+</tr>
+<tr>
+<td>Tugas diberikan</td>
+<td>PIC</td>
+<td>In-app dan email</td>
+<td>Setelah final</td>
+<td>PIC terisi</td>
+</tr>
+<tr>
+<td>Resume AI selesai</td>
+<td>Notulis</td>
+<td>In-app</td>
+<td>Setelah job</td>
+<td>Status draft</td>
+</tr>
+<tr>
+<td>Pengingat H-3</td>
+<td>PIC</td>
+<td>Email dan in-app</td>
+<td>Pukul 09.00</td>
+<td>Tugas belum selesai</td>
+</tr>
+<tr>
+<td>Pengingat H-1</td>
+<td>PIC</td>
+<td>Email dan in-app</td>
+<td>Pukul 09.00</td>
+<td>Tugas belum selesai</td>
+</tr>
+<tr>
+<td>Terlambat</td>
+<td>PIC dan kepala divisi</td>
+<td>Email dan in-app</td>
+<td>Harian</td>
+<td>Melewati tenggat</td>
+</tr>
+<tr>
+<td>Rekap mingguan</td>
+<td>Pengguna dan kepala divisi</td>
+<td>Email</td>
+<td>Senin pukul 08.00</td>
+<td>Ada aktivitas</td>
+</tr>
+<tr>
+<td>AI gagal</td>
+<td>Notulis dan admin</td>
+<td>In-app</td>
+<td>Setelah retry gagal</td>
+<td>Job gagal</td>
+</tr>
+</tbody>
+</table>
+<h2 id="mom-14-kebutuhan-non-fungsional">14. Kebutuhan Non-Fungsional<a href="#mom-14-kebutuhan-non-fungsional" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Aspek</th>
+<th>Kebutuhan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Kinerja</td>
+<td>Halaman &lt;= 2 detik; pencarian &lt;= 3 detik; resume AI &lt;= 60 detik</td>
+</tr>
+<tr>
+<td>Ketersediaan</td>
+<td>&gt;= 99,5% pada jam kerja</td>
+</tr>
+<tr>
+<td>Skalabilitas</td>
+<td>Seluruh karyawan dan ribuan notulen per tahun</td>
+</tr>
+<tr>
+<td>Kegunaan</td>
+<td>Responsif desktop dan ponsel; bahasa Indonesia</td>
+</tr>
+<tr>
+<td>Kolaborasi</td>
+<td>Penyuntingan bersama tanpa konflik; riwayat versi</td>
+</tr>
+<tr>
+<td>Keamanan</td>
+<td>Policy di level query, enkripsi, audit, dan backup harian</td>
+</tr>
+<tr>
+<td>Kepatuhan</td>
+<td>Jejak audit dan retensi sesuai kebijakan perusahaan</td>
+</tr>
+<tr>
+<td>Aksesibilitas</td>
+<td>Kontras memadai, navigasi keyboard, dan label form</td>
+</tr>
+<tr>
+<td>Observabilitas</td>
+<td>Log terpusat, monitoring queue, dan alert kegagalan AI</td>
+</tr>
+</tbody>
+</table>
+<h2 id="mom-15-rencana-rilis-dan-deliverables">15. Rencana Rilis dan Deliverables<a href="#mom-15-rencana-rilis-dan-deliverables" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Fase</th>
+<th>Cakupan</th>
+<th>Durasi Indikatif</th>
+<th>Milestone</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fase 0 - Discovery</td>
+<td>Wawancara divisi, contoh notulen, daftar divisi/topik, kebijakan data</td>
+<td>1 minggu</td>
+<td>Peta proses disetujui</td>
+</tr>
+<tr>
+<td>Fase 1 - MVP dan Pilot</td>
+<td>Template, tagging, action item, notifikasi, resume AI, kolaborasi, pilot 2-3 divisi</td>
+<td>10 minggu</td>
+<td>Go-live pilot</td>
+</tr>
+<tr>
+<td>Fase 2 - Perluasan</td>
+<td>Semua divisi, halaman divisi/orang, pengingat, board, ekspor</td>
+<td>7 minggu</td>
+<td>Full rollout</td>
+</tr>
+<tr>
+<td>Fase 3 - Penyempurnaan</td>
+<td>SSO, kalender, chat, Q&amp;A, rekap, transkripsi, evaluasi</td>
+<td>2 minggu</td>
+<td>Evaluasi manfaat</td>
+</tr>
+</tbody>
+</table>
+<p>Deliverables:</p>
+<ul>
+<li>Aplikasi web siap pakai di lingkungan staging dan produksi.</li>
+<li>Database, seed demo, dan konfigurasi environment.</li>
+<li>Panduan pengguna dan panduan admin.</li>
+<li>Dokumen teknis dan matriks traceability yang diperbarui.</li>
+<li>Laporan UAT dan berita acara serah terima.</li>
+<li>Pelatihan notulis champion dan admin.</li>
+</ul>
+<h2 id="mom-16-kriteria-penerimaan-uat">16. Kriteria Penerimaan (UAT)<a href="#mom-16-kriteria-penerimaan-uat" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<h3 id="mom-161-fungsional">16.1 Fungsional<a href="#mom-161-fungsional" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<ul>
+<li>Login dan hak akses setiap peran berjalan sesuai matriks.</li>
+<li>Notulen dapat dibuat dari template, disunting, dan difinalkan.</li>
+<li>Mention <code>@orang</code>, <code>@divisi</code>, dan <code>#topik</code> tersimpan dan muncul di halaman terkait.</li>
+<li>Action item wajib memiliki PIC dan tenggat sebelum finalisasi.</li>
+<li>Resume AI dapat dibuat, disunting, disetujui, dan diterapkan ke action item.</li>
+<li>Notifikasi in-app dan email terkirim hanya kepada pihak yang berhak.</li>
+<li>Pencarian dan filter menampilkan hasil sesuai akses.</li>
+<li>PIC dapat memperbarui status tugas dan perubahan tercatat di audit.</li>
+<li>Dua notulis dapat menyunting bersamaan; fallback berjalan jika layanan kolaborasi mati.</li>
+<li>Admin dapat mengelola pengguna, divisi, topik, template, dan melihat audit.</li>
+</ul>
+<h3 id="mom-162-kpi">16.2 KPI<a href="#mom-162-kpi" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<ul>
+<li>
+<blockquote>
+<p>= 90% rapat resmi tercatat.</p>
+</blockquote>
+</li>
+<li>100% action item memiliki PIC dan tenggat.</li>
+<li>
+<blockquote>
+<p>= 80% action item selesai tepat waktu.</p>
+</blockquote>
+</li>
+<li>
+<blockquote>
+<p>= 70% notulen memiliki resume AI yang dipakai.</p>
+</blockquote>
+</li>
+<li>Waktu muat &lt;= 2 detik dan pencarian &lt;= 3 detik.</li>
+</ul>
+<h2 id="mom-17-di-luar-lingkup">17. Di Luar Lingkup<a href="#mom-17-di-luar-lingkup" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<ul>
+<li>Pengganti aplikasi video meeting atau kalender.</li>
+<li>Sistem manajemen proyek penuh.</li>
+<li>Transkripsi audio otomatis pada rilis awal.</li>
+<li>Aplikasi mobile native.</li>
+<li>Pengadaan perangkat, lisensi, dan infrastruktur.</li>
+<li>Migrasi seluruh arsip lama.</li>
+<li>Pembahasan komersial dan pembiayaan.</li>
+</ul>
+<h2 id="mom-18-risiko-dan-mitigasi">18. Risiko dan Mitigasi<a href="#mom-18-risiko-dan-mitigasi" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Risiko</th>
+<th>Dampak</th>
+<th>Mitigasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Notulis tidak disiplin mengisi</td>
+<td>Data tidak lengkap</td>
+<td>Template sederhana, target kepatuhan, dukungan manajemen</td>
+</tr>
+<tr>
+<td>Resume AI keliru</td>
+<td>Salah informasi</td>
+<td>Verifikasi manusia, sitasi, dan label AI</td>
+</tr>
+<tr>
+<td>Kebocoran data sensitif</td>
+<td>Risiko hukum dan reputasi</td>
+<td>Klasifikasi, policy, pengecualian AI, dan audit</td>
+</tr>
+<tr>
+<td>Notifikasi berlebihan</td>
+<td>Pengguna mengabaikan</td>
+<td>Preferensi, rekap gabungan, dan batching</td>
+</tr>
+<tr>
+<td>Adopsi rendah</td>
+<td>Sistem tidak dipakai</td>
+<td>Pilot, pelatihan, dan champion divisi</td>
+</tr>
+<tr>
+<td>Ketergantungan layanan AI/Node</td>
+<td>Fitur terganggu</td>
+<td>Fallback, health check, dan runbook</td>
+</tr>
+</tbody>
+</table>
+<h2 id="mom-19-pertanyaan-terbuka-untuk-klien">19. Pertanyaan Terbuka untuk Klien<a href="#mom-19-pertanyaan-terbuka-untuk-klien" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<ol>
+<li>Berapa jumlah divisi dan karyawan yang akan menggunakan sistem?</li>
+<li>Apakah perusahaan memakai Google Workspace, Microsoft 365, atau keduanya?</li>
+<li>Siapa yang menjadi notulis: sekretaris, anggota bergilir, atau siapa saja?</li>
+<li>Apakah ada rapat dengan data sensitif yang tidak boleh diproses AI eksternal?</li>
+<li>Penyedia AI mana yang diizinkan dan di mana data boleh diproses?</li>
+<li>Saluran notifikasi utama: email, WhatsApp, atau chat perusahaan?</li>
+<li>Apakah perlu dukungan notulen campuran Indonesia-Inggris?</li>
+<li>Kebijakan retensi notulen dan rekaman?</li>
+<li>Siapa admin yang ditunjuk untuk notulen rahasia?</li>
+<li>Apakah kalender perusahaan menggunakan Google atau Microsoft?</li>
+</ol>
+<h2 id="mom-20-persetujuan">20. Persetujuan<a href="#mom-20-persetujuan" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Peran</th>
+<th>Nama</th>
+<th>Tanda Tangan / Tanggal</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pemilik Produk</td>
+<td>Wafiq Lana Pradana</td>
+<td></td>
+</tr>
+<tr>
+<td>Perwakilan Divisi</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>IT / Pengembang</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Manajemen</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="mom-lampiran-a---glosarium">Lampiran A - Glosarium<a href="#mom-lampiran-a---glosarium" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Istilah</th>
+<th>Arti</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MoM</td>
+<td>Minutes of Meeting atau notulen rapat</td>
+</tr>
+<tr>
+<td>Notulis</td>
+<td>Pengguna yang menulis dan memfinalkan notulen</td>
+</tr>
+<tr>
+<td>Tag</td>
+<td>Penanda orang, divisi, atau topik di dalam notulen</td>
+</tr>
+<tr>
+<td>Mention</td>
+<td>Tag yang disisipkan di editor</td>
+</tr>
+<tr>
+<td>Action item</td>
+<td>Tugas tindak lanjut dari rapat</td>
+</tr>
+<tr>
+<td>PIC</td>
+<td>Person in Charge</td>
+</tr>
+<tr>
+<td>Resume AI</td>
+<td>Ringkasan yang dihasilkan model bahasa</td>
+</tr>
+<tr>
+<td>R1, R2, R3</td>
+<td>Tahap rilis pertama, kedua, dan ketiga</td>
+</tr>
+<tr>
+<td>UAT</td>
+<td>User Acceptance Test</td>
+</tr>
+<tr>
+<td>SSO</td>
+<td>Single Sign-On</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><strong>Catatan dokumen:</strong> Blueprint ini adalah ringkasan untuk presentasi klien. Perubahan requirement wajib memperbarui PRD, ERD, bisnis proses, matriks traceability, dan dokumen ini.</p>
+</section>
+<section class="doc" id="doc-1">
+<h1 id="mom-prd--sistem-notulensi-mom-terintegrasi-ai">PRD — Sistem Notulensi (MoM) Terintegrasi AI<a href="#mom-prd--sistem-notulensi-mom-terintegrasi-ai" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h1>
+<p><strong>Kode dokumen:</strong> DOC-PRD-MOM-001<br />
+<strong>Versi:</strong> 1.0<br />
+<strong>Tanggal:</strong> 26 Oktober 2026<br />
+<strong>Status:</strong> Final draft untuk persetujuan<br />
+<strong>Pemilik produk:</strong> Wafiq Lana Pradana<br />
+<strong>Reviewer:</strong> Manager IT, Kepala Divisi Pilot<br />
+<strong>Approver:</strong> Manajemen</p>
+<blockquote>
+<p>Dokumen ini adalah acuan produk untuk pembangunan Sistem Notulensi (Minutes of Meeting/MoM). Aspek komersial dan pembiayaan tidak dibahas dalam dokumen ini. Data model dijelaskan pada <code>02-ERD-Sistem-Notulensi.md</code>; alur kerja dijelaskan pada <code>03-Bisnis-Proses-Sistem-Notulensi.md</code>.</p>
+</blockquote>
+<h2 id="mom-riwayat-versi">Riwayat Versi<a href="#mom-riwayat-versi" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Versi</th>
+<th>Tanggal</th>
+<th>Perubahan</th>
+<th>Penyusun</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0.1</td>
+<td>26 Okt 2026</td>
+<td>Draf awal kebutuhan produk</td>
+<td>Wafiq Lana Pradana</td>
+</tr>
+<tr>
+<td>0.2</td>
+<td>26 Okt 2026</td>
+<td>Penambahan rekomendasi tech stack</td>
+<td>Wafiq Lana Pradana</td>
+</tr>
+<tr>
+<td>1.0</td>
+<td>26 Okt 2026</td>
+<td>Konsolidasi PRD, ERD, bisnis proses, dan keputusan arsitektur</td>
+<td>Wafiq Lana Pradana</td>
+</tr>
+</tbody>
+</table>
+<h2 id="mom-1-ringkasan-eksekutif-1">1. Ringkasan Eksekutif<a href="#mom-1-ringkasan-eksekutif-1" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<p>Sistem Notulensi (MoM) adalah aplikasi web internal untuk mencatat, mendistribusikan, dan menindaklanjuti hasil rapat lintas divisi. Setiap notulen dapat menandai peserta, divisi, dan topik melalui <code>@orang</code>, <code>@divisi</code>, dan <code>#topik</code>, sehingga pihak terkait otomatis menerima notifikasi dan dapat menemukan kembali keputusan serta tugasnya.</p>
+<p>Pengalaman menulis dibuat mirip Google Docs: teks kaya, tabel, daftar, lampiran, dan kolaborasi. Seluruh notulen terhubung ke layanan AI untuk menghasilkan ringkasan, daftar keputusan, usulan action item, saran tag, serta tanya-jawab lintas notulen. AI tidak pernah menjadi sumber kebenaran tunggal: notulis wajib memverifikasi sebelum notulen difinalkan.</p>
+<p><strong>Keputusan arsitektur:</strong> aplikasi custom (Opsi B) dengan pilot bertahap di 2–3 divisi. Pendekatan ini dipilih karena kebutuhan P0 — tagging lintas dokumen, hak akses granular, halaman &quot;Terkait Saya&quot;, pencarian terfilter, dan pelacakan action item — tidak dapat dipenuhi secara konsisten di Google Workspace.</p>
+<p><strong>Hasil yang diharapkan dalam 6 bulan:</strong></p>
+<ul>
+<li>≥ 90% rapat resmi tercatat di sistem.</li>
+<li>100% action item memiliki PIC dan tenggat.</li>
+<li>≥ 80% action item selesai tepat waktu.</li>
+<li>≥ 70% notulen memiliki resume AI yang dipakai.</li>
+<li>Seluruh divisi aktif menggunakan sistem.</li>
+</ul>
+<h2 id="mom-2-latar-belakang--masalah">2. Latar Belakang &amp; Masalah<a href="#mom-2-latar-belakang--masalah" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Masalah</th>
+<th>Dampak</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Notulen tersebar di dokumen pribadi, chat, dan email</td>
+<td>Sulit dicari kembali, tidak ada sumber tunggal, dan rawan hilang</td>
+</tr>
+<tr>
+<td>Tidak ada kejelasan PIC dan tenggat action item</td>
+<td>Tindak lanjut rapat terlewat</td>
+</tr>
+<tr>
+<td>Keputusan rapat divisi lain tidak diketahui</td>
+<td>Silo informasi dan pekerjaan duplikatif</td>
+</tr>
+<tr>
+<td>Notulen panjang dan tidak seragam</td>
+<td>Manajemen sulit membaca ringkasan cepat</td>
+</tr>
+<tr>
+<td>Tagging dan pencarian lintas dokumen lemah</td>
+<td>Notulen yang relevan tidak ditemukan saat dibutuhkan</td>
+</tr>
+<tr>
+<td>Jejak akses dan perubahan tidak tercatat</td>
+<td>Sulit diaudit dan dipertanggungjawabkan</td>
+</tr>
+</tbody>
+</table>
+<h2 id="mom-3-tujuan--metrik-keberhasilan">3. Tujuan &amp; Metrik Keberhasilan<a href="#mom-3-tujuan--metrik-keberhasilan" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Tujuan</th>
+<th>Metrik</th>
+<th>Baseline</th>
+<th>Target 6 bulan</th>
+<th>Sumber</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Notulen tersentralisasi</td>
+<td>% rapat resmi tercatat</td>
+<td>Belum diukur</td>
+<td>≥ 90%</td>
+<td>Register notulen</td>
+</tr>
+<tr>
+<td>Distribusi cepat</td>
+<td>Waktu kirim ke peserta/tag</td>
+<td>Manual</td>
+<td>≤ 24 jam</td>
+<td>Log notifikasi</td>
+</tr>
+<tr>
+<td>Tindak lanjut jelas</td>
+<td>% action item punya PIC &amp; tenggat</td>
+<td>Belum diukur</td>
+<td>100%</td>
+<td>Tabel action item</td>
+</tr>
+<tr>
+<td>Penyelesaian tindak lanjut</td>
+<td>% action item selesai tepat waktu</td>
+<td>Belum diukur</td>
+<td>≥ 80%</td>
+<td>Status action item</td>
+</tr>
+<tr>
+<td>Efisiensi membaca</td>
+<td>% notulen dengan resume AI yang dipakai</td>
+<td>0%</td>
+<td>≥ 70%</td>
+<td>Log akses resume</td>
+</tr>
+<tr>
+<td>Adopsi</td>
+<td>Divisi aktif</td>
+<td>0</td>
+<td>Semua divisi</td>
+<td>Pengguna aktif</td>
+</tr>
+<tr>
+<td>Kualitas AI</td>
+<td>% resume disetujui tanpa koreksi besar</td>
+<td>Belum ada</td>
+<td>≥ 80%</td>
+<td>Riwayat persetujuan</td>
+</tr>
+<tr>
+<td>Kinerja</td>
+<td>Waktu muat &amp; pencarian</td>
+<td>Belum diukur</td>
+<td>≤ 2 dtk / ≤ 3 dtk</td>
+<td>APM/log server</td>
+</tr>
+</tbody>
+</table>
+<h2 id="mom-4-ruang-lingkup">4. Ruang Lingkup<a href="#mom-4-ruang-lingkup" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<h3 id="mom-41-termasuk">4.1 Termasuk<a href="#mom-41-termasuk" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<ul>
+<li>Pembuatan dan penyuntingan notulen dari template.</li>
+<li>Tagging orang, divisi, dan topik pada level dokumen dan bagian tertentu.</li>
+<li>Halaman &quot;Terkait Saya&quot;, halaman topik, halaman divisi, dan halaman orang.</li>
+<li>Pencarian teks penuh dengan filter tanggal, divisi, topik, orang, dan status.</li>
+<li>Tabel action item, board tindak lanjut, pengingat tenggat, dan rekap.</li>
+<li>Notifikasi email dan in-app.</li>
+<li>Resume AI, ekstraksi action item, saran tag, rekap lintas notulen, dan tanya-jawab sesuai hak akses.</li>
+<li>Administrasi pengguna, divisi, topik, peran, audit, dan retensi.</li>
+<li>Integrasi SSO, kalender, dan kanal chat pada fase lanjutan.</li>
+</ul>
+<h3 id="mom-42-tidak-termasuk">4.2 Tidak Termasuk<a href="#mom-42-tidak-termasuk" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<ul>
+<li>Pengganti aplikasi video meeting atau kalender.</li>
+<li>Sistem manajemen proyek penuh; hanya pelacakan action item dari rapat.</li>
+<li>Transkripsi audio otomatis pada rilis awal (fase lanjutan).</li>
+<li>Aplikasi mobile native; antarmuka web responsif sudah mencakup ponsel.</li>
+<li>Pengadaan perangkat, lisensi, dan infrastruktur.</li>
+<li>Migrasi seluruh arsip lama; dilakukan bertahap bila diperlukan.</li>
+<li>Pembahasan komersial, pembiayaan, dan penawaran harga.</li>
+</ul>
+<h2 id="mom-5-persona--peran">5. Persona &amp; Peran<a href="#mom-5-persona--peran" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Persona</th>
+<th>Kebutuhan utama</th>
+<th>Peran sistem</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Notulis</td>
+<td>Template cepat, tagging mudah, tidak perlu format ulang</td>
+<td>Admin atau Notulis</td>
+</tr>
+<tr>
+<td>Peserta rapat</td>
+<td>Menerima notulen dan melihat tugas sendiri</td>
+<td>Anggota</td>
+</tr>
+<tr>
+<td>Kepala divisi / manajer</td>
+<td>Memantau keputusan dan tindak lanjut divisi</td>
+<td>Anggota atau Notulis</td>
+</tr>
+<tr>
+<td>Direksi / manajemen</td>
+<td>Ringkasan lintas divisi dan topik strategis</td>
+<td>Pembaca</td>
+</tr>
+<tr>
+<td>Admin sistem (IT)</td>
+<td>Kelola pengguna, divisi, hak akses, integrasi, audit</td>
+<td>Admin</td>
+</tr>
+</tbody>
+</table>
+<h2 id="mom-6-cerita-pengguna--kriteria-penerimaan">6. Cerita Pengguna &amp; Kriteria Penerimaan<a href="#mom-6-cerita-pengguna--kriteria-penerimaan" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Cerita pengguna</th>
+<th>Kriteria penerimaan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>US-01</td>
+<td>Sebagai notulis, saya ingin membuat notulen dari template agar format seragam.</td>
+<td>Notulis memilih template; judul, tanggal, agenda, peserta, dan bagian standar terisi otomatis; notulen tersimpan sebagai draf.</td>
+</tr>
+<tr>
+<td>US-02</td>
+<td>Sebagai notulis, saya ingin men-tag peserta, divisi, dan topik dengan <code>@nama</code>, <code>@divisi</code>, dan <code>#topik</code>.</td>
+<td>Mention tersimpan sebagai tag terstruktur; tag muncul di halaman terkait dan memicu notifikasi; duplikasi tag di dokumen yang sama digabung.</td>
+</tr>
+<tr>
+<td>US-03</td>
+<td>Sebagai peserta, saya ingin menerima notifikasi saat di-tag dan melihat tugas saya.</td>
+<td>Notifikasi in-app dan email terkirim setelah notulen difinalkan; halaman &quot;Terkait Saya&quot; menampilkan notulen dan tugas.</td>
+</tr>
+<tr>
+<td>US-04</td>
+<td>Sebagai anggota divisi, saya ingin melihat notulen yang menyebut divisi saya.</td>
+<td>Notulen dengan tag divisi terlihat oleh anggota divisi sesuai tingkat kerahasiaan.</td>
+</tr>
+<tr>
+<td>US-05</td>
+<td>Sebagai manajer, saya ingin melihat keputusan terkait satu topik lintas divisi.</td>
+<td>Halaman topik menampilkan notulen, keputusan, dan action item lintas divisi.</td>
+</tr>
+<tr>
+<td>US-06</td>
+<td>Sebagai pengguna, saya ingin AI merangkum notulen panjang.</td>
+<td>Resume berisi ringkasan, poin penting, keputusan, dan usulan action item; berlabel &quot;dibuat AI&quot; dan dapat disunting.</td>
+</tr>
+<tr>
+<td>US-07</td>
+<td>Sebagai pengguna, saya ingin bertanya ke AI tentang keputusan bulan ini.</td>
+<td>AI hanya memakai notulen yang boleh diakses penanya; jawaban menautkan sumber.</td>
+</tr>
+<tr>
+<td>US-08</td>
+<td>Sebagai admin, saya ingin mengatur siapa boleh melihat notulen tertentu.</td>
+<td>Admin menetapkan tingkat kerahasiaan; akses diuji terhadap peran, peserta, tag, dan divisi.</td>
+</tr>
+<tr>
+<td>US-09</td>
+<td>Sebagai PIC, saya ingin memperbarui status tugas saya.</td>
+<td>PIC dapat mengubah status tugasnya; perubahan tercatat di audit log.</td>
+</tr>
+<tr>
+<td>US-10</td>
+<td>Sebagai notulis, saya ingin memfinalkan notulen setelah verifikasi.</td>
+<td>Finalisasi mengunci versi, mencatat waktu dan approver, dan mencegah penyuntingan non-admin.</td>
+</tr>
+<tr>
+<td>US-11</td>
+<td>Sebagai manajer, saya ingin rekap mingguan/bulanan per divisi.</td>
+<td>Rekap dibuat AI dari notulen yang berhak diakses dan dapat diekspor.</td>
+</tr>
+<tr>
+<td>US-12</td>
+<td>Sebagai admin, saya ingin melihat jejak akses dan perubahan.</td>
+<td>Audit log mencatat aktor, aksi, waktu, IP, dan objek terkait.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="mom-7-kebutuhan-fungsional">7. Kebutuhan Fungsional<a href="#mom-7-kebutuhan-fungsional" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<p>Prioritas: <strong>P0</strong> wajib rilis awal, <strong>P1</strong> penting, <strong>P2</strong> fase lanjutan.</p>
+<h3 id="mom-71-pembuatan--penyuntingan-notulen">7.1 Pembuatan &amp; Penyuntingan Notulen<a href="#mom-71-pembuatan--penyuntingan-notulen" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Kebutuhan</th>
+<th>Prioritas</th>
+<th>Kriteria penerimaan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F-01</td>
+<td>Editor dokumen kaya (teks, tabel, daftar, lampiran)</td>
+<td>P0</td>
+<td>Mendukung heading, bold/italic, daftar, tabel, tautan, dan gambar/lampiran; konten tersimpan sebagai JSON.</td>
+</tr>
+<tr>
+<td>F-02</td>
+<td>Template notulen standar</td>
+<td>P0</td>
+<td>Template memuat judul, tanggal, waktu, lokasi/link, agenda, peserta, pembahasan, keputusan, action item.</td>
+</tr>
+<tr>
+<td>F-03</td>
+<td>Template per jenis rapat</td>
+<td>P1</td>
+<td>Template dapat dibedakan untuk harian, mingguan, divisi, lintas divisi, dan manajemen.</td>
+</tr>
+<tr>
+<td>F-04</td>
+<td>Kolaborasi real-time &amp; riwayat versi</td>
+<td>P0</td>
+<td>Dua notulis dapat menyunting bersamaan tanpa konflik; versi tersimpan dan dapat dipulihkan.</td>
+</tr>
+<tr>
+<td>F-05</td>
+<td>Tabel action item bergaya spreadsheet</td>
+<td>P0</td>
+<td>Kolom tugas, PIC, tenggat, status; dapat diubah dari halaman notulen.</td>
+</tr>
+<tr>
+<td>F-06</td>
+<td>Draf, final, dan penguncian</td>
+<td>P1</td>
+<td>Status draf → final → terkunci; hanya admin dapat menyunting setelah final.</td>
+</tr>
+<tr>
+<td>F-07</td>
+<td>Lampiran file dan tautan</td>
+<td>P1</td>
+<td>Berkas disimpan di object storage; tautan eksternal dapat ditambahkan.</td>
+</tr>
+<tr>
+<td>F-08</td>
+<td>Ekspor PDF dan Word</td>
+<td>P1</td>
+<td>Ekspor mengikuti hak akses dan menampilkan label kerahasiaan.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mom-72-tagging">7.2 Tagging<a href="#mom-72-tagging" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Kebutuhan</th>
+<th>Prioritas</th>
+<th>Kriteria penerimaan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F-10</td>
+<td>Tag orang <code>@nama</code></td>
+<td>P0</td>
+<td>Mention menyimpan ID pengguna dan label; muncul di halaman terkait.</td>
+</tr>
+<tr>
+<td>F-11</td>
+<td>Tag divisi <code>@divisi</code></td>
+<td>P0</td>
+<td>Mention divisi mencakup seluruh anggota divisi untuk notifikasi dan akses.</td>
+</tr>
+<tr>
+<td>F-12</td>
+<td>Tag topik <code>#topik</code></td>
+<td>P0</td>
+<td>Topik terkelola admin; mention topik menghubungkan notulen ke halaman topik.</td>
+</tr>
+<tr>
+<td>F-13</td>
+<td>Tag pada level dokumen atau bagian</td>
+<td>P1</td>
+<td>Tag dapat menyimpan posisi/rentang di dokumen.</td>
+</tr>
+<tr>
+<td>F-14</td>
+<td>Notifikasi dan halaman terkait</td>
+<td>P0</td>
+<td>Setiap tag menghasilkan notifikasi dan entri &quot;Terkait Saya&quot;.</td>
+</tr>
+<tr>
+<td>F-15</td>
+<td>Banyak tag sekaligus</td>
+<td>P0</td>
+<td>Satu notulen dapat memiliki kombinasi orang, divisi, dan topik.</td>
+</tr>
+<tr>
+<td>F-16</td>
+<td>Tamu eksternal</td>
+<td>P2</td>
+<td>Nama tamu dapat di-tag tanpa akun; opsi kirim email.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mom-73-pencarian-filter--tampilan">7.3 Pencarian, Filter &amp; Tampilan<a href="#mom-73-pencarian-filter--tampilan" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Kebutuhan</th>
+<th>Prioritas</th>
+<th>Kriteria penerimaan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F-20</td>
+<td>Halaman &quot;Terkait Saya&quot;</td>
+<td>P0</td>
+<td>Menampilkan notulen dan tugas yang menyebut pengguna/divisinya.</td>
+</tr>
+<tr>
+<td>F-21</td>
+<td>Halaman topik</td>
+<td>P0</td>
+<td>Menampilkan notulen, keputusan, dan tugas untuk satu topik lintas divisi.</td>
+</tr>
+<tr>
+<td>F-22</td>
+<td>Halaman divisi dan orang</td>
+<td>P1</td>
+<td>Menampilkan notulen dan tugas per divisi/orang sesuai akses.</td>
+</tr>
+<tr>
+<td>F-23</td>
+<td>Pencarian teks penuh + filter</td>
+<td>P0</td>
+<td>Filter tanggal, divisi, topik, orang, status; hasil ≤ 3 detik.</td>
+</tr>
+<tr>
+<td>F-24</td>
+<td>Board action item</td>
+<td>P1</td>
+<td>Tampilan daftar/kanban dengan filter PIC, divisi, dan tenggat.</td>
+</tr>
+<tr>
+<td>F-25</td>
+<td>Dashboard ringkasan</td>
+<td>P2</td>
+<td>Rapat bulan ini, tugas terlambat, topik terbanyak.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mom-74-notifikasi--tindak-lanjut">7.4 Notifikasi &amp; Tindak Lanjut<a href="#mom-74-notifikasi--tindak-lanjut" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Kebutuhan</th>
+<th>Prioritas</th>
+<th>Kriteria penerimaan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F-30</td>
+<td>Notifikasi email dan in-app</td>
+<td>P0</td>
+<td>Terkirim saat di-tag, diberi tugas, atau notulen difinalkan.</td>
+</tr>
+<tr>
+<td>F-31</td>
+<td>Pengingat H-3, H-1, dan terlambat</td>
+<td>P1</td>
+<td>Scheduler mengirim pengingat; status tugas diperbarui otomatis.</td>
+</tr>
+<tr>
+<td>F-32</td>
+<td>Integrasi chat perusahaan</td>
+<td>P2</td>
+<td>Notifikasi dapat dikirim ke WhatsApp/Slack/Teams sesuai kebijakan.</td>
+</tr>
+<tr>
+<td>F-33</td>
+<td>Integrasi kalender</td>
+<td>P1</td>
+<td>Menarik jadwal dan peserta dari undangan kalender.</td>
+</tr>
+<tr>
+<td>F-34</td>
+<td>Rekap mingguan otomatis</td>
+<td>P1</td>
+<td>Rekap per orang dan kepala divisi dikirim sesuai jadwal.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mom-75-fitur-ai">7.5 Fitur AI<a href="#mom-75-fitur-ai" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Kebutuhan</th>
+<th>Prioritas</th>
+<th>Kriteria penerimaan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F-40</td>
+<td>Resume otomatis per notulen</td>
+<td>P0</td>
+<td>Menghasilkan ringkasan, poin penting, dan keputusan; berlabel AI.</td>
+</tr>
+<tr>
+<td>F-41</td>
+<td>Ekstraksi action item</td>
+<td>P0</td>
+<td>Menghasilkan tugas, PIC, dan tenggat; notulis mengonfirmasi sebelum disimpan.</td>
+</tr>
+<tr>
+<td>F-42</td>
+<td>Saran tag</td>
+<td>P1</td>
+<td>Menyarankan orang, divisi, dan topik berdasarkan isi.</td>
+</tr>
+<tr>
+<td>F-43</td>
+<td>Resume lintas notulen</td>
+<td>P1</td>
+<td>Rekap per topik/divisi/periode.</td>
+</tr>
+<tr>
+<td>F-44</td>
+<td>Tanya-jawab atas notulen</td>
+<td>P1</td>
+<td>Jawaban hanya dari notulen yang boleh diakses; menautkan sumber.</td>
+</tr>
+<tr>
+<td>F-45</td>
+<td>Resume per peran</td>
+<td>P2</td>
+<td>Versi singkat untuk direksi dan versi detail untuk tim.</td>
+</tr>
+<tr>
+<td>F-46</td>
+<td>Transkripsi rekaman</td>
+<td>P2</td>
+<td>Rekaman menjadi draf notulen.</td>
+</tr>
+<tr>
+<td>F-47</td>
+<td>Penerjemahan resume</td>
+<td>P2</td>
+<td>Indonesia–Inggris.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mom-76-administrasi">7.6 Administrasi<a href="#mom-76-administrasi" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Kebutuhan</th>
+<th>Prioritas</th>
+<th>Kriteria penerimaan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F-50</td>
+<td>Manajemen pengguna, divisi, peran, SSO</td>
+<td>P0</td>
+<td>Admin dapat mengubah peran/divisi; SSO tersedia untuk produksi.</td>
+</tr>
+<tr>
+<td>F-51</td>
+<td>Manajemen topik</td>
+<td>P1</td>
+<td>Buat, gabung, arsipkan topik; mencegah duplikasi.</td>
+</tr>
+<tr>
+<td>F-52</td>
+<td>Audit log</td>
+<td>P1</td>
+<td>Mencatat siapa melihat, mengubah, dan memfinalkan notulen.</td>
+</tr>
+<tr>
+<td>F-53</td>
+<td>Retensi dan arsip</td>
+<td>P2</td>
+<td>Kebijakan retensi dapat dikonfigurasi.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="mom-8-aturan-bisnis">8. Aturan Bisnis<a href="#mom-8-aturan-bisnis" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Aturan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BR-01</td>
+<td>Notulen baru berstatus <code>draft</code>; hanya pembuat, notulis, atau admin yang dapat menyunting draf.</td>
+</tr>
+<tr>
+<td>BR-02</td>
+<td>Finalisasi mengubah status menjadi <code>final</code>, mengisi <code>finalized_at</code> dan <code>approved_by</code>, serta mencatat audit.</td>
+</tr>
+<tr>
+<td>BR-03</td>
+<td>Setelah final, penyuntingan hanya boleh dilakukan admin dan tetap tercatat di audit log.</td>
+</tr>
+<tr>
+<td>BR-04</td>
+<td>Status <code>locked</code> tidak dapat disunting oleh siapa pun kecuali melalui prosedur admin.</td>
+</tr>
+<tr>
+<td>BR-05</td>
+<td>Visibilitas mengikuti tingkat kerahasiaan: terbuka, divisi, terbatas, rahasia.</td>
+</tr>
+<tr>
+<td>BR-06</td>
+<td>Notulen rahasia hanya terlihat oleh peserta, pembuat, dan admin yang ditunjuk; tag tidak membuka akses.</td>
+</tr>
+<tr>
+<td>BR-07</td>
+<td>Tag orang/divisi/topik disinkronkan dari mention di editor; duplikat dalam satu notulen digabung.</td>
+</tr>
+<tr>
+<td>BR-08</td>
+<td>Tag divisi mencakup seluruh anggota divisi untuk notifikasi, tetapi akses tetap mengikuti kerahasiaan.</td>
+</tr>
+<tr>
+<td>BR-09</td>
+<td>Action item wajib memiliki judul; PIC dan tenggat wajib diisi sebelum notulen final.</td>
+</tr>
+<tr>
+<td>BR-10</td>
+<td>Status action item: <code>new</code>, <code>in_progress</code>, <code>done</code>, <code>cancelled</code>; <code>overdue</code> dihitung dari tenggat, bukan status tersimpan.</td>
+</tr>
+<tr>
+<td>BR-11</td>
+<td>Hanya PIC, notulis, atau admin yang dapat mengubah status action item.</td>
+</tr>
+<tr>
+<td>BR-12</td>
+<td>Resume AI berstatus <code>draft</code> sampai disetujui notulis; AI tidak boleh memfinalkan notulen.</td>
+</tr>
+<tr>
+<td>BR-13</td>
+<td>AI hanya memakai notulen yang boleh diakses penanya; notulen rahasia dikecualikan kecuali disetujui eksplisit.</td>
+</tr>
+<tr>
+<td>BR-14</td>
+<td>Semua hasil AI wajib berlabel &quot;dibuat AI&quot; dan menautkan sumber.</td>
+</tr>
+<tr>
+<td>BR-15</td>
+<td>Notifikasi tidak boleh dikirim ke pihak yang tidak berhak melihat notulen.</td>
+</tr>
+<tr>
+<td>BR-16</td>
+<td>Perubahan peran, divisi, dan status pengguna dicatat di audit log.</td>
+</tr>
+<tr>
+<td>BR-17</td>
+<td>Penghapusan notulen menggunakan soft delete; pemulihan dilakukan admin.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="mom-9-model-data-ringkas">9. Model Data Ringkas<a href="#mom-9-model-data-ringkas" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<p>Detail lengkap ada di <code>02-ERD-Sistem-Notulensi.md</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Entitas</th>
+<th>Fungsi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>users</code></td>
+<td>Pengguna, peran, divisi, status aktif</td>
+</tr>
+<tr>
+<td><code>divisions</code></td>
+<td>Divisi dan kepala divisi</td>
+</tr>
+<tr>
+<td><code>topics</code></td>
+<td>Topik terkelola</td>
+</tr>
+<tr>
+<td><code>meeting_templates</code></td>
+<td>Template notulen per jenis rapat</td>
+</tr>
+<tr>
+<td><code>meetings</code></td>
+<td>Notulen, isi dokumen, status, kerahasiaan</td>
+</tr>
+<tr>
+<td><code>meeting_participants</code></td>
+<td>Peserta dan kehadiran</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td>Mention orang/divisi/topik beserta posisi</td>
+</tr>
+<tr>
+<td><code>decisions</code></td>
+<td>Keputusan rapat dan topik terkait</td>
+</tr>
+<tr>
+<td><code>action_items</code></td>
+<td>Tugas, PIC, tenggat, status</td>
+</tr>
+<tr>
+<td><code>ai_summaries</code></td>
+<td>Resume AI per notulen/topik/divisi/periode</td>
+</tr>
+<tr>
+<td><code>attachments</code></td>
+<td>Berkas, tautan, rekaman</td>
+</tr>
+<tr>
+<td><code>audit_logs</code></td>
+<td>Jejak akses dan perubahan</td>
+</tr>
+<tr>
+<td><code>notifications</code></td>
+<td>Notifikasi in-app per pengguna</td>
+</tr>
+</tbody>
+</table>
+<h2 id="mom-10-ringkasan-bisnis-proses">10. Ringkasan Bisnis Proses<a href="#mom-10-ringkasan-bisnis-proses" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<p>Detail alur, swimlane, state machine, dan RACI ada di <code>03-Bisnis-Proses-Sistem-Notulensi.md</code>.</p>
+<div class="mermaid-wrap"><pre class="mermaid">flowchart TB
+    A[Perencanaan rapat] --&gt; B[Pencatatan saat rapat]
+    B --&gt; C[Resume AI]
+    C --&gt; D[Verifikasi notulis]
+    D --&gt; E[Finalisasi]
+    E --&gt; F[Distribusi &amp; notifikasi]
+    F --&gt; G[Tindak lanjut action item]
+    G --&gt; H[Pelaporan &amp; rekap]
+    H -.-&gt; A</pre></div>
+<table>
+<thead>
+<tr>
+<th>Proses</th>
+<th>Aktor utama</th>
+<th>Output</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Perencanaan &amp; pembuatan notulen</td>
+<td>Notulis, Sistem</td>
+<td>Draf notulen + peserta + agenda</td>
+</tr>
+<tr>
+<td>Pencatatan rapat</td>
+<td>Notulis</td>
+<td>Isi notulen, tag, keputusan, action item</td>
+</tr>
+<tr>
+<td>Resume AI &amp; verifikasi</td>
+<td>Notulis, AI</td>
+<td>Resume dan usulan tugas yang terverifikasi</td>
+</tr>
+<tr>
+<td>Finalisasi &amp; distribusi</td>
+<td>Notulis, Sistem</td>
+<td>Notulen final + notifikasi</td>
+</tr>
+<tr>
+<td>Tindak lanjut</td>
+<td>PIC, Sistem</td>
+<td>Status tugas dan pengingat</td>
+</tr>
+<tr>
+<td>Pelaporan</td>
+<td>Manajer, AI</td>
+<td>Rekap mingguan/bulanan</td>
+</tr>
+<tr>
+<td>Administrasi &amp; audit</td>
+<td>Admin</td>
+<td>Pengguna, topik, divisi, audit</td>
+</tr>
+</tbody>
+</table>
+<h2 id="mom-11-integrasi-ai">11. Integrasi AI<a href="#mom-11-integrasi-ai" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<h3 id="mom-111-pendekatan">11.1 Pendekatan<a href="#mom-111-pendekatan" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<p>Notulen berstatus draf atau final dikirim ke layanan LLM melalui API. Hasil disimpan sebagai resume yang dapat disunting dan disetujui notulis. Pemrosesan dilakukan asinkron melalui queue agar tidak memblokir permintaan pengguna.</p>
+<h3 id="mom-112-keluaran-ai">11.2 Keluaran AI<a href="#mom-112-keluaran-ai" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<ul>
+<li>Ringkasan singkat.</li>
+<li>Poin pembahasan penting.</li>
+<li>Daftar keputusan.</li>
+<li>Usulan action item: tugas, PIC, tenggat.</li>
+<li>Saran tag: orang, divisi, topik.</li>
+<li>Rekap lintas notulen per topik/divisi/periode.</li>
+<li>Jawaban tanya-jawab dengan sitasi sumber.</li>
+</ul>
+<h3 id="mom-113-guardrail">11.3 Guardrail<a href="#mom-113-guardrail" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>Guardrail</th>
+<th>Implementasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Manusia memverifikasi</td>
+<td>Status <code>draft</code> sampai notulis menyetujui</td>
+</tr>
+<tr>
+<td>Hak akses dihormati</td>
+<td>Query AI dibatasi <code>Meeting::visibleTo(user)</code></td>
+</tr>
+<tr>
+<td>Transparan</td>
+<td>Label &quot;dibuat AI&quot; dan tautan sumber</td>
+</tr>
+<tr>
+<td>Data tidak untuk pelatihan</td>
+<td>Penyedia AI wajib memiliki kebijakan no-training</td>
+</tr>
+<tr>
+<td>Notulen sensitif</td>
+<td>Dapat dikecualikan dari pemrosesan AI</td>
+</tr>
+<tr>
+<td>Kegagalan layanan</td>
+<td>Job retry, fallback tanpa AI, notifikasi admin</td>
+</tr>
+<tr>
+<td>Kuota pemakaian AI</td>
+<td>Kuota dan pemantauan token per divisi</td>
+</tr>
+</tbody>
+</table>
+<h2 id="mom-12-hak-akses--keamanan">12. Hak Akses &amp; Keamanan<a href="#mom-12-hak-akses--keamanan" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<h3 id="mom-121-tingkat-kerahasiaan">12.1 Tingkat Kerahasiaan<a href="#mom-121-tingkat-kerahasiaan" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>Tingkat</th>
+<th>Siapa yang dapat melihat</th>
+<th>AI</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Terbuka</td>
+<td>Seluruh pengguna terautentikasi</td>
+<td>Boleh, dengan label AI</td>
+</tr>
+<tr>
+<td>Divisi</td>
+<td>Anggota divisi yang di-tag dan peserta</td>
+<td>Boleh untuk pengguna berhak</td>
+</tr>
+<tr>
+<td>Terbatas</td>
+<td>Peserta dan orang yang di-tag</td>
+<td>Hanya jika penanya berhak</td>
+</tr>
+<tr>
+<td>Rahasia</td>
+<td>Peserta tertentu dan admin yang ditunjuk</td>
+<td>Dikecualikan kecuali disetujui eksplisit</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mom-122-matriks-peran">12.2 Matriks Peran<a href="#mom-122-matriks-peran" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>Fungsi</th>
+<th>Admin</th>
+<th>Notulis</th>
+<th>Kepala Divisi</th>
+<th>Peserta</th>
+<th>Pembaca</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Dashboard</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Buat/sunting draf</td>
+<td>✓</td>
+<td>✓</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Finalkan</td>
+<td>✓</td>
+<td>✓</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Sunting setelah final</td>
+<td>✓</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Lihat sesuai kerahasiaan</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Update status tugas</td>
+<td>✓</td>
+<td>✓</td>
+<td>PIC</td>
+<td>PIC</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Kelola topik/divisi/pengguna</td>
+<td>✓</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Audit log</td>
+<td>✓</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Tanya AI</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mom-123-keamanan">12.3 Keamanan<a href="#mom-123-keamanan" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<ul>
+<li>SSO perusahaan dan opsi MFA.</li>
+<li>Enkripsi saat transit dan saat disimpan.</li>
+<li>Password di-hash; token sesi dikelola framework.</li>
+<li>Otorisasi di level policy dan query, bukan hanya UI.</li>
+<li>Audit log untuk akses dan perubahan.</li>
+<li>Backup harian dan uji restore berkala.</li>
+<li>Notulen sensitif mengikuti kebijakan perlindungan data perusahaan dan UU Pelindungan Data Pribadi.</li>
+</ul>
+<h2 id="mom-13-kebutuhan-non-fungsional">13. Kebutuhan Non-Fungsional<a href="#mom-13-kebutuhan-non-fungsional" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Aspek</th>
+<th>Kebutuhan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Kinerja</td>
+<td>Halaman ≤ 2 detik; pencarian ≤ 3 detik; resume AI ≤ 60 detik untuk notulen standar</td>
+</tr>
+<tr>
+<td>Ketersediaan</td>
+<td>≥ 99,5% pada jam kerja</td>
+</tr>
+<tr>
+<td>Skalabilitas</td>
+<td>Seluruh karyawan dan ribuan notulen per tahun</td>
+</tr>
+<tr>
+<td>Kegunaan</td>
+<td>Responsif desktop/ponsel; bahasa antarmuka Indonesia</td>
+</tr>
+<tr>
+<td>Kolaborasi</td>
+<td>Penyuntingan bersama tanpa konflik; riwayat versi</td>
+</tr>
+<tr>
+<td>Keandalan</td>
+<td>Backup harian; pemulihan maksimal 24 jam</td>
+</tr>
+<tr>
+<td>Kepatuhan</td>
+<td>Jejak audit; retensi sesuai kebijakan</td>
+</tr>
+<tr>
+<td>Aksesibilitas</td>
+<td>Kontras memadai, navigasi keyboard, label form</td>
+</tr>
+<tr>
+<td>Observabilitas</td>
+<td>Log terpusat, monitoring queue, alert kegagalan AI</td>
+</tr>
+</tbody>
+</table>
+<h2 id="mom-14-arsitektur--tech-stack">14. Arsitektur &amp; Tech Stack<a href="#mom-14-arsitektur--tech-stack" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<h3 id="mom-141-keputusan-arsitektur">14.1 Keputusan Arsitektur<a href="#mom-141-keputusan-arsitektur" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<p>Aplikasi dibangun sebagai monolit modular Laravel dengan frontend Vue 3 melalui Inertia. Pendekatan ini menghindari API terpisah untuk kebutuhan internal, mempercepat pengembangan, dan tetap memungkinkan pemisahan layanan ketika skala meningkat.</p>
+<div class="mermaid-wrap"><pre class="mermaid">flowchart TB
+    U[Browser desktop / mobile] &lt;--&gt; L[Laravel 12 + Inertia]
+    U &lt;--&gt; C[Hocuspocus / Yjs]
+    L --&gt; D[(PostgreSQL)]
+    L --&gt; S[Layanan pendukung&lt;br/&gt;Redis · Meilisearch · Object Storage]
+    L --&gt; I[Integrasi&lt;br/&gt;SSO · Email · LLM]
+    L --&gt; Q[Queue Worker / Scheduler]
+    Q --&gt; I</pre></div>
+<h3 id="mom-142-tech-stack">14.2 Tech Stack<a href="#mom-142-tech-stack" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>Lapisan</th>
+<th>Teknologi</th>
+<th>Alasan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Backend</td>
+<td>PHP 8.4 + Laravel 12</td>
+<td>Ekosistem auth, policy, queue, scheduler, notifikasi</td>
+</tr>
+<tr>
+<td>Frontend</td>
+<td>Vue 3 + TypeScript</td>
+<td>Kurva belajar landai untuk tim PHP, tipe aman</td>
+</tr>
+<tr>
+<td>Jembatan</td>
+<td>Inertia.js 2</td>
+<td>Render dari controller tanpa API terpisah</td>
+</tr>
+<tr>
+<td>Styling</td>
+<td>Tailwind CSS</td>
+<td>Konsisten dan mudah dikustom</td>
+</tr>
+<tr>
+<td>Komponen UI</td>
+<td>shadcn-vue</td>
+<td>Aksesibel, dapat dimodifikasi</td>
+</tr>
+<tr>
+<td>Editor</td>
+<td>Tiptap 2</td>
+<td>Mention, tabel, ekstensi kaya</td>
+</tr>
+<tr>
+<td>Kolaborasi</td>
+<td>Yjs + Hocuspocus</td>
+<td>Sinkronisasi real-time dan presence</td>
+</tr>
+<tr>
+<td>Database</td>
+<td>PostgreSQL 16+</td>
+<td>JSONB untuk dokumen, pgvector untuk AI</td>
+</tr>
+<tr>
+<td>Pencarian</td>
+<td>Meilisearch + Scout</td>
+<td>Toleran salah ketik, filter facet</td>
+</tr>
+<tr>
+<td>Queue</td>
+<td>Laravel Queue + Redis</td>
+<td>AI/notifikasi asinkron</td>
+</tr>
+<tr>
+<td>Scheduler</td>
+<td>Laravel Scheduler</td>
+<td>Pengingat dan rekap</td>
+</tr>
+<tr>
+<td>AI</td>
+<td>LLM API provider-agnostik</td>
+<td>Mudah mengganti penyedia</td>
+</tr>
+<tr>
+<td>Auth</td>
+<td>Fortify + SSO + MFA</td>
+<td>Sesuai kebijakan perusahaan</td>
+</tr>
+<tr>
+<td>Storage</td>
+<td>S3-compatible</td>
+<td>Lampiran dan rekaman</td>
+</tr>
+<tr>
+<td>Deployment</td>
+<td>Docker Compose + Nginx</td>
+<td>Konsisten lokal dan produksi</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mom-143-lingkungan">14.3 Lingkungan<a href="#mom-143-lingkungan" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>Lingkungan</th>
+<th>Tujuan</th>
+<th>Data</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Local</td>
+<td>Pengembangan</td>
+<td>Data demo</td>
+</tr>
+<tr>
+<td>Staging</td>
+<td>UAT dan pelatihan</td>
+<td>Data sintetis</td>
+</tr>
+<tr>
+<td>Production</td>
+<td>Operasional</td>
+<td>Data perusahaan</td>
+</tr>
+</tbody>
+</table>
+<h2 id="mom-15-rencana-rilis">15. Rencana Rilis<a href="#mom-15-rencana-rilis" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Fase</th>
+<th>Cakupan</th>
+<th>Durasi</th>
+<th>Milestone</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fase 0 — Discovery</td>
+<td>Wawancara divisi, contoh notulen, daftar divisi/topik, kebijakan data</td>
+<td>1 minggu</td>
+<td>Peta proses disetujui</td>
+</tr>
+<tr>
+<td>Fase 1 — MVP &amp; Pilot</td>
+<td>Template, tagging, action item, notifikasi, resume AI, pilot 2–3 divisi</td>
+<td>10 minggu</td>
+<td>Go-live pilot (W10)</td>
+</tr>
+<tr>
+<td>Fase 2 — Perluasan</td>
+<td>Semua divisi, Terkait Saya, halaman topik, pengingat, rekap, Q&amp;A</td>
+<td>7 minggu</td>
+<td>Full rollout (W16)</td>
+</tr>
+<tr>
+<td>Fase 3 — Penyempurnaan</td>
+<td>Kalender, chat, transkripsi, penerjemahan, evaluasi</td>
+<td>2 minggu</td>
+<td>Evaluasi manfaat (W18)</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>Jadwal bersifat indikatif dan bergantung pada kesiapan SSO, kebijakan AI, dan partisipasi divisi pilot.</p>
+</blockquote>
+<h2 id="mom-16-risiko--mitigasi">16. Risiko &amp; Mitigasi<a href="#mom-16-risiko--mitigasi" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Risiko</th>
+<th>Dampak</th>
+<th>Mitigasi</th>
+<th>Owner</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Notulis tidak disiplin mengisi</td>
+<td>Data tidak lengkap</td>
+<td>Template sederhana, sasaran kepatuhan, dukungan manajemen</td>
+<td>Product Owner</td>
+</tr>
+<tr>
+<td>Resume AI keliru</td>
+<td>Salah informasi</td>
+<td>Verifikasi manusia, sitasi sumber, label AI</td>
+<td>Tech Lead</td>
+</tr>
+<tr>
+<td>Kebocoran data sensitif</td>
+<td>Risiko hukum/reputasi</td>
+<td>Klasifikasi, policy, pengecualian AI, audit</td>
+<td>Manager IT</td>
+</tr>
+<tr>
+<td>Notifikasi berlebihan</td>
+<td>Pengguna mengabaikan</td>
+<td>Preferensi, rekap gabungan, batching</td>
+<td>Product Owner</td>
+</tr>
+<tr>
+<td>Topik duplikat</td>
+<td>Pencarian tidak akurat</td>
+<td>Topik terkelola, saran AI, review berkala</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>Adopsi rendah</td>
+<td>Sistem tidak dipakai</td>
+<td>Pilot, pelatihan, champion divisi</td>
+<td>Product Owner</td>
+</tr>
+<tr>
+<td>Scope creep</td>
+<td>Rilis mundur</td>
+<td>Scope P0 dikunci, change request formal</td>
+<td>Manager IT</td>
+</tr>
+<tr>
+<td>Ketergantungan layanan Node/Meilisearch</td>
+<td>Fitur terganggu</td>
+<td>Health check, fallback pencarian, runbook</td>
+<td>Tech Lead</td>
+</tr>
+<tr>
+<td>SSO belum siap</td>
+<td>Login terhambat</td>
+<td>Fallback login lokal + MFA, jadwal integrasi</td>
+<td>Manager IT</td>
+</tr>
+<tr>
+<td>Kehilangan data</td>
+<td>Operasional terganggu</td>
+<td>Backup harian, uji restore, retensi</td>
+<td>Manager IT</td>
+</tr>
+</tbody>
+</table>
+<h2 id="mom-17-pertanyaan-terbuka">17. Pertanyaan Terbuka<a href="#mom-17-pertanyaan-terbuka" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<ol>
+<li>Berapa jumlah divisi dan karyawan yang akan menggunakan sistem?</li>
+<li>Apakah perusahaan memakai Google Workspace, Microsoft 365, atau keduanya?</li>
+<li>Siapa yang menjadi notulis: sekretaris, anggota bergilir, atau siapa saja?</li>
+<li>Apakah ada rapat dengan data sensitif yang tidak boleh diproses AI eksternal?</li>
+<li>Penyedia AI mana yang diizinkan dan di mana data boleh diproses?</li>
+<li>Saluran notifikasi utama: email, WhatsApp, atau chat perusahaan?</li>
+<li>Apakah perlu dukungan notulen campuran Indonesia–Inggris?</li>
+<li>Kebijakan retensi notulen dan rekaman?</li>
+<li>Siapa admin yang ditunjuk untuk notulen rahasia?</li>
+<li>Apakah kalender perusahaan menggunakan Google atau Microsoft?</li>
+</ol>
+<h2 id="mom-18-persetujuan">18. Persetujuan<a href="#mom-18-persetujuan" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Peran</th>
+<th>Nama</th>
+<th>Tanda tangan / Tanggal</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pemilik Produk</td>
+<td>Wafiq Lana Pradana</td>
+<td></td>
+</tr>
+<tr>
+<td>Perwakilan Divisi</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>IT / Pengembang</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Manajemen</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="mom-lampiran-a--glosarium">Lampiran A — Glosarium<a href="#mom-lampiran-a--glosarium" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Istilah</th>
+<th>Arti</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MoM</td>
+<td>Minutes of Meeting / notulen rapat</td>
+</tr>
+<tr>
+<td>Notulis</td>
+<td>Pengguna yang menulis dan memfinalkan notulen</td>
+</tr>
+<tr>
+<td>Tag</td>
+<td>Penanda orang, divisi, atau topik di dalam notulen</td>
+</tr>
+<tr>
+<td>Mention</td>
+<td>Tag yang disisipkan di editor</td>
+</tr>
+<tr>
+<td>Action item</td>
+<td>Tugas tindak lanjut dari rapat</td>
+</tr>
+<tr>
+<td>PIC</td>
+<td>Person in Charge</td>
+</tr>
+<tr>
+<td>Resume AI</td>
+<td>Ringkasan yang dihasilkan model bahasa</td>
+</tr>
+<tr>
+<td>Scout</td>
+<td>Lapisan pencarian Laravel</td>
+</tr>
+<tr>
+<td>Hocuspocus</td>
+<td>Layanan sinkronisasi Yjs untuk kolaborasi</td>
+</tr>
+<tr>
+<td>SSO</td>
+<td>Single Sign-On</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section class="doc" id="doc-2">
+<h1 id="mom-erd--kamus-data--sistem-notulensi-mom">ERD &amp; Kamus Data — Sistem Notulensi (MoM)<a href="#mom-erd--kamus-data--sistem-notulensi-mom" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h1>
+<p><strong>Kode dokumen:</strong> DOC-ERD-MOM-001<br />
+<strong>Versi:</strong> 1.0<br />
+<strong>Tanggal:</strong> 26 Oktober 2026<br />
+<strong>Status:</strong> Final draft<br />
+<strong>Acuan:</strong> <code>01-PRD-Sistem-Notulensi.md</code><br />
+<strong>Implementasi:</strong> migrasi Laravel pada <code>database/migrations</code></p>
+<h2 id="mom-1-tujuan--ruang-lingkup">1. Tujuan &amp; Ruang Lingkup<a href="#mom-1-tujuan--ruang-lingkup" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<p>Dokumen ini menjelaskan model data Sistem Notulensi secara lengkap: entitas, relasi, kardinalitas, kamus data, indeks, enum, siklus hidup data, dan aturan akses di level data. Diagram menggunakan notasi crow's foot. Kamus data mengikuti skema PostgreSQL yang berjalan.</p>
+<p>Ruang lingkup mencakup 13 tabel domain:</p>
+<p><code>users</code>, <code>divisions</code>, <code>topics</code>, <code>meeting_templates</code>, <code>meetings</code>, <code>meeting_participants</code>, <code>tags</code>, <code>decisions</code>, <code>action_items</code>, <code>ai_summaries</code>, <code>attachments</code>, <code>audit_logs</code>, <code>notifications</code>.</p>
+<p>Tabel infrastruktur Laravel (<code>sessions</code>, <code>cache</code>, <code>jobs</code>, <code>failed_jobs</code>, <code>password_reset_tokens</code>) tidak dibahas karena bukan domain produk.</p>
+<h2 id="mom-2-notasi">2. Notasi<a href="#mom-2-notasi" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Simbol</th>
+<th>Arti</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>`</td>
+<td></td>
+</tr>
+<tr>
+<td>`</td>
+<td></td>
+</tr>
+<tr>
+<td><code>}o--o{</code></td>
+<td>Banyak ke banyak</td>
+</tr>
+<tr>
+<td><code>PK</code></td>
+<td>Primary key</td>
+</tr>
+<tr>
+<td><code>FK</code></td>
+<td>Foreign key</td>
+</tr>
+<tr>
+<td><code>UK</code></td>
+<td>Unique key</td>
+</tr>
+<tr>
+<td><code>jsonb</code></td>
+<td>Dokumen JSON terindeks PostgreSQL</td>
+</tr>
+</tbody>
+</table>
+<p>Catatan: <code>tags.target_id</code> dan <code>notifications.notifiable_*</code> bersifat polimorfik, sehingga tidak memiliki foreign key fisik. Relasinya dijaga di level aplikasi.</p>
+<h2 id="mom-3-erd-inti">3. ERD Inti<a href="#mom-3-erd-inti" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<h3 id="mom-31-identitas-rapat-dan-peserta">3.1 Identitas, Rapat, dan Peserta<a href="#mom-31-identitas-rapat-dan-peserta" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<div class="mermaid-wrap"><pre class="mermaid">erDiagram
+    DIVISIONS {
+        bigint id PK
+        varchar name
+        bigint head_id FK
+    }
+
+    USERS {
+        bigint id PK
+        bigint division_id FK
+        varchar name
+        varchar email
+        varchar role
+    }
+
+    MEETING_TEMPLATES {
+        bigint id PK
+        varchar name
+        varchar meeting_type
+    }
+
+    MEETINGS {
+        bigint id PK
+        varchar title
+        bigint division_id FK
+        bigint created_by FK
+        varchar status
+        varchar confidentiality
+        timestamp scheduled_at
+        timestamp finalized_at
+    }
+
+    MEETING_PARTICIPANTS {
+        bigint id PK
+        bigint meeting_id FK
+        bigint user_id FK
+        varchar attendance
+    }
+
+    DIVISIONS ||--o{ USERS : &quot;anggota&quot;
+    USERS ||--o{ DIVISIONS : &quot;kepala divisi&quot;
+    USERS ||--o{ MEETINGS : &quot;membuat notulen&quot;
+    DIVISIONS ||--o{ MEETINGS : &quot;menyelenggarakan&quot;
+    MEETING_TEMPLATES ||--o{ MEETINGS : &quot;menjadi dasar&quot;
+    MEETINGS ||--o{ MEETING_PARTICIPANTS : &quot;memiliki peserta&quot;
+    USERS ||--o{ MEETING_PARTICIPANTS : &quot;mengikuti&quot;</pre></div>
+<h3 id="mom-32-tagging-dan-keputusan">3.2 Tagging dan Keputusan<a href="#mom-32-tagging-dan-keputusan" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<div class="mermaid-wrap"><pre class="mermaid">erDiagram
+    USERS {
+        bigint id PK
+        varchar name
+        varchar role
+    }
+
+    DIVISIONS {
+        bigint id PK
+        varchar name
+    }
+
+    TOPICS {
+        bigint id PK
+        varchar name
+        varchar status
+    }
+
+    MEETINGS {
+        bigint id PK
+        varchar title
+        varchar status
+    }
+
+    TAGS {
+        bigint id PK
+        bigint meeting_id FK
+        varchar type
+        bigint target_id
+    }
+
+    DECISIONS {
+        bigint id PK
+        bigint meeting_id FK
+        bigint topic_id FK
+        text content
+    }
+
+    MEETINGS ||--o{ TAGS : &quot;memiliki tag&quot;
+    USERS ||--o{ TAGS : &quot;target orang&quot;
+    DIVISIONS ||--o{ TAGS : &quot;target divisi&quot;
+    TOPICS ||--o{ TAGS : &quot;target topik&quot;
+    MEETINGS ||--o{ DECISIONS : &quot;menghasilkan keputusan&quot;
+    TOPICS ||--o{ DECISIONS : &quot;mengelompokkan&quot;
+    USERS ||--o{ TOPICS : &quot;membuat topik&quot;</pre></div>
+<h2 id="mom-4-erd-eksekusi">4. ERD Eksekusi<a href="#mom-4-erd-eksekusi" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<h3 id="mom-41-tugas--resume-ai">4.1 Tugas &amp; Resume AI<a href="#mom-41-tugas--resume-ai" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<div class="mermaid-wrap"><pre class="mermaid">erDiagram
+    MEETINGS {
+        bigint id PK
+        varchar title
+        varchar status
+    }
+
+    USERS {
+        bigint id PK
+        varchar name
+        varchar role
+    }
+
+    DIVISIONS {
+        bigint id PK
+        varchar name
+    }
+
+    TOPICS {
+        bigint id PK
+        varchar name
+    }
+
+    ACTION_ITEMS {
+        bigint id PK
+        bigint meeting_id FK
+        bigint pic_id FK
+        bigint division_id FK
+        varchar title
+        date due_date
+        varchar status
+    }
+
+    AI_SUMMARIES {
+        bigint id PK
+        bigint meeting_id FK
+        varchar scope
+        bigint topic_id FK
+        bigint division_id FK
+        int version
+        varchar status
+    }
+
+    MEETINGS ||--o{ ACTION_ITEMS : &quot;memiliki tugas&quot;
+    USERS ||--o{ ACTION_ITEMS : &quot;menjadi PIC&quot;
+    DIVISIONS ||--o{ ACTION_ITEMS : &quot;menjalankan&quot;
+    MEETINGS ||--o{ AI_SUMMARIES : &quot;memiliki resume&quot;
+    TOPICS ||--o{ AI_SUMMARIES : &quot;diringkas per topik&quot;
+    DIVISIONS ||--o{ AI_SUMMARIES : &quot;diringkas per divisi&quot;
+    USERS ||--o{ AI_SUMMARIES : &quot;membuat atau menyetujui&quot;</pre></div>
+<h3 id="mom-42-lampiran-audit--notifikasi">4.2 Lampiran, Audit &amp; Notifikasi<a href="#mom-42-lampiran-audit--notifikasi" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<div class="mermaid-wrap"><pre class="mermaid">erDiagram
+    MEETINGS {
+        bigint id PK
+        varchar title
+    }
+
+    USERS {
+        bigint id PK
+        varchar name
+    }
+
+    ATTACHMENTS {
+        bigint id PK
+        bigint meeting_id FK
+        varchar kind
+        varchar original_name
+    }
+
+    AUDIT_LOGS {
+        bigint id PK
+        bigint user_id FK
+        bigint meeting_id FK
+        varchar action
+        timestamp created_at
+    }
+
+    NOTIFICATIONS {
+        uuid id PK
+        varchar notifiable_type
+        bigint notifiable_id
+        timestamp read_at
+    }
+
+    MEETINGS ||--o{ ATTACHMENTS : &quot;memiliki lampiran&quot;
+    USERS ||--o{ ATTACHMENTS : &quot;mengunggah&quot;
+    USERS ||--o{ AUDIT_LOGS : &quot;melakukan aksi&quot;
+    MEETINGS ||--o{ AUDIT_LOGS : &quot;dicatat&quot;
+    USERS ||--o{ NOTIFICATIONS : &quot;menerima&quot;</pre></div>
+<h2 id="mom-5-katalog-entitas">5. Katalog Entitas<a href="#mom-5-katalog-entitas" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Entitas</th>
+<th>Deskripsi</th>
+<th>Sumber utama</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>users</code></td>
+<td>Pengguna sistem, peran, divisi, status aktif</td>
+<td>SSO / admin</td>
+</tr>
+<tr>
+<td><code>divisions</code></td>
+<td>Struktur divisi dan kepala divisi</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td><code>topics</code></td>
+<td>Taksonomi topik lintas divisi</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td><code>meeting_templates</code></td>
+<td>Template notulen per jenis rapat</td>
+<td>Admin/notulis</td>
+</tr>
+<tr>
+<td><code>meetings</code></td>
+<td>Notulen, isi dokumen, status, kerahasiaan</td>
+<td>Notulis</td>
+</tr>
+<tr>
+<td><code>meeting_participants</code></td>
+<td>Peserta internal/eksternal dan kehadiran</td>
+<td>Notulis/kalender</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td>Mention orang/divisi/topik</td>
+<td>Editor</td>
+</tr>
+<tr>
+<td><code>decisions</code></td>
+<td>Keputusan rapat</td>
+<td>Notulis</td>
+</tr>
+<tr>
+<td><code>action_items</code></td>
+<td>Tugas tindak lanjut</td>
+<td>Notulis/AI</td>
+</tr>
+<tr>
+<td><code>ai_summaries</code></td>
+<td>Resume dan rekap AI</td>
+<td>Layanan AI</td>
+</tr>
+<tr>
+<td><code>attachments</code></td>
+<td>Berkas, tautan, rekaman</td>
+<td>Notulis</td>
+</tr>
+<tr>
+<td><code>audit_logs</code></td>
+<td>Jejak akses dan perubahan</td>
+<td>Aplikasi</td>
+</tr>
+<tr>
+<td><code>notifications</code></td>
+<td>Notifikasi in-app</td>
+<td>Aplikasi</td>
+</tr>
+</tbody>
+</table>
+<h2 id="mom-6-kamus-data">6. Kamus Data<a href="#mom-6-kamus-data" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<h3 id="mom-61-users">6.1 <code>users</code><a href="#mom-61-users" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Tipe</th>
+<th>Null</th>
+<th>Default</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>bigint</td>
+<td>Tidak</td>
+<td>sequence</td>
+<td>PK</td>
+</tr>
+<tr>
+<td><code>division_id</code></td>
+<td>bigint</td>
+<td>Ya</td>
+<td>–</td>
+<td>FK ke <code>divisions.id</code>, <code>nullOnDelete</code></td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>varchar(255)</td>
+<td>Tidak</td>
+<td>–</td>
+<td>Nama lengkap</td>
+</tr>
+<tr>
+<td><code>email</code></td>
+<td>varchar(255)</td>
+<td>Tidak</td>
+<td>–</td>
+<td>UK; identitas login</td>
+</tr>
+<tr>
+<td><code>email_verified_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Waktu verifikasi email</td>
+</tr>
+<tr>
+<td><code>password</code></td>
+<td>varchar(255)</td>
+<td>Tidak</td>
+<td>–</td>
+<td>Hash password</td>
+</tr>
+<tr>
+<td><code>remember_token</code></td>
+<td>varchar(100)</td>
+<td>Ya</td>
+<td>–</td>
+<td>Token remember me</td>
+</tr>
+<tr>
+<td><code>role</code></td>
+<td>varchar(255)</td>
+<td>Tidak</td>
+<td><code>member</code></td>
+<td><code>admin</code>, <code>notulis</code>, <code>member</code>, <code>reader</code></td>
+</tr>
+<tr>
+<td><code>job_title</code></td>
+<td>varchar(255)</td>
+<td>Ya</td>
+<td>–</td>
+<td>Jabatan</td>
+</tr>
+<tr>
+<td><code>is_active</code></td>
+<td>boolean</td>
+<td>Tidak</td>
+<td><code>true</code></td>
+<td>Status aktif</td>
+</tr>
+<tr>
+<td><code>last_login_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Login terakhir</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Waktu dibuat</td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Waktu diubah</td>
+</tr>
+</tbody>
+</table>
+<p>Indeks: <code>email</code> unik, <code>division_id</code>, <code>role</code>.</p>
+<h3 id="mom-62-divisions">6.2 <code>divisions</code><a href="#mom-62-divisions" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Tipe</th>
+<th>Null</th>
+<th>Default</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>bigint</td>
+<td>Tidak</td>
+<td>sequence</td>
+<td>PK</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>varchar(255)</td>
+<td>Tidak</td>
+<td>–</td>
+<td>UK; nama divisi</td>
+</tr>
+<tr>
+<td><code>slug</code></td>
+<td>varchar(255)</td>
+<td>Tidak</td>
+<td>–</td>
+<td>UK; slug URL</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>text</td>
+<td>Ya</td>
+<td>–</td>
+<td>Deskripsi</td>
+</tr>
+<tr>
+<td><code>head_id</code></td>
+<td>bigint</td>
+<td>Ya</td>
+<td>–</td>
+<td>FK ke <code>users.id</code>, <code>nullOnDelete</code></td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Waktu dibuat</td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Waktu diubah</td>
+</tr>
+</tbody>
+</table>
+<p>Indeks: <code>name</code> unik, <code>slug</code> unik, <code>head_id</code>.</p>
+<h3 id="mom-63-topics">6.3 <code>topics</code><a href="#mom-63-topics" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Tipe</th>
+<th>Null</th>
+<th>Default</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>bigint</td>
+<td>Tidak</td>
+<td>sequence</td>
+<td>PK</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>varchar(255)</td>
+<td>Tidak</td>
+<td>–</td>
+<td>UK; nama topik</td>
+</tr>
+<tr>
+<td><code>slug</code></td>
+<td>varchar(255)</td>
+<td>Tidak</td>
+<td>–</td>
+<td>UK; slug URL</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>text</td>
+<td>Ya</td>
+<td>–</td>
+<td>Deskripsi</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>varchar(255)</td>
+<td>Tidak</td>
+<td><code>active</code></td>
+<td><code>active</code> atau <code>archived</code></td>
+</tr>
+<tr>
+<td><code>created_by</code></td>
+<td>bigint</td>
+<td>Ya</td>
+<td>–</td>
+<td>FK ke <code>users.id</code>, <code>nullOnDelete</code></td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Waktu dibuat</td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Waktu diubah</td>
+</tr>
+</tbody>
+</table>
+<p>Indeks: <code>name</code> unik, <code>slug</code> unik, <code>status</code>.</p>
+<h3 id="mom-64-meetingtemplates">6.4 <code>meeting_templates</code><a href="#mom-64-meetingtemplates" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Tipe</th>
+<th>Null</th>
+<th>Default</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>bigint</td>
+<td>Tidak</td>
+<td>sequence</td>
+<td>PK</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>varchar(255)</td>
+<td>Tidak</td>
+<td>–</td>
+<td>Nama template</td>
+</tr>
+<tr>
+<td><code>meeting_type</code></td>
+<td>varchar(255)</td>
+<td>Tidak</td>
+<td><code>other</code></td>
+<td>Jenis rapat</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>text</td>
+<td>Ya</td>
+<td>–</td>
+<td>Deskripsi</td>
+</tr>
+<tr>
+<td><code>sections</code></td>
+<td>jsonb</td>
+<td>Ya</td>
+<td>–</td>
+<td>Struktur bagian template</td>
+</tr>
+<tr>
+<td><code>is_active</code></td>
+<td>boolean</td>
+<td>Tidak</td>
+<td><code>true</code></td>
+<td>Status aktif</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Waktu dibuat</td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Waktu diubah</td>
+</tr>
+</tbody>
+</table>
+<p>Indeks: <code>meeting_type</code>.</p>
+<h3 id="mom-65-meetings">6.5 <code>meetings</code><a href="#mom-65-meetings" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Tipe</th>
+<th>Null</th>
+<th>Default</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>bigint</td>
+<td>Tidak</td>
+<td>sequence</td>
+<td>PK</td>
+</tr>
+<tr>
+<td><code>title</code></td>
+<td>varchar(255)</td>
+<td>Tidak</td>
+<td>–</td>
+<td>Judul rapat</td>
+</tr>
+<tr>
+<td><code>meeting_type</code></td>
+<td>varchar(255)</td>
+<td>Tidak</td>
+<td><code>other</code></td>
+<td>Jenis rapat</td>
+</tr>
+<tr>
+<td><code>meeting_template_id</code></td>
+<td>bigint</td>
+<td>Ya</td>
+<td>–</td>
+<td>FK ke <code>meeting_templates.id</code>, <code>nullOnDelete</code></td>
+</tr>
+<tr>
+<td><code>division_id</code></td>
+<td>bigint</td>
+<td>Ya</td>
+<td>–</td>
+<td>FK ke <code>divisions.id</code>, <code>nullOnDelete</code></td>
+</tr>
+<tr>
+<td><code>created_by</code></td>
+<td>bigint</td>
+<td>Tidak</td>
+<td>–</td>
+<td>FK ke <code>users.id</code>, <code>cascadeOnDelete</code></td>
+</tr>
+<tr>
+<td><code>scheduled_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Jadwal rapat</td>
+</tr>
+<tr>
+<td><code>started_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Mulai aktual</td>
+</tr>
+<tr>
+<td><code>ended_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Selesai aktual</td>
+</tr>
+<tr>
+<td><code>location</code></td>
+<td>varchar(255)</td>
+<td>Ya</td>
+<td>–</td>
+<td>Lokasi</td>
+</tr>
+<tr>
+<td><code>meeting_link</code></td>
+<td>varchar(255)</td>
+<td>Ya</td>
+<td>–</td>
+<td>Tautan rapat daring</td>
+</tr>
+<tr>
+<td><code>agenda</code></td>
+<td>text</td>
+<td>Ya</td>
+<td>–</td>
+<td>Agenda</td>
+</tr>
+<tr>
+<td><code>content</code></td>
+<td>jsonb</td>
+<td>Ya</td>
+<td>–</td>
+<td>Dokumen editor (ProseMirror JSON)</td>
+</tr>
+<tr>
+<td><code>content_text</code></td>
+<td>text</td>
+<td>Ya</td>
+<td>–</td>
+<td>Teks datar untuk pencarian/analitik</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>varchar(255)</td>
+<td>Tidak</td>
+<td><code>draft</code></td>
+<td><code>draft</code>, <code>final</code>, <code>locked</code></td>
+</tr>
+<tr>
+<td><code>confidentiality</code></td>
+<td>varchar(255)</td>
+<td>Tidak</td>
+<td><code>division</code></td>
+<td><code>open</code>, <code>division</code>, <code>restricted</code>, <code>secret</code></td>
+</tr>
+<tr>
+<td><code>finalized_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Waktu finalisasi</td>
+</tr>
+<tr>
+<td><code>approved_by</code></td>
+<td>bigint</td>
+<td>Ya</td>
+<td>–</td>
+<td>FK ke <code>users.id</code>, <code>nullOnDelete</code></td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Waktu dibuat</td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Waktu diubah</td>
+</tr>
+<tr>
+<td><code>deleted_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Soft delete</td>
+</tr>
+</tbody>
+</table>
+<p>Indeks: <code>(status, scheduled_at)</code>, <code>(division_id, scheduled_at)</code>, <code>meeting_type</code>, <code>confidentiality</code>, <code>created_by</code>, <code>meeting_template_id</code>, <code>approved_by</code>, <code>deleted_at</code>. Indeks trigram <code>meetings_title_trgm_index</code> pada <code>title</code> (PostgreSQL, <code>pg_trgm</code>).</p>
+<h3 id="mom-66-meetingparticipants">6.6 <code>meeting_participants</code><a href="#mom-66-meetingparticipants" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Tipe</th>
+<th>Null</th>
+<th>Default</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>bigint</td>
+<td>Tidak</td>
+<td>sequence</td>
+<td>PK</td>
+</tr>
+<tr>
+<td><code>meeting_id</code></td>
+<td>bigint</td>
+<td>Tidak</td>
+<td>–</td>
+<td>FK ke <code>meetings.id</code>, <code>cascadeOnDelete</code></td>
+</tr>
+<tr>
+<td><code>user_id</code></td>
+<td>bigint</td>
+<td>Ya</td>
+<td>–</td>
+<td>FK ke <code>users.id</code>, <code>nullOnDelete</code></td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>varchar(255)</td>
+<td>Ya</td>
+<td>–</td>
+<td>Nama peserta (internal/eksternal)</td>
+</tr>
+<tr>
+<td><code>email</code></td>
+<td>varchar(255)</td>
+<td>Ya</td>
+<td>–</td>
+<td>Email peserta</td>
+</tr>
+<tr>
+<td><code>attendance</code></td>
+<td>varchar(255)</td>
+<td>Tidak</td>
+<td><code>invited</code></td>
+<td><code>invited</code>, <code>present</code>, <code>absent</code>, <code>excused</code></td>
+</tr>
+<tr>
+<td><code>is_external</code></td>
+<td>boolean</td>
+<td>Tidak</td>
+<td><code>false</code></td>
+<td>Penanda tamu eksternal</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Waktu dibuat</td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Waktu diubah</td>
+</tr>
+</tbody>
+</table>
+<p>Indeks: <code>meeting_id</code>, <code>user_id</code>. Belum ada unique <code>(meeting_id, user_id)</code>; pencegahan duplikat dilakukan aplikasi.</p>
+<h3 id="mom-67-tags">6.7 <code>tags</code><a href="#mom-67-tags" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Tipe</th>
+<th>Null</th>
+<th>Default</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>bigint</td>
+<td>Tidak</td>
+<td>sequence</td>
+<td>PK</td>
+</tr>
+<tr>
+<td><code>meeting_id</code></td>
+<td>bigint</td>
+<td>Tidak</td>
+<td>–</td>
+<td>FK ke <code>meetings.id</code>, <code>cascadeOnDelete</code></td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td>varchar(255)</td>
+<td>Tidak</td>
+<td>–</td>
+<td><code>person</code>, <code>division</code>, <code>topic</code></td>
+</tr>
+<tr>
+<td><code>target_id</code></td>
+<td>bigint</td>
+<td>Ya</td>
+<td>–</td>
+<td>ID target (polimorfik)</td>
+</tr>
+<tr>
+<td><code>target_name</code></td>
+<td>varchar(255)</td>
+<td>Ya</td>
+<td>–</td>
+<td>Snapshot label</td>
+</tr>
+<tr>
+<td><code>position</code></td>
+<td>jsonb</td>
+<td>Ya</td>
+<td>–</td>
+<td>Posisi/rentang di dokumen</td>
+</tr>
+<tr>
+<td><code>created_by</code></td>
+<td>bigint</td>
+<td>Ya</td>
+<td>–</td>
+<td>FK ke <code>users.id</code>, <code>nullOnDelete</code></td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Waktu dibuat</td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Waktu diubah</td>
+</tr>
+</tbody>
+</table>
+<p>Indeks: <code>(meeting_id, type)</code>, <code>(type, target_id)</code>, <code>created_by</code>.</p>
+<h3 id="mom-68-decisions">6.8 <code>decisions</code><a href="#mom-68-decisions" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Tipe</th>
+<th>Null</th>
+<th>Default</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>bigint</td>
+<td>Tidak</td>
+<td>sequence</td>
+<td>PK</td>
+</tr>
+<tr>
+<td><code>meeting_id</code></td>
+<td>bigint</td>
+<td>Tidak</td>
+<td>–</td>
+<td>FK ke <code>meetings.id</code>, <code>cascadeOnDelete</code></td>
+</tr>
+<tr>
+<td><code>content</code></td>
+<td>text</td>
+<td>Tidak</td>
+<td>–</td>
+<td>Isi keputusan</td>
+</tr>
+<tr>
+<td><code>topic_id</code></td>
+<td>bigint</td>
+<td>Ya</td>
+<td>–</td>
+<td>FK ke <code>topics.id</code>, <code>nullOnDelete</code></td>
+</tr>
+<tr>
+<td><code>decided_at</code></td>
+<td>date</td>
+<td>Ya</td>
+<td>–</td>
+<td>Tanggal keputusan</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Waktu dibuat</td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Waktu diubah</td>
+</tr>
+</tbody>
+</table>
+<p>Indeks: <code>meeting_id</code>, <code>topic_id</code>.</p>
+<h3 id="mom-69-actionitems">6.9 <code>action_items</code><a href="#mom-69-actionitems" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Tipe</th>
+<th>Null</th>
+<th>Default</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>bigint</td>
+<td>Tidak</td>
+<td>sequence</td>
+<td>PK</td>
+</tr>
+<tr>
+<td><code>meeting_id</code></td>
+<td>bigint</td>
+<td>Tidak</td>
+<td>–</td>
+<td>FK ke <code>meetings.id</code>, <code>cascadeOnDelete</code></td>
+</tr>
+<tr>
+<td><code>title</code></td>
+<td>varchar(255)</td>
+<td>Tidak</td>
+<td>–</td>
+<td>Judul tugas</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>text</td>
+<td>Ya</td>
+<td>–</td>
+<td>Detail tugas</td>
+</tr>
+<tr>
+<td><code>pic_id</code></td>
+<td>bigint</td>
+<td>Ya</td>
+<td>–</td>
+<td>FK ke <code>users.id</code>, <code>nullOnDelete</code></td>
+</tr>
+<tr>
+<td><code>pic_name</code></td>
+<td>varchar(255)</td>
+<td>Ya</td>
+<td>–</td>
+<td>Snapshot PIC eksternal</td>
+</tr>
+<tr>
+<td><code>division_id</code></td>
+<td>bigint</td>
+<td>Ya</td>
+<td>–</td>
+<td>FK ke <code>divisions.id</code>, <code>nullOnDelete</code></td>
+</tr>
+<tr>
+<td><code>due_date</code></td>
+<td>date</td>
+<td>Ya</td>
+<td>–</td>
+<td>Tenggat</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>varchar(255)</td>
+<td>Tidak</td>
+<td><code>new</code></td>
+<td><code>new</code>, <code>in_progress</code>, <code>done</code>, <code>cancelled</code></td>
+</tr>
+<tr>
+<td><code>notes</code></td>
+<td>text</td>
+<td>Ya</td>
+<td>–</td>
+<td>Catatan</td>
+</tr>
+<tr>
+<td><code>source</code></td>
+<td>varchar(255)</td>
+<td>Tidak</td>
+<td><code>manual</code></td>
+<td><code>manual</code> atau <code>ai</code></td>
+</tr>
+<tr>
+<td><code>ai_confirmed</code></td>
+<td>boolean</td>
+<td>Tidak</td>
+<td><code>true</code></td>
+<td>Konfirmasi notulis untuk usulan AI</td>
+</tr>
+<tr>
+<td><code>completed_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Waktu selesai</td>
+</tr>
+<tr>
+<td><code>sort_order</code></td>
+<td>int</td>
+<td>Tidak</td>
+<td><code>0</code></td>
+<td>Urutan tampilan</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Waktu dibuat</td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Waktu diubah</td>
+</tr>
+</tbody>
+</table>
+<p>Indeks: <code>(pic_id, status)</code>, <code>(division_id, status)</code>, <code>due_date</code>, <code>meeting_id</code>. Atribut turunan <code>is_overdue</code> dihitung aplikasi.</p>
+<h3 id="mom-610-aisummaries">6.10 <code>ai_summaries</code><a href="#mom-610-aisummaries" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Tipe</th>
+<th>Null</th>
+<th>Default</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>bigint</td>
+<td>Tidak</td>
+<td>sequence</td>
+<td>PK</td>
+</tr>
+<tr>
+<td><code>meeting_id</code></td>
+<td>bigint</td>
+<td>Ya</td>
+<td>–</td>
+<td>FK ke <code>meetings.id</code>, <code>cascadeOnDelete</code></td>
+</tr>
+<tr>
+<td><code>scope</code></td>
+<td>varchar(255)</td>
+<td>Tidak</td>
+<td><code>meeting</code></td>
+<td><code>meeting</code>, <code>topic</code>, <code>division</code>, <code>period</code>, <code>question</code></td>
+</tr>
+<tr>
+<td><code>topic_id</code></td>
+<td>bigint</td>
+<td>Ya</td>
+<td>–</td>
+<td>FK ke <code>topics.id</code>, <code>nullOnDelete</code></td>
+</tr>
+<tr>
+<td><code>division_id</code></td>
+<td>bigint</td>
+<td>Ya</td>
+<td>–</td>
+<td>FK ke <code>divisions.id</code>, <code>nullOnDelete</code></td>
+</tr>
+<tr>
+<td><code>period_start</code></td>
+<td>date</td>
+<td>Ya</td>
+<td>–</td>
+<td>Awal periode rekap</td>
+</tr>
+<tr>
+<td><code>period_end</code></td>
+<td>date</td>
+<td>Ya</td>
+<td>–</td>
+<td>Akhir periode rekap</td>
+</tr>
+<tr>
+<td><code>audience</code></td>
+<td>varchar(255)</td>
+<td>Ya</td>
+<td>–</td>
+<td>Sasaran (direksi/tim)</td>
+</tr>
+<tr>
+<td><code>language</code></td>
+<td>varchar(255)</td>
+<td>Tidak</td>
+<td><code>id</code></td>
+<td><code>id</code> atau <code>en</code></td>
+</tr>
+<tr>
+<td><code>content</code></td>
+<td>jsonb</td>
+<td>Tidak</td>
+<td>–</td>
+<td>Ringkasan, poin, keputusan</td>
+</tr>
+<tr>
+<td><code>model</code></td>
+<td>varchar(255)</td>
+<td>Ya</td>
+<td>–</td>
+<td>Model AI</td>
+</tr>
+<tr>
+<td><code>version</code></td>
+<td>int</td>
+<td>Tidak</td>
+<td><code>1</code></td>
+<td>Versi resume</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>varchar(255)</td>
+<td>Tidak</td>
+<td><code>draft</code></td>
+<td><code>draft</code>, <code>approved</code>, <code>rejected</code></td>
+</tr>
+<tr>
+<td><code>generated_by</code></td>
+<td>bigint</td>
+<td>Ya</td>
+<td>–</td>
+<td>FK ke <code>users.id</code>, <code>nullOnDelete</code></td>
+</tr>
+<tr>
+<td><code>approved_by</code></td>
+<td>bigint</td>
+<td>Ya</td>
+<td>–</td>
+<td>FK ke <code>users.id</code>, <code>nullOnDelete</code></td>
+</tr>
+<tr>
+<td><code>approved_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Waktu persetujuan</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Waktu dibuat</td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Waktu diubah</td>
+</tr>
+</tbody>
+</table>
+<p>Indeks: <code>(meeting_id, scope)</code>, <code>(scope, topic_id)</code>, <code>status</code>, <code>division_id</code>, <code>generated_by</code>, <code>approved_by</code>.</p>
+<h3 id="mom-611-attachments">6.11 <code>attachments</code><a href="#mom-611-attachments" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Tipe</th>
+<th>Null</th>
+<th>Default</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>bigint</td>
+<td>Tidak</td>
+<td>sequence</td>
+<td>PK</td>
+</tr>
+<tr>
+<td><code>meeting_id</code></td>
+<td>bigint</td>
+<td>Tidak</td>
+<td>–</td>
+<td>FK ke <code>meetings.id</code>, <code>cascadeOnDelete</code></td>
+</tr>
+<tr>
+<td><code>uploaded_by</code></td>
+<td>bigint</td>
+<td>Ya</td>
+<td>–</td>
+<td>FK ke <code>users.id</code>, <code>nullOnDelete</code></td>
+</tr>
+<tr>
+<td><code>kind</code></td>
+<td>varchar(255)</td>
+<td>Tidak</td>
+<td><code>file</code></td>
+<td><code>file</code>, <code>link</code>, <code>recording</code></td>
+</tr>
+<tr>
+<td><code>disk</code></td>
+<td>varchar(255)</td>
+<td>Tidak</td>
+<td><code>local</code></td>
+<td>Disk penyimpanan</td>
+</tr>
+<tr>
+<td><code>path</code></td>
+<td>varchar(255)</td>
+<td>Ya</td>
+<td>–</td>
+<td>Path object storage</td>
+</tr>
+<tr>
+<td><code>url</code></td>
+<td>text</td>
+<td>Ya</td>
+<td>–</td>
+<td>URL eksternal</td>
+</tr>
+<tr>
+<td><code>original_name</code></td>
+<td>varchar(255)</td>
+<td>Tidak</td>
+<td>–</td>
+<td>Nama asli</td>
+</tr>
+<tr>
+<td><code>mime_type</code></td>
+<td>varchar(255)</td>
+<td>Ya</td>
+<td>–</td>
+<td>MIME type</td>
+</tr>
+<tr>
+<td><code>size</code></td>
+<td>bigint</td>
+<td>Tidak</td>
+<td><code>0</code></td>
+<td>Ukuran byte</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Waktu dibuat</td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Waktu diubah</td>
+</tr>
+</tbody>
+</table>
+<p>Indeks: <code>meeting_id</code>, <code>uploaded_by</code>.</p>
+<h3 id="mom-612-auditlogs">6.12 <code>audit_logs</code><a href="#mom-612-auditlogs" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Tipe</th>
+<th>Null</th>
+<th>Default</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>bigint</td>
+<td>Tidak</td>
+<td>sequence</td>
+<td>PK</td>
+</tr>
+<tr>
+<td><code>user_id</code></td>
+<td>bigint</td>
+<td>Ya</td>
+<td>–</td>
+<td>FK ke <code>users.id</code>, <code>nullOnDelete</code></td>
+</tr>
+<tr>
+<td><code>action</code></td>
+<td>varchar(255)</td>
+<td>Tidak</td>
+<td>–</td>
+<td>Nama aksi, mis. <code>meeting.finalized</code></td>
+</tr>
+<tr>
+<td><code>auditable_type</code></td>
+<td>varchar(255)</td>
+<td>Ya</td>
+<td>–</td>
+<td>Kelas objek</td>
+</tr>
+<tr>
+<td><code>auditable_id</code></td>
+<td>bigint</td>
+<td>Ya</td>
+<td>–</td>
+<td>ID objek</td>
+</tr>
+<tr>
+<td><code>meeting_id</code></td>
+<td>bigint</td>
+<td>Ya</td>
+<td>–</td>
+<td>FK ke <code>meetings.id</code>, <code>nullOnDelete</code></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>text</td>
+<td>Ya</td>
+<td>–</td>
+<td>Deskripsi manusiawi</td>
+</tr>
+<tr>
+<td><code>changes</code></td>
+<td>jsonb</td>
+<td>Ya</td>
+<td>–</td>
+<td>Perubahan terstruktur</td>
+</tr>
+<tr>
+<td><code>ip_address</code></td>
+<td>varchar(45)</td>
+<td>Ya</td>
+<td>–</td>
+<td>IP aktor</td>
+</tr>
+<tr>
+<td><code>user_agent</code></td>
+<td>text</td>
+<td>Ya</td>
+<td>–</td>
+<td>User agent</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Waktu kejadian</td>
+</tr>
+</tbody>
+</table>
+<p>Indeks: <code>(auditable_type, auditable_id)</code>, <code>(meeting_id, created_at)</code>, <code>user_id</code>.</p>
+<h3 id="mom-613-notifications">6.13 <code>notifications</code><a href="#mom-613-notifications" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Tipe</th>
+<th>Null</th>
+<th>Default</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>uuid</td>
+<td>Tidak</td>
+<td>–</td>
+<td>PK</td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td>varchar(255)</td>
+<td>Tidak</td>
+<td>–</td>
+<td>Kelas notifikasi</td>
+</tr>
+<tr>
+<td><code>notifiable_type</code></td>
+<td>varchar(255)</td>
+<td>Tidak</td>
+<td>–</td>
+<td>Model penerima (polimorfik)</td>
+</tr>
+<tr>
+<td><code>notifiable_id</code></td>
+<td>bigint</td>
+<td>Tidak</td>
+<td>–</td>
+<td>ID penerima</td>
+</tr>
+<tr>
+<td><code>data</code></td>
+<td>text</td>
+<td>Tidak</td>
+<td>–</td>
+<td>Payload JSON (judul, pesan, URL)</td>
+</tr>
+<tr>
+<td><code>read_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Waktu dibaca</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Waktu dibuat</td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td>timestamp</td>
+<td>Ya</td>
+<td>–</td>
+<td>Waktu diubah</td>
+</tr>
+</tbody>
+</table>
+<p>Indeks: <code>(notifiable_type, notifiable_id)</code>, <code>read_at</code>.</p>
+<h2 id="mom-7-matriks-relasi">7. Matriks Relasi<a href="#mom-7-matriks-relasi" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Relasi</th>
+<th>Kardinalitas</th>
+<th>FK</th>
+<th>On delete</th>
+<th>Catatan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Divisi → Pengguna</td>
+<td>1:N</td>
+<td><code>users.division_id</code></td>
+<td>set null</td>
+<td>Anggota divisi</td>
+</tr>
+<tr>
+<td>Pengguna → Divisi</td>
+<td>1:N</td>
+<td><code>divisions.head_id</code></td>
+<td>set null</td>
+<td>Kepala divisi</td>
+</tr>
+<tr>
+<td>Pengguna → Notulen</td>
+<td>1:N</td>
+<td><code>meetings.created_by</code></td>
+<td>cascade</td>
+<td>Notulis pembuat</td>
+</tr>
+<tr>
+<td>Divisi → Notulen</td>
+<td>1:N</td>
+<td><code>meetings.division_id</code></td>
+<td>set null</td>
+<td>Divisi penyelenggara</td>
+</tr>
+<tr>
+<td>Template → Notulen</td>
+<td>1:N</td>
+<td><code>meetings.meeting_template_id</code></td>
+<td>set null</td>
+<td>Template dasar</td>
+</tr>
+<tr>
+<td>Notulen → Peserta</td>
+<td>1:N</td>
+<td><code>meeting_participants.meeting_id</code></td>
+<td>cascade</td>
+<td>Peserta rapat</td>
+</tr>
+<tr>
+<td>Pengguna → Peserta</td>
+<td>1:N</td>
+<td><code>meeting_participants.user_id</code></td>
+<td>set null</td>
+<td>Kehadiran</td>
+</tr>
+<tr>
+<td>Notulen → Tag</td>
+<td>1:N</td>
+<td><code>tags.meeting_id</code></td>
+<td>cascade</td>
+<td>Mention</td>
+</tr>
+<tr>
+<td>Pengguna/Divisi/Topik → Tag</td>
+<td>1:N (polimorfik)</td>
+<td><code>tags.target_id</code></td>
+<td>aplikasi</td>
+<td>Tidak ada FK fisik</td>
+</tr>
+<tr>
+<td>Notulen → Keputusan</td>
+<td>1:N</td>
+<td><code>decisions.meeting_id</code></td>
+<td>cascade</td>
+<td>Keputusan rapat</td>
+</tr>
+<tr>
+<td>Topik → Keputusan</td>
+<td>1:N</td>
+<td><code>decisions.topic_id</code></td>
+<td>set null</td>
+<td>Klasifikasi</td>
+</tr>
+<tr>
+<td>Notulen → Action item</td>
+<td>1:N</td>
+<td><code>action_items.meeting_id</code></td>
+<td>cascade</td>
+<td>Tugas</td>
+</tr>
+<tr>
+<td>Pengguna → Action item</td>
+<td>1:N</td>
+<td><code>action_items.pic_id</code></td>
+<td>set null</td>
+<td>PIC</td>
+</tr>
+<tr>
+<td>Divisi → Action item</td>
+<td>1:N</td>
+<td><code>action_items.division_id</code></td>
+<td>set null</td>
+<td>Pelaksana</td>
+</tr>
+<tr>
+<td>Notulen → Resume AI</td>
+<td>1:N</td>
+<td><code>ai_summaries.meeting_id</code></td>
+<td>cascade</td>
+<td>Resume per notulen</td>
+</tr>
+<tr>
+<td>Topik/Divisi → Resume AI</td>
+<td>1:N</td>
+<td><code>ai_summaries.topic_id/division_id</code></td>
+<td>set null</td>
+<td>Rekap</td>
+</tr>
+<tr>
+<td>Pengguna → Resume AI</td>
+<td>1:N</td>
+<td><code>ai_summaries.generated_by/approved_by</code></td>
+<td>set null</td>
+<td>Pembuat/approver</td>
+</tr>
+<tr>
+<td>Notulen → Lampiran</td>
+<td>1:N</td>
+<td><code>attachments.meeting_id</code></td>
+<td>cascade</td>
+<td>Berkas/tautan</td>
+</tr>
+<tr>
+<td>Pengguna → Lampiran</td>
+<td>1:N</td>
+<td><code>attachments.uploaded_by</code></td>
+<td>set null</td>
+<td>Pengunggah</td>
+</tr>
+<tr>
+<td>Pengguna → Audit</td>
+<td>1:N</td>
+<td><code>audit_logs.user_id</code></td>
+<td>set null</td>
+<td>Aktor</td>
+</tr>
+<tr>
+<td>Notulen → Audit</td>
+<td>1:N</td>
+<td><code>audit_logs.meeting_id</code></td>
+<td>set null</td>
+<td>Objek</td>
+</tr>
+<tr>
+<td>Pengguna → Notifikasi</td>
+<td>1:N (polimorfik)</td>
+<td><code>notifications.notifiable_*</code></td>
+<td>aplikasi</td>
+<td>In-app</td>
+</tr>
+</tbody>
+</table>
+<h2 id="mom-8-enum--nilai-terkontrol">8. Enum &amp; Nilai Terkontrol<a href="#mom-8-enum--nilai-terkontrol" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Domain</th>
+<th>Nilai</th>
+<th>Sumber</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Peran pengguna</td>
+<td><code>admin</code>, <code>notulis</code>, <code>member</code>, <code>reader</code></td>
+<td><code>App\Enums\UserRole</code></td>
+</tr>
+<tr>
+<td>Jenis rapat</td>
+<td><code>daily</code>, <code>weekly</code>, <code>division</code>, <code>cross_division</code>, <code>management</code>, <code>other</code></td>
+<td><code>App\Enums\MeetingType</code></td>
+</tr>
+<tr>
+<td>Status notulen</td>
+<td><code>draft</code>, <code>final</code>, <code>locked</code></td>
+<td><code>App\Enums\MeetingStatus</code></td>
+</tr>
+<tr>
+<td>Kerahasiaan</td>
+<td><code>open</code>, <code>division</code>, <code>restricted</code>, <code>secret</code></td>
+<td><code>App\Enums\Confidentiality</code></td>
+</tr>
+<tr>
+<td>Tipe tag</td>
+<td><code>person</code>, <code>division</code>, <code>topic</code></td>
+<td><code>App\Enums\TagType</code></td>
+</tr>
+<tr>
+<td>Kehadiran</td>
+<td><code>invited</code>, <code>present</code>, <code>absent</code>, <code>excused</code></td>
+<td><code>App\Enums\AttendanceStatus</code></td>
+</tr>
+<tr>
+<td>Status tugas</td>
+<td><code>new</code>, <code>in_progress</code>, <code>done</code>, <code>cancelled</code></td>
+<td><code>App\Enums\ActionItemStatus</code></td>
+</tr>
+<tr>
+<td>Scope resume</td>
+<td><code>meeting</code>, <code>topic</code>, <code>division</code>, <code>period</code>, <code>question</code></td>
+<td><code>App\Enums\AiSummaryScope</code></td>
+</tr>
+<tr>
+<td>Status resume</td>
+<td><code>draft</code>, <code>approved</code>, <code>rejected</code></td>
+<td><code>App\Enums\AiSummaryStatus</code></td>
+</tr>
+<tr>
+<td>Jenis lampiran</td>
+<td><code>file</code>, <code>link</code>, <code>recording</code></td>
+<td><code>App\Enums\AttachmentKind</code></td>
+</tr>
+<tr>
+<td>Status topik</td>
+<td><code>active</code>, <code>archived</code></td>
+<td>string terkontrol aplikasi</td>
+</tr>
+<tr>
+<td>Sumber tugas</td>
+<td><code>manual</code>, <code>ai</code></td>
+<td>string terkontrol aplikasi</td>
+</tr>
+</tbody>
+</table>
+<p>Catatan: nilai enum disimpan sebagai <code>varchar</code>, bukan tipe enum PostgreSQL, agar perubahan nilai tidak memerlukan migrasi tipe. Validasi dilakukan di aplikasi.</p>
+<h2 id="mom-9-aturan-akses-di-level-data">9. Aturan Akses di Level Data<a href="#mom-9-aturan-akses-di-level-data" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<p>Query notulen untuk pengguna non-admin menggunakan aturan berikut:</p>
+<ol>
+<li>Notulen <code>open</code> terlihat oleh semua pengguna terautentikasi.</li>
+<li>Pembuat notulen selalu dapat melihat notulennya.</li>
+<li>Peserta dapat melihat notulen tempat ia terdaftar.</li>
+<li>Notulen <code>division</code> dan <code>restricted</code> terlihat jika pengguna menjadi target tag orang atau anggota divisi yang menjadi target tag divisi.</li>
+<li>Notulen <code>secret</code> tidak dibuka oleh tag; hanya peserta, pembuat, dan admin yang ditunjuk.</li>
+<li>Admin dapat melihat seluruh notulen.</li>
+<li>Action item mewarisi akses notulen induk.</li>
+<li>AI hanya boleh membaca notulen yang lolos aturan yang sama untuk penanya.</li>
+</ol>
+<p>Implementasi: <code>Meeting::scopeVisibleTo()</code> dan <code>MeetingPolicy</code>. Detail matriks peran ada di PRD bagian 12.</p>
+<h2 id="mom-10-indeks-integritas--keterbatasan">10. Indeks, Integritas &amp; Keterbatasan<a href="#mom-10-indeks-integritas--keterbatasan" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<h3 id="mom-101-indeks-penting">10.1 Indeks Penting<a href="#mom-101-indeks-penting" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<ul>
+<li><code>meetings_title_trgm_index</code> (GIN trigram) untuk pencarian judul.</li>
+<li><code>meetings(status, scheduled_at)</code> untuk daftar dan dashboard.</li>
+<li><code>meetings(division_id, scheduled_at)</code> untuk halaman divisi.</li>
+<li><code>tags(meeting_id, type)</code> dan <code>tags(type, target_id)</code> untuk halaman terkait/topik.</li>
+<li><code>action_items(pic_id, status)</code> dan <code>action_items(due_date)</code> untuk board dan pengingat.</li>
+<li><code>ai_summaries(meeting_id, scope)</code> untuk versi resume.</li>
+<li><code>audit_logs(meeting_id, created_at)</code> untuk jejak per notulen.</li>
+</ul>
+<h3 id="mom-102-keterbatasan-yang-diketahui">10.2 Keterbatasan yang Diketahui<a href="#mom-102-keterbatasan-yang-diketahui" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>Keterbatasan</th>
+<th>Dampak</th>
+<th>Rencana</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tags.target_id</code> polimorfik tanpa FK</td>
+<td>Integritas target dijaga aplikasi</td>
+<td>Validasi saat sinkronisasi tag</td>
+</tr>
+<tr>
+<td>Tidak ada unique <code>(meeting_id, user_id)</code> pada peserta</td>
+<td>Potensi duplikat</td>
+<td>Unique index pada iterasi berikut</td>
+</tr>
+<tr>
+<td>Enum disimpan sebagai varchar</td>
+<td>Nilai invalid mungkin masuk lewat query langsung</td>
+<td>Validasi FormRequest dan enum cast</td>
+</tr>
+<tr>
+<td><code>notifications.data</code> bertipe text</td>
+<td>Tidak dapat diquery sebagai JSONB</td>
+<td>Migrasi ke jsonb bila diperlukan</td>
+</tr>
+<tr>
+<td><code>meetings.created_by</code> cascade delete</td>
+<td>Menghapus pengguna dapat menghapus notulen</td>
+<td>Ubah ke restrict/set null pada hardening</td>
+</tr>
+<tr>
+<td>pgvector opsional</td>
+<td>Q&amp;A semantik belum aktif tanpa ekstensi</td>
+<td>Aktifkan ekstensi di production</td>
+</tr>
+<tr>
+<td>Embedding table kondisional</td>
+<td>Tidak ada tabel vektor di lingkungan tanpa pgvector</td>
+<td>Migrasi aman dengan guard</td>
+</tr>
+</tbody>
+</table>
+<h2 id="mom-11-siklus-hidup-data">11. Siklus Hidup Data<a href="#mom-11-siklus-hidup-data" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Data</th>
+<th>Saat dibuat</th>
+<th>Perubahan</th>
+<th>Penghapusan/arsip</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Notulen</td>
+<td>Draf oleh notulis</td>
+<td>Draf → final → locked; soft delete</td>
+<td>Arsip sesuai retensi</td>
+</tr>
+<tr>
+<td>Tag</td>
+<td>Saat mention disimpan</td>
+<td>Disinkronkan ulang dari editor</td>
+<td>Cascade saat notulen dihapus</td>
+</tr>
+<tr>
+<td>Peserta</td>
+<td>Saat notulen dibuat/diimpor</td>
+<td>Kehadiran diperbarui</td>
+<td>Cascade</td>
+</tr>
+<tr>
+<td>Action item</td>
+<td>Manual atau konfirmasi AI</td>
+<td>Status, PIC, tenggat</td>
+<td>Cascade; soft delete tidak digunakan</td>
+</tr>
+<tr>
+<td>Resume AI</td>
+<td>Job AI selesai</td>
+<td>Versi baru; approved/rejected</td>
+<td>Cascade</td>
+</tr>
+<tr>
+<td>Lampiran</td>
+<td>Upload/tautan</td>
+<td>Metadata</td>
+<td>Cascade; object storage dibersihkan job</td>
+</tr>
+<tr>
+<td>Audit log</td>
+<td>Setiap aksi penting</td>
+<td>Tidak diubah</td>
+<td>Retensi sesuai kebijakan</td>
+</tr>
+<tr>
+<td>Notifikasi</td>
+<td>Event tagging/finalisasi</td>
+<td>read_at</td>
+<td>Retensi/purge berkala</td>
+</tr>
+</tbody>
+</table>
+<h2 id="mom-12-urutan-migrasi">12. Urutan Migrasi<a href="#mom-12-urutan-migrasi" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<ol>
+<li><code>users</code>, <code>password_reset_tokens</code>, <code>sessions</code></li>
+<li><code>cache</code>, <code>jobs</code>, <code>failed_jobs</code></li>
+<li><code>divisions</code> + kolom tambahan <code>users</code></li>
+<li><code>meeting_templates</code>, <code>meetings</code>, <code>meeting_participants</code>, <code>tags</code>, <code>decisions</code>, <code>action_items</code>, <code>attachments</code></li>
+<li><code>topics</code>, <code>ai_summaries</code>, FK <code>decisions.topic_id</code></li>
+<li><code>audit_logs</code></li>
+<li>indeks pencarian &amp; tabel vektor opsional</li>
+<li><code>notifications</code></li>
+</ol>
+<h2 id="mom-13-pemetaan-ke-implementasi">13. Pemetaan ke Implementasi<a href="#mom-13-pemetaan-ke-implementasi" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Dokumen</th>
+<th>Kode</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Enum</td>
+<td><code>app/Enums/*</code></td>
+</tr>
+<tr>
+<td>Model</td>
+<td><code>app/Models/*</code></td>
+</tr>
+<tr>
+<td>Policy akses</td>
+<td><code>app/Policies/MeetingPolicy.php</code></td>
+</tr>
+<tr>
+<td>Sinkronisasi tag</td>
+<td><code>app/Services/MeetingTagSynchronizer.php</code>, <code>MeetingContentParser.php</code></td>
+</tr>
+<tr>
+<td>Audit</td>
+<td><code>app/Services/AuditLogger.php</code>, model <code>AuditLog</code></td>
+</tr>
+<tr>
+<td>Pencarian</td>
+<td><code>Meeting::toSearchableArray()</code>, Laravel Scout</td>
+</tr>
+<tr>
+<td>Migrasi</td>
+<td><code>database/migrations/2026_10_26_*</code></td>
+</tr>
+<tr>
+<td>Seeder demo</td>
+<td><code>database/seeders/DatabaseSeeder.php</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="mom-14-referensi">14. Referensi<a href="#mom-14-referensi" class="heading-anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<ul>
+<li><code>01-PRD-Sistem-Notulensi.md</code> — kebutuhan produk dan aturan bisnis.</li>
+<li><code>03-Bisnis-Proses-Sistem-Notulensi.md</code> — alur dan state machine.</li>
+<li><code>database/migrations</code> — definisi skema aktual.</li>
+<li><code>app/Models</code> — relasi dan cast.</li>
+</ul>
+</section>
+
+<script src="../mom/node_modules/mermaid/dist/mermaid.min.js"></script>
+<script>
+    mermaid.initialize({
+        startOnLoad: true,
+        securityLevel: 'loose',
+        theme: 'base',
+        fontFamily: 'Segoe UI, Arial, sans-serif',
+        themeVariables: {
+            primaryColor: '#EEF3FA',
+            primaryTextColor: '#1F3864',
+            primaryBorderColor: '#2F5597',
+            lineColor: '#2F5597',
+            secondaryColor: '#D9E2F3',
+            secondaryTextColor: '#1F3864',
+            tertiaryColor: '#ffffff',
+            tertiaryTextColor: '#1F3864',
+            textColor: '#1F3864',
+            fontSize: '13px'
+        },
+        flowchart: { htmlLabels: true, curve: 'basis', useMaxWidth: true },
+        er: { useMaxWidth: true, fontSize: 11 },
+        timeline: { useMaxWidth: true }
+    });
+</script>
+</body>
+</html>
