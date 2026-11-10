@@ -28,7 +28,7 @@ class DashboardController extends Controller
         ];
 
         $upcoming = (clone $meetings)
-            ->select(['id', 'title', 'meeting_type', 'scheduled_at', 'status', 'confidentiality', 'division_id'])
+            ->select(['id', 'title', 'document_type', 'meeting_type', 'scheduled_at', 'status', 'confidentiality', 'division_id'])
             ->with('division:id,name')
             ->where('scheduled_at', '>=', now())
             ->orderBy('scheduled_at')
@@ -36,7 +36,7 @@ class DashboardController extends Controller
             ->get();
 
         $recent = (clone $meetings)
-            ->select(['id', 'title', 'meeting_type', 'scheduled_at', 'status', 'confidentiality', 'division_id', 'created_at'])
+            ->select(['id', 'title', 'document_type', 'meeting_type', 'scheduled_at', 'status', 'confidentiality', 'division_id', 'created_at'])
             ->with('division:id,name')
             ->latest()
             ->limit(5)

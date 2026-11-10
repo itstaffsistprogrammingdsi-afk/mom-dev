@@ -58,6 +58,7 @@ export interface User {
 export interface Meeting {
     id: number;
     title: string;
+    document_type: string;
     meeting_type: string;
     status: 'draft' | 'final' | 'locked';
     confidentiality: 'open' | 'division' | 'restricted' | 'secret';

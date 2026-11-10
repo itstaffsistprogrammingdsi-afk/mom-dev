@@ -10,7 +10,7 @@ import SettingsLayout from '@/layouts/settings/Layout.vue';
 
 const breadcrumbItems: BreadcrumbItem[] = [
     {
-        title: 'Appearance settings',
+        title: 'Tampilan',
         href: '/settings/appearance',
     },
 ];
@@ -18,12 +18,15 @@ const breadcrumbItems: BreadcrumbItem[] = [
 
 <template>
     <AppLayout :breadcrumbs="breadcrumbItems">
-        <Head title="Appearance settings" />
+        <Head title="Tampilan" />
 
         <SettingsLayout>
             <div class="space-y-6">
-                <HeadingSmall title="Appearance settings" description="Update your account's appearance settings" />
+                <HeadingSmall title="Tampilan" description="Pilih tema terang, gelap, atau ikuti pengaturan sistem." />
                 <AppearanceTabs />
+                <p class="text-sm text-muted-foreground">
+                    Mode sistem akan mengikuti preferensi perangkat Anda dan berubah otomatis saat tema perangkat berubah.
+                </p>
             </div>
         </SettingsLayout>
     </AppLayout>

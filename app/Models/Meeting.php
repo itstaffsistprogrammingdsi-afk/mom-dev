@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\Confidentiality;
+use App\Enums\DocumentType;
 use App\Enums\MeetingStatus;
 use App\Enums\MeetingType;
 use Illuminate\Database\Eloquent\Builder;
@@ -19,6 +20,7 @@ class Meeting extends Model
 
     protected $fillable = [
         'title',
+        'document_type',
         'meeting_type',
         'meeting_template_id',
         'division_id',
@@ -42,6 +44,7 @@ class Meeting extends Model
     protected function casts(): array
     {
         return [
+            'document_type' => DocumentType::class,
             'meeting_type' => MeetingType::class,
             'status' => MeetingStatus::class,
             'confidentiality' => Confidentiality::class,
@@ -168,6 +171,7 @@ class Meeting extends Model
             ))
             ->when($filters['status'] ?? null, fn (Builder $q, $status) => $q->where('status', $status))
             ->when($filters['type'] ?? null, fn (Builder $q, $type) => $q->where('meeting_type', $type))
+            ->when($filters['document_type'] ?? null, fn (Builder $q, $type) => $q->where('document_type', $type))
             ->when($filters['from'] ?? null, fn (Builder $q, $from) => $q->whereDate('scheduled_at', '>=', $from))
             ->when($filters['to'] ?? null, fn (Builder $q, $to) => $q->whereDate('scheduled_at', '<=', $to));
     }
@@ -179,6 +183,7 @@ class Meeting extends Model
             'title' => $this->title,
             'agenda' => $this->agenda,
             'content_text' => $this->content_text,
+            'document_type' => $this->document_type?->value,
             'status' => $this->status?->value,
             'meeting_type' => $this->meeting_type?->value,
             'division_id' => $this->division_id,

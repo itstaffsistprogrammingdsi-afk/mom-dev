@@ -7,6 +7,22 @@ export const meetingTypeLabels: Record<string, string> = {
     other: 'Lainnya',
 };
 
+export const documentTypeLabels: Record<string, string> = {
+    meeting: 'Notulen',
+    proposal: 'Proposal',
+    brochure: 'Brosur',
+    report: 'Laporan',
+    other: 'Dokumen Lain',
+};
+
+export const documentTypeClasses: Record<string, string> = {
+    meeting: 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300',
+    proposal: 'bg-violet-100 text-violet-800 dark:bg-violet-950 dark:text-violet-300',
+    brochure: 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300',
+    report: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
+    other: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+};
+
 export const statusLabels: Record<string, string> = {
     draft: 'Draf',
     final: 'Final',

@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { roleLabels } from '@/lib/labels';
 import { type BreadcrumbItem, type Division, type UserRole } from '@/types';
-import { Head, router, useForm } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { Plus, Search } from 'lucide-vue-next';
 import { ref } from 'vue';
 
@@ -80,7 +80,13 @@ function updateUser(user: AdminUser, field: 'role' | 'division_id' | 'is_active'
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex flex-col gap-6 p-4">
-            <PageHeader title="Pengguna" description="Atur peran, divisi, dan status aktif pengguna." />
+            <PageHeader title="Pengguna" description="Atur peran, divisi, dan status aktif pengguna.">
+                <template #actions>
+                    <Button variant="outline" as-child>
+                        <Link :href="route('admin.roles.index')">Peran & Akses</Link>
+                    </Button>
+                </template>
+            </PageHeader>
 
             <form class="grid gap-2 rounded-lg border bg-card p-3 md:grid-cols-7" @submit.prevent="createUser">
                 <input v-model="createForm.name" required placeholder="Nama" class="h-9 rounded-md border bg-background px-3 text-sm" />

@@ -3,64 +3,53 @@ import PageHeader from '@/components/PageHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { documentTypeClasses, documentTypeLabels, meetingTypeLabels } from '@/lib/labels';
 import { type BreadcrumbItem } from '@/types';
-import { Head, router, useForm } from '@inertiajs/vue3';
-import { Pencil, Plus, X } from 'lucide-vue-next';
-import { reactive, ref } from 'vue';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { FilePenLine, Plus } from 'lucide-vue-next';
+import { computed, watch } from 'vue';
 
 interface Template {
     id: number;
     name: string;
+    document_type: string;
     meeting_type: string;
     description: string | null;
+    sections: string[] | null;
     is_active: boolean;
 }
 
 const props = defineProps<{
     templates: Template[];
-    types: { value: string; label: string }[];
+    documentTypes: { value: string; label: string; description: string }[];
+    meetingTypes: { value: string; label: string }[];
 }>();
 
-const breadcrumbs: BreadcrumbItem[] = [{ title: 'Template Notulen', href: '/admin/template' }];
-const editingId = ref<number | null>(null);
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Template Dokumen', href: '/admin/template' }];
 
 const form = useForm({
     name: '',
+    document_type: 'meeting',
     meeting_type: 'weekly',
     description: '',
     is_active: true,
 });
 
-const editForm = reactive({
-    name: '',
-    meeting_type: 'weekly',
-    description: '',
-    is_active: true,
-});
+const selectedType = computed(() => props.documentTypes.find((type) => type.value === form.document_type));
+
+watch(
+    () => form.document_type,
+    (type) => {
+        if (type !== 'meeting') {
+            form.meeting_type = 'other';
+        }
+    },
+);
 
 function submit() {
     form.post(route('admin.templates.store'), {
         preserveScroll: true,
         onSuccess: () => form.reset('name', 'description'),
-    });
-}
-
-function startEdit(template: Template) {
-    editingId.value = template.id;
-    Object.assign(editForm, {
-        name: template.name,
-        meeting_type: template.meeting_type,
-        description: template.description ?? '',
-        is_active: template.is_active,
-    });
-}
-
-function saveEdit(template: Template) {
-    router.patch(route('admin.templates.update', template.id), { ...editForm }, {
-        preserveScroll: true,
-        onSuccess: () => {
-            editingId.value = null;
-        },
     });
 }
 
@@ -70,26 +59,45 @@ function toggle(template: Template) {
 </script>
 
 <template>
-    <Head title="Template Notulen" />
+    <Head title="Template Dokumen" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex flex-col gap-6 p-4">
-            <PageHeader title="Template Notulen" description="Kelola struktur standar notulen per jenis rapat." />
+            <PageHeader
+                title="Template Dokumen"
+                description="Kelola struktur notulen, proposal, laporan, brosur, dan dokumen lain."
+            />
 
             <Card>
                 <CardHeader><CardTitle class="text-base">Tambah template</CardTitle></CardHeader>
-                <CardContent>
-                    <form class="grid gap-2 md:grid-cols-5" @submit.prevent="submit">
-                        <input v-model="form.name" required placeholder="Nama template" class="h-9 rounded-md border bg-background px-3 text-sm md:col-span-2" />
-                        <select v-model="form.meeting_type" class="h-9 rounded-md border bg-background px-3 text-sm">
-                            <option v-for="type in props.types" :key="type.value" :value="type.value">{{ type.label }}</option>
+                <CardContent class="space-y-3">
+                    <form class="grid gap-2 md:grid-cols-6" @submit.prevent="submit">
+                        <input
+                            v-model="form.name"
+                            required
+                            placeholder="Nama template"
+                            class="h-9 rounded-md border bg-background px-3 text-sm md:col-span-2"
+                        />
+                        <select v-model="form.document_type" class="h-9 rounded-md border bg-background px-3 text-sm">
+                            <option v-for="type in props.documentTypes" :key="type.value" :value="type.value">{{ type.label }}</option>
                         </select>
-                        <input v-model="form.description" placeholder="Deskripsi" class="h-9 rounded-md border bg-background px-3 text-sm" />
-                        <Button type="submit">
+                        <select v-model="form.meeting_type" class="h-9 rounded-md border bg-background px-3 text-sm">
+                            <option v-for="type in props.meetingTypes" :key="type.value" :value="type.value">{{ type.label }}</option>
+                        </select>
+                        <input
+                            v-model="form.description"
+                            placeholder="Deskripsi singkat"
+                            class="h-9 rounded-md border bg-background px-3 text-sm"
+                        />
+                        <Button type="submit" :disabled="form.processing">
                             <Plus class="size-4" />
-                            Tambah
+                            Buat
                         </Button>
                     </form>
+                    <p v-if="selectedType" class="text-xs text-muted-foreground">
+                        {{ selectedType.description }} Template akan dibuat dengan struktur dasar yang dapat Anda sunting.
+                    </p>
+                    <p v-if="form.errors.name" class="text-xs text-rose-600">{{ form.errors.name }}</p>
                 </CardContent>
             </Card>
 
@@ -97,12 +105,13 @@ function toggle(template: Template) {
                 <CardHeader><CardTitle class="text-base">Daftar template</CardTitle></CardHeader>
                 <CardContent>
                     <div class="overflow-x-auto">
-                        <table class="w-full min-w-[720px] text-sm">
+                        <table class="w-full min-w-[880px] text-sm">
                             <thead class="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
                                 <tr>
                                     <th class="py-2 pr-3">Nama</th>
-                                    <th class="py-2 pr-3">Jenis</th>
-                                    <th class="py-2 pr-3">Deskripsi</th>
+                                    <th class="py-2 pr-3">Jenis dokumen</th>
+                                    <th class="py-2 pr-3">Jenis rapat</th>
+                                    <th class="py-2 pr-3">Struktur</th>
                                     <th class="py-2 pr-3">Status</th>
                                     <th class="py-2">Aksi</th>
                                 </tr>
@@ -110,36 +119,40 @@ function toggle(template: Template) {
                             <tbody class="divide-y">
                                 <tr v-for="template in props.templates" :key="template.id">
                                     <td class="py-3 pr-3">
-                                        <input v-if="editingId === template.id" v-model="editForm.name" class="h-8 w-full rounded-md border bg-background px-2 text-sm" />
-                                        <span v-else class="font-medium">{{ template.name }}</span>
+                                        <p class="font-medium">{{ template.name }}</p>
+                                        <p class="max-w-xs text-xs text-muted-foreground">{{ template.description ?? '—' }}</p>
                                     </td>
                                     <td class="py-3 pr-3">
-                                        <select v-if="editingId === template.id" v-model="editForm.meeting_type" class="h-8 rounded-md border bg-background px-2 text-xs">
-                                            <option v-for="type in props.types" :key="type.value" :value="type.value">{{ type.label }}</option>
-                                        </select>
-                                        <span v-else>{{ props.types.find((type) => type.value === template.meeting_type)?.label ?? template.meeting_type }}</span>
+                                        <span class="rounded-full px-2 py-1 text-xs font-medium" :class="documentTypeClasses[template.document_type]">
+                                            {{ documentTypeLabels[template.document_type] ?? template.document_type }}
+                                        </span>
+                                    </td>
+                                    <td class="py-3 pr-3 text-muted-foreground">{{ meetingTypeLabels[template.meeting_type] ?? template.meeting_type }}</td>
+                                    <td class="py-3 pr-3 text-xs text-muted-foreground">
+                                        {{ template.sections?.length ?? 0 }} bagian
+                                        <span v-if="template.sections?.length" class="block max-w-xs truncate">
+                                            {{ template.sections.join(' · ') }}
+                                        </span>
                                     </td>
                                     <td class="py-3 pr-3">
-                                        <input v-if="editingId === template.id" v-model="editForm.description" class="h-8 w-full rounded-md border bg-background px-2 text-sm" />
-                                        <span v-else class="text-muted-foreground">{{ template.description ?? '—' }}</span>
-                                    </td>
-                                    <td class="py-3 pr-3">
-                                        <span class="rounded-full px-2 py-1 text-xs" :class="template.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-muted text-muted-foreground'">
+                                        <span
+                                            class="rounded-full px-2 py-1 text-xs"
+                                            :class="template.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-muted text-muted-foreground'"
+                                        >
                                             {{ template.is_active ? 'Aktif' : 'Nonaktif' }}
                                         </span>
                                     </td>
                                     <td class="py-3">
                                         <div class="flex items-center gap-1">
-                                            <template v-if="editingId === template.id">
-                                                <Button size="sm" @click="saveEdit(template)">Simpan</Button>
-                                                <Button size="sm" variant="ghost" @click="editingId = null"><X class="size-4" /></Button>
-                                            </template>
-                                            <template v-else>
-                                                <Button size="sm" variant="ghost" @click="startEdit(template)"><Pencil class="size-4" /></Button>
-                                                <Button size="sm" variant="outline" @click="toggle(template)">
-                                                    {{ template.is_active ? 'Nonaktifkan' : 'Aktifkan' }}
-                                                </Button>
-                                            </template>
+                                            <Button size="sm" variant="outline" as-child>
+                                                <Link :href="route('admin.templates.edit', template.id)">
+                                                    <FilePenLine class="size-4" />
+                                                    Sunting isi
+                                                </Link>
+                                            </Button>
+                                            <Button size="sm" variant="ghost" @click="toggle(template)">
+                                                {{ template.is_active ? 'Nonaktifkan' : 'Aktifkan' }}
+                                            </Button>
                                         </div>
                                     </td>
                                 </tr>

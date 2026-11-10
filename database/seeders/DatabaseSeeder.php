@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\AttendanceStatus;
+use App\Enums\DocumentType;
 use App\Models\ActionItem;
 use App\Models\AiSummary;
 use App\Models\Decision;
@@ -11,6 +12,7 @@ use App\Models\Meeting;
 use App\Models\MeetingTemplate;
 use App\Models\Topic;
 use App\Models\User;
+use App\Services\TemplateContentFactory;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -60,11 +62,29 @@ class DatabaseSeeder extends Seeder
         $divisions['Keuangan']->update(['head_id' => $users['keuangan@mom.test']->id]);
         $divisions['Sumber Daya Manusia']->update(['head_id' => $users['hr@mom.test']->id]);
 
-        $templates = collect([
-            ['name' => 'Rapat Mingguan Standar', 'meeting_type' => 'weekly', 'description' => 'Agenda, pembahasan, keputusan, dan action item mingguan.'],
-            ['name' => 'Rapat Divisi', 'meeting_type' => 'division', 'description' => 'Laporan progres dan kendala divisi.'],
-            ['name' => 'Rapat Manajemen', 'meeting_type' => 'management', 'description' => 'Keputusan strategis dan lintas divisi.'],
-        ])->map(fn (array $data) => MeetingTemplate::firstOrCreate(['name' => $data['name']], $data));
+        $templateFactory = app(TemplateContentFactory::class);
+
+        $templateDefinitions = [
+            ['name' => 'Rapat Mingguan Standar', 'document_type' => 'meeting', 'meeting_type' => 'weekly', 'description' => 'Agenda, pembahasan, keputusan, dan action item mingguan.'],
+            ['name' => 'Rapat Divisi', 'document_type' => 'meeting', 'meeting_type' => 'division', 'description' => 'Laporan progres dan kendala divisi.'],
+            ['name' => 'Rapat Manajemen', 'document_type' => 'meeting', 'meeting_type' => 'management', 'description' => 'Keputusan strategis dan lintas divisi.'],
+            ['name' => 'Notulen Lintas Divisi', 'document_type' => 'meeting', 'meeting_type' => 'cross_division', 'description' => 'Koordinasi lintas divisi, keputusan bersama, dan tindak lanjut.'],
+            ['name' => 'Proposal Proyek', 'document_type' => 'proposal', 'meeting_type' => 'other', 'description' => 'Usulan proyek dengan tujuan, ruang lingkup, timeline, dan anggaran.'],
+            ['name' => 'Laporan Bulanan', 'document_type' => 'report', 'meeting_type' => 'other', 'description' => 'Laporan berkala dengan temuan, analisis, dan rekomendasi.'],
+            ['name' => 'Brosur Produk', 'document_type' => 'brochure', 'meeting_type' => 'other', 'description' => 'Materi promosi singkat untuk produk, layanan, atau program.'],
+        ];
+
+        $templates = collect($templateDefinitions)->map(function (array $data) use ($templateFactory) {
+            $type = DocumentType::from($data['document_type']);
+            $content = $templateFactory->default($type);
+
+            return MeetingTemplate::updateOrCreate(['name' => $data['name']], [
+                ...$data,
+                'sections' => $templateFactory->sectionTitles($content),
+                'content' => $content,
+                'is_active' => true,
+            ]);
+        });
 
         $topics = collect([
             ['name' => 'Anggaran', 'description' => 'Perencanaan dan realisasi anggaran.'],

@@ -29,6 +29,7 @@ class MeetingFactory extends Factory
 
         return [
             'title' => fake()->sentence(5),
+            'document_type' => 'meeting',
             'meeting_type' => fake()->randomElement(MeetingType::cases()),
             'division_id' => Division::factory(),
             'created_by' => User::factory(),

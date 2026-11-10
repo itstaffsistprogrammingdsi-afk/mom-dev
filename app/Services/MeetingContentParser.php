@@ -21,9 +21,9 @@ class MeetingContentParser
                 $parts[] = $node['text'];
             }
 
-            if (($node['type'] ?? null) === 'mention') {
+            if (in_array($node['type'] ?? null, ['mention', 'topicMention'], true)) {
                 $attrs = $node['attrs'] ?? [];
-                $type = $attrs['type'] ?? null;
+                $type = $attrs['type'] ?? ($node['type'] === 'topicMention' ? 'topic' : null);
                 $id = $attrs['id'] ?? null;
                 $label = $attrs['label'] ?? null;
 
