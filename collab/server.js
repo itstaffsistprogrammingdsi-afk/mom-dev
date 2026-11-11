@@ -60,6 +60,7 @@ function documentPath(documentName) {
 
 const server = Server.configure({
     port: Number(process.env.COLLAB_PORT ?? 1234),
+    address: process.env.COLLAB_HOST ?? '127.0.0.1',
     async onAuthenticate({ token, documentName }) {
         const user = verifyToken(token, documentName);
 
