@@ -71,6 +71,13 @@ interface Summary {
     approved_at: string | null;
 }
 
+type AiTier = 'auto' | 'expert';
+
+const summaryModelLabels: Record<string, string> = {
+    'ocg/deepseek-v4.1-flash': 'DeepSeek 4.1 Flash · Auto',
+    'cx/gpt-6.1-sol': 'GPT-6.1 Sol · Expert',
+};
+
 interface Attachment {
     id: number;
     original_name: string;
@@ -256,7 +263,7 @@ function unlockMeeting() {
     router.post(route('meetings.unlock', props.meeting.id), {}, { preserveScroll: true });
 }
 
-function generateAi() {
+function generateAi(tier: AiTier = 'auto') {
     if (props.meeting.confidentiality === 'secret' && !aiConsent.value) {
         if (!window.confirm('Notulen ini rahasia. Setujui pemrosesan AI secara eksplisit?')) {
             return;
@@ -265,7 +272,7 @@ function generateAi() {
         aiConsent.value = true;
     }
 
-    router.post(route('meetings.ai.generate', props.meeting.id), { ai_consent: aiConsent.value }, { preserveScroll: true });
+    router.post(route('meetings.ai.generate', props.meeting.id), { ai_consent: aiConsent.value, model_tier: tier }, { preserveScroll: true });
 }
 
 function openShare() {
@@ -427,16 +434,28 @@ function restoreVersion(version: Version) {
                     <Button v-if="props.can.update" as-child variant="outline">
                         <Link :href="route('meetings.edit', props.meeting.id)">Sunting</Link>
                     </Button>
-                    <Button
-                        v-if="props.can.generateAi && props.meeting.status !== 'locked'"
-                        variant="outline"
-                        :disabled="hasPendingAiSummary"
-                        @click="generateAi"
-                    >
-                        <Loader2 v-if="hasPendingAiSummary" class="size-4 animate-spin" />
-                        <Sparkles v-else class="size-4" />
-                        {{ hasPendingAiSummary ? 'Memproses…' : 'Resume AI' }}
+                    <Button v-if="hasPendingAiSummary" variant="outline" disabled>
+                        <Loader2 class="size-4 animate-spin" />
+                        Memproses…
                     </Button>
+                    <DropdownMenu v-else-if="props.can.generateAi && props.meeting.status !== 'locked'">
+                        <DropdownMenuTrigger as-child>
+                            <Button variant="outline">
+                                <Sparkles class="size-4" />
+                                Resume AI
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" class="w-64">
+                            <DropdownMenuItem class="flex-col items-start gap-0.5" @click="generateAi('auto')">
+                                <span class="font-medium">Auto · DeepSeek 4.1 Flash</span>
+                                <span class="text-xs text-muted-foreground">Cepat dan hemat untuk resume harian</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem class="flex-col items-start gap-0.5" @click="generateAi('expert')">
+                                <span class="font-medium">Expert · GPT-6.1 Sol</span>
+                                <span class="text-xs text-muted-foreground">Analisis lebih mendalam untuk rapat penting</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                     <Button v-if="props.can.finalize && props.meeting.status === 'draft'" @click="finalize">
                         {{ props.meeting.document_type === 'meeting' ? 'Finalkan notulen' : 'Finalkan dokumen' }}
                     </Button>
@@ -583,7 +602,7 @@ function restoreVersion(version: Version) {
                                     v{{ summary.version }} · {{ summaryStatusLabels[summary.status] ?? summary.status }} ·
                                     {{ summaryGenerationLabels[summary.generation_status] ?? summary.generation_status }}
                                 </span>
-                                <span v-if="summary.model">· {{ summary.model }}</span>
+                                <span v-if="summary.model">· {{ summaryModelLabels[summary.model] ?? summary.model }}</span>
                             </div>
 
                             <p

@@ -17,6 +17,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class MeetingAiController extends Controller
@@ -24,6 +25,12 @@ class MeetingAiController extends Controller
     public function generate(Request $request, Meeting $meeting): RedirectResponse
     {
         $this->authorize('update', $meeting);
+
+        $validated = $request->validate([
+            'model_tier' => ['nullable', Rule::in(['auto', 'expert'])],
+        ]);
+
+        $tier = $validated['model_tier'] ?? 'auto';
 
         if ($meeting->confidentiality === Confidentiality::Secret && ! $request->boolean('ai_consent')) {
             throw ValidationException::withMessages([
@@ -63,7 +70,7 @@ class MeetingAiController extends Controller
             'generated_by' => $request->user()->id,
         ]);
 
-        GenerateMeetingSummary::dispatch($summary);
+        GenerateMeetingSummary::dispatch($summary, $tier);
 
         return back()->with('success', 'Permintaan resume AI dibuat. Hasil akan muncul otomatis di panel Resume AI.');
     }

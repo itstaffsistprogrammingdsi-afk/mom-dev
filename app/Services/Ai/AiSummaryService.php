@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 class AiSummaryService
 {
-    public function generate(AiSummary $summary): AiSummary
+    public function generate(AiSummary $summary, string $tier = 'auto'): AiSummary
     {
         $meeting = $summary->meeting;
         $user = $summary->generator;
@@ -26,13 +26,14 @@ class AiSummaryService
         ]);
 
         try {
-            $raw = $this->client()->summarizeMeeting($this->payload($meeting));
+            $model = $this->model($tier);
+            $raw = $this->client($tier)->summarizeMeeting($this->payload($meeting));
             $content = $this->normalize($raw);
 
             $summary->update([
                 'content' => $content,
                 'sources' => [['meeting_id' => $meeting->id, 'title' => $meeting->title]],
-                'model' => config('ai.driver') === 'mock' ? 'mock' : config('ai.model'),
+                'model' => config('ai.driver') === 'mock' ? 'mock' : $model,
                 'status' => AiSummaryStatus::Draft,
                 'generation_status' => 'completed',
                 'error_message' => null,
@@ -51,7 +52,7 @@ class AiSummaryService
         return $summary->fresh();
     }
 
-    private function client(): AiClient
+    private function client(string $tier): AiClient
     {
         if (config('ai.driver') === 'mock' || blank(config('ai.api_key'))) {
             return new MockAiClient;
@@ -60,10 +61,17 @@ class AiSummaryService
         return new OpenAiCompatibleClient(
             (string) config('ai.base_url'),
             config('ai.api_key'),
-            (string) config('ai.model'),
+            $this->model($tier),
             (int) config('ai.timeout'),
             (int) config('ai.max_tokens'),
         );
+    }
+
+    private function model(string $tier): string
+    {
+        $model = config("ai.models.$tier");
+
+        return (string) ($model ?: config('ai.model'));
     }
 
     /**

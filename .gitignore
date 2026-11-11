@@ -2,6 +2,7 @@
 /node_modules
 /collab/node_modules
 /collab/storage
+/collab/.npm-cache
 /public/build
 /public/hot
 /public/storage

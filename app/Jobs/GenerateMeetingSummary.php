@@ -17,12 +17,12 @@ class GenerateMeetingSummary implements ShouldQueue
 
     public int $timeout = 120;
 
-    public function __construct(public AiSummary $summary) {}
+    public function __construct(public AiSummary $summary, public string $tier = 'auto') {}
 
     public function handle(AiSummaryService $service): void
     {
         try {
-            $summary = $service->generate($this->summary);
+            $summary = $service->generate($this->summary, $this->tier);
 
             $summary->generator?->notify(new AiSummaryReadyNotification($summary));
         } catch (\Throwable $exception) {
