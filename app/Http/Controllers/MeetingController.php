@@ -178,6 +178,7 @@ class MeetingController extends Controller
             'decisions.topic:id,name,slug',
             'actionItems.pic:id,name',
             'actionItems.division:id,name',
+            'actionItems.feedback.user:id,name',
             'summaries' => fn ($query) => $query->latest('version')->limit(5),
             'attachments',
             'versions' => fn ($query) => $query->latest('version')->limit(10),

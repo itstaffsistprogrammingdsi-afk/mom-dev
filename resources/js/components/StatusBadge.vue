@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { actionStatusClasses, actionStatusLabels, confidentialityClasses, confidentialityLabels, statusClasses, statusLabels } from '@/lib/labels';
+import { Badge, type BadgeVariants } from '@/components/ui/badge';
+import { actionStatusLabels, confidentialityLabels, statusLabels } from '@/lib/labels';
 import { computed } from 'vue';
 
 const props = defineProps<{
@@ -7,10 +8,30 @@ const props = defineProps<{
     value: string;
 }>();
 
-const classes = computed(() => {
-    if (props.kind === 'confidentiality') return confidentialityClasses[props.value] ?? '';
-    if (props.kind === 'action') return actionStatusClasses[props.value] ?? '';
-    return statusClasses[props.value] ?? '';
+const meetingVariants: Record<string, BadgeVariants['variant']> = {
+    draft: 'neutral',
+    final: 'success',
+    locked: 'outline',
+};
+
+const confidentialityVariants: Record<string, BadgeVariants['variant']> = {
+    open: 'success',
+    division: 'info',
+    restricted: 'warning',
+    secret: 'danger',
+};
+
+const actionVariants: Record<string, BadgeVariants['variant']> = {
+    new: 'neutral',
+    in_progress: 'info',
+    done: 'success',
+    cancelled: 'outline',
+};
+
+const variant = computed(() => {
+    if (props.kind === 'confidentiality') return confidentialityVariants[props.value] ?? 'neutral';
+    if (props.kind === 'action') return actionVariants[props.value] ?? 'neutral';
+    return meetingVariants[props.value] ?? 'neutral';
 });
 
 const label = computed(() => {
@@ -21,5 +42,5 @@ const label = computed(() => {
 </script>
 
 <template>
-    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium" :class="classes">{{ label }}</span>
+    <Badge :variant="variant">{{ label }}</Badge>
 </template>

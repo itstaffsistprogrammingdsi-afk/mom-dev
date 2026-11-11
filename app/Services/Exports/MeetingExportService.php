@@ -46,7 +46,7 @@ class MeetingExportService
         $mpdf->SetTitle($meeting->title);
         $mpdf->SetAuthor($meeting->creator?->name ?? 'Sistem Notulensi');
         $mpdf->SetHTMLFooter(
-            '<div style="border-top:1px solid #dbe3f0;padding-top:4px;font-size:8pt;color:#6b7280;">'
+            '<div style="border-top:1px solid #e2e7f0;padding-top:4px;font-size:8pt;color:#536079;">'
             .'Sistem Notulensi (MoM) · Halaman {PAGENO} dari {nbpg}'
             .'</div>'
         );
@@ -76,20 +76,20 @@ class MeetingExportService
         ]);
 
         $header = $section->addHeader();
-        $header->addText('Sistem Notulensi (MoM)', ['size' => 8, 'color' => '6B7280']);
+        $header->addText('Sistem Notulensi (MoM)', ['size' => 8, 'color' => '536079']);
 
         $footer = $section->addFooter();
-        $footer->addPreserveText('Halaman {PAGE} dari {NUMPAGES}', ['size' => 8, 'color' => '6B7280'], ['alignment' => Jc::END]);
+        $footer->addPreserveText('Halaman {PAGE} dari {NUMPAGES}', ['size' => 8, 'color' => '536079'], ['alignment' => Jc::END]);
 
         $section->addText($this->esc($meeting->title), [
             'size' => 20,
             'bold' => true,
-            'color' => '1F3864',
+            'color' => '172033',
         ], ['spaceAfter' => 80]);
 
         $section->addText(
             $this->esc(($meeting->document_type?->label() ?? 'Notulen').' · '.($meeting->confidentiality?->label() ?? '-')),
-            ['size' => 9, 'color' => '6B7280'],
+            ['size' => 9, 'color' => '536079'],
             ['spaceAfter' => 180]
         );
 
@@ -107,8 +107,8 @@ class MeetingExportService
 
         foreach ($meta as [$label, $value]) {
             $row = $table->addRow(null, ['cantSplit' => true]);
-            $row->addCell(2300)->addText($this->esc($label), ['size' => 9, 'color' => '6B7280']);
-            $row->addCell(6700)->addText($this->esc($value), ['size' => 9, 'color' => '1F3864', 'bold' => true]);
+            $row->addCell(2300)->addText($this->esc($label), ['size' => 9, 'color' => '536079']);
+            $row->addCell(6700)->addText($this->esc($value), ['size' => 9, 'color' => '172033', 'bold' => true]);
         }
 
         $section->addTextBreak(1);
@@ -123,7 +123,7 @@ class MeetingExportService
             foreach ($meeting->participants as $participant) {
                 $name = $participant->user?->name ?? $participant->name ?? $participant->email ?? '-';
                 $attendance = $participant->attendance?->label() ?? '-';
-                $section->addListItem($this->esc($name.' — '.$attendance), 0);
+                $section->addListItem($this->esc($name.' - '.$attendance), 0);
             }
         }
 
@@ -140,14 +140,14 @@ class MeetingExportService
 
             $taskTable = $section->addTable([
                 'borderSize' => 4,
-                'borderColor' => 'D9E2F3',
+                'borderColor' => 'E2E7F0',
                 'cellMargin' => 60,
             ]);
             $taskTable->setWidth(9000);
 
             $headerRow = $taskTable->addRow();
             foreach (['Tugas', 'PIC', 'Divisi', 'Tenggat', 'Status'] as $heading) {
-                $headerRow->addCell(1800, ['bgColor' => '1F3864'])->addText($this->esc($heading), [
+                $headerRow->addCell(1800, ['bgColor' => '2456C7'])->addText($this->esc($heading), [
                     'size' => 8,
                     'bold' => true,
                     'color' => 'FFFFFF',

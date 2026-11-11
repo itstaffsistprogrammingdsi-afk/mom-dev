@@ -27,12 +27,12 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits);
 <template>
     <DialogPortal>
         <DialogOverlay
-            class="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
+            class="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-foreground/30 backdrop-blur-[2px] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:duration-150 data-[state=open]:duration-200 dark:bg-black/70"
         >
             <DialogContent
                 :class="
                     cn(
-                        'relative z-50 my-8 grid w-full max-w-lg gap-4 border border-border bg-background p-6 shadow-lg duration-200 sm:rounded-lg md:w-full',
+                        'relative z-50 my-4 grid w-[calc(100%-2rem)] max-w-lg gap-5 rounded-2xl border border-border/80 bg-surface p-6 text-surface-foreground shadow-modal outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:duration-150 data-[state=open]:duration-200 sm:p-7',
                         props.class,
                     )
                 "
@@ -49,8 +49,10 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits);
             >
                 <slot />
 
-                <DialogClose class="absolute right-3 top-3 rounded-md p-0.5 transition-colors hover:bg-secondary">
-                    <X class="h-4 w-4" />
+                <DialogClose
+                    class="absolute right-4 top-4 inline-flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors duration-fast ease-out-soft hover:bg-accent hover:text-accent-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+                >
+                    <X class="size-4" aria-hidden="true" />
                     <span class="sr-only">Tutup</span>
                 </DialogClose>
             </DialogContent>

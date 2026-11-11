@@ -95,6 +95,17 @@ export interface Decision {
     topic?: { id: number; name: string; slug: string } | null;
 }
 
+export interface ActionItemFeedback {
+    id: number;
+    action_item_id: number;
+    user_id: number | null;
+    body: string;
+    response_status: 'acknowledged' | 'scheduled' | 'in_progress' | 'blocked' | 'done' | 'need_help';
+    response_status_label: string;
+    created_at: string;
+    user?: { id: number; name: string } | null;
+}
+
 export interface ActionItem {
     id: number;
     title: string;
@@ -102,12 +113,17 @@ export interface ActionItem {
     due_date: string | null;
     status: 'new' | 'in_progress' | 'done' | 'cancelled';
     is_overdue?: boolean;
+    is_owned?: boolean;
+    response_time_hours?: number | null;
+    overdue_hours?: number | null;
+    first_responded_at?: string | null;
     source: string;
     completed_at: string | null;
     meeting?: { id: number; title: string; scheduled_at?: string | null } | null;
     pic?: { id: number; name: string } | null;
     pic_name: string | null;
     division?: Division | null;
+    feedback?: ActionItemFeedback[];
 }
 
 export type BreadcrumbItemType = BreadcrumbItem;

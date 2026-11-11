@@ -45,8 +45,8 @@ const closeModal = () => {
 <template>
     <div class="space-y-6">
         <HeadingSmall title="Hapus akun" description="Hapus akun Anda secara permanen." />
-        <div class="space-y-4 rounded-lg border border-red-100 bg-red-50 p-4 dark:border-red-200/10 dark:bg-red-700/10">
-            <div class="relative space-y-0.5 text-red-600 dark:text-red-100">
+        <div class="space-y-4 rounded-lg border border-destructive/20 bg-destructive-soft p-4 text-destructive-strong">
+            <div class="relative space-y-0.5">
                 <p class="font-medium">Perhatian</p>
                 <p class="text-sm">Tindakan ini tidak dapat dibatalkan. Akun yang masih memiliki notulen tidak dapat dihapus.</p>
             </div>
@@ -83,7 +83,7 @@ const closeModal = () => {
                                 <Button type="button" variant="secondary" @click="closeModal">Batal</Button>
                             </DialogClose>
 
-                            <Button type="submit" variant="destructive" :disabled="form.processing">Hapus akun</Button>
+                            <Button type="submit" variant="destructive" :loading="form.processing">Hapus akun</Button>
                         </DialogFooter>
                     </form>
                 </DialogContent>

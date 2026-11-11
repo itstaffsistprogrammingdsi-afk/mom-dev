@@ -16,10 +16,18 @@ const props = withDefaults(defineProps<Props>(), {
 
 <template>
     <AppShell variant="sidebar">
+        <a
+            href="#main-content"
+            class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[110] focus:rounded-md focus:bg-surface focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-foreground focus:shadow-popover focus:outline-none focus:ring-2 focus:ring-ring"
+        >
+            Lewati ke konten utama
+        </a>
         <AppSidebar />
         <AppContent variant="sidebar">
             <AppSidebarHeader :breadcrumbs="props.breadcrumbs" />
-            <slot />
+            <div class="page-enter">
+                <slot />
+            </div>
         </AppContent>
     </AppShell>
 </template>

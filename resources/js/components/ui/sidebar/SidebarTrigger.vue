@@ -13,8 +13,15 @@ const { toggleSidebar } = useSidebar();
 </script>
 
 <template>
-    <Button data-sidebar="trigger" variant="ghost" size="icon" :class="cn('h-7 w-7', props.class)" @click="toggleSidebar">
+    <Button
+        data-sidebar="trigger"
+        variant="ghost"
+        size="icon"
+        :class="cn('size-9 text-muted-foreground', props.class)"
+        aria-label="Buka atau tutup sidebar"
+        @click="toggleSidebar"
+    >
         <PanelLeft />
-        <span class="sr-only">Toggle Sidebar</span>
+        <span class="sr-only">Buka atau tutup sidebar</span>
     </Button>
 </template>

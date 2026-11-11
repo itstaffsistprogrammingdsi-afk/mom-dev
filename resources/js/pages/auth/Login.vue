@@ -58,7 +58,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <AuthBase kicker="SISTEM NOTULENSI" title="Selamat datang kembali" description="Masuk ke akun MoM untuk melanjutkan ke ruang rapat Anda.">
+    <AuthBase kicker="Sistem notulensi" title="Masuk ke ruang kerja" description="Akses notulen, action item, dan topik divisi Anda.">
         <Head title="Masuk" />
 
         <div

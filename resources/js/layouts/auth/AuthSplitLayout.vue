@@ -40,7 +40,7 @@ defineProps<{
                         </Link>
 
                         <div class="welcome-block">
-                            <div class="welcome-kicker">{{ kicker ?? 'SISTEM NOTULENSI' }}</div>
+                            <div class="welcome-kicker">{{ kicker ?? 'Sistem notulensi' }}</div>
                             <h1>{{ title }}</h1>
                             <p>{{ description }}</p>
                         </div>

@@ -76,19 +76,19 @@ const submit = () => {
                                 :href="route('verification.send')"
                                 method="post"
                                 as="button"
-                                class="focus:outline-hidden rounded-md text-sm text-primary underline hover:text-primary/80 focus:ring-2 focus:ring-offset-2"
+                                class="rounded-md text-sm text-primary underline underline-offset-2 hover:text-primary/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2"
                             >
                                 Klik di sini untuk mengirim ulang email verifikasi.
                             </Link>
                         </p>
 
-                        <div v-if="status === 'verification-link-sent'" class="mt-2 text-sm font-medium text-green-600">
+                        <div v-if="status === 'verification-link-sent'" class="mt-2 text-sm font-medium text-success-strong">
                             Tautan verifikasi baru telah dikirim ke alamat email Anda.
                         </div>
                     </div>
 
                     <div class="flex items-center gap-4">
-                        <Button :disabled="form.processing">Simpan</Button>
+                        <Button :loading="form.processing">Simpan</Button>
 
                         <TransitionRoot
                             :show="form.recentlySuccessful"

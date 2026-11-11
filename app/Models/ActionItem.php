@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ActionItem extends Model
 {
@@ -15,6 +16,9 @@ class ActionItem extends Model
 
     protected $appends = [
         'is_overdue',
+        'is_owned',
+        'response_time_hours',
+        'overdue_hours',
     ];
 
     protected $fillable = [
@@ -30,6 +34,7 @@ class ActionItem extends Model
         'source',
         'ai_confirmed',
         'completed_at',
+        'first_responded_at',
         'reminder_h3_sent_at',
         'reminder_h1_sent_at',
         'overdue_notified_at',
@@ -43,6 +48,7 @@ class ActionItem extends Model
             'due_date' => 'date',
             'ai_confirmed' => 'boolean',
             'completed_at' => 'datetime',
+            'first_responded_at' => 'datetime',
             'reminder_h3_sent_at' => 'datetime',
             'reminder_h1_sent_at' => 'datetime',
             'overdue_notified_at' => 'datetime',
@@ -64,11 +70,49 @@ class ActionItem extends Model
         return $this->belongsTo(Division::class);
     }
 
+    public function feedback(): HasMany
+    {
+        return $this->hasMany(ActionItemFeedback::class);
+    }
+
     protected function isOverdue(): Attribute
     {
         return Attribute::get(fn () => $this->due_date
             && $this->due_date->lt(today())
             && ! in_array($this->status, [ActionItemStatus::Done, ActionItemStatus::Cancelled], true));
+    }
+
+    protected function isOwned(): Attribute
+    {
+        return Attribute::get(fn () => $this->pic_id !== null || $this->division_id !== null);
+    }
+
+    protected function responseTimeHours(): Attribute
+    {
+        return Attribute::get(function () {
+            if (! $this->first_responded_at || ! $this->created_at) {
+                return null;
+            }
+
+            return round(max(0, $this->created_at->diffInMinutes($this->first_responded_at)) / 60, 1);
+        });
+    }
+
+    protected function overdueHours(): Attribute
+    {
+        return Attribute::get(function () {
+            if (! $this->due_date || in_array($this->status, [ActionItemStatus::Done, ActionItemStatus::Cancelled], true)) {
+                return null;
+            }
+
+            $due = $this->due_date->copy()->endOfDay();
+
+            if ($due->isFuture()) {
+                return null;
+            }
+
+            return round($due->diffInMinutes(now()) / 60, 1);
+        });
     }
 
     public function scopeOpen(Builder $query): Builder
@@ -92,6 +136,13 @@ class ActionItem extends Model
             ->when($filters['division'] ?? null, fn (Builder $q, $division) => $q->where('division_id', $division))
             ->when($filters['overdue'] ?? null, fn (Builder $q) => $q->whereDate('due_date', '<', now())
                 ->whereNotIn('status', [ActionItemStatus::Done->value, ActionItemStatus::Cancelled->value]))
+            ->when(array_key_exists('owner', $filters) && $filters['owner'] !== null && $filters['owner'] !== '', function (Builder $q) use ($filters) {
+                if ((string) $filters['owner'] === '1') {
+                    $q->where(fn (Builder $sub) => $sub->whereNotNull('pic_id')->orWhereNotNull('division_id'));
+                } else {
+                    $q->whereNull('pic_id')->whereNull('division_id');
+                }
+            })
             ->when($filters['search'] ?? null, fn (Builder $q, $search) => $q->whereLike('title', "%{$search}%", caseSensitive: false));
     }
 }

@@ -37,7 +37,7 @@ const capabilities: { label: string; roles: string[] }[] = [
     <Head title="Peran & Akses" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex flex-col gap-6 p-4">
+        <div class="flex flex-col gap-section p-page lg:p-page-lg">
             <PageHeader
                 title="Peran & Hak Akses"
                 description="Empat peran dengan tanggung jawab berbeda. Hak akses tetap mengikuti tingkat kerahasiaan dokumen."
@@ -54,12 +54,12 @@ const capabilities: { label: string; roles: string[] }[] = [
                 </Card>
             </div>
 
-            <Card>
+            <Card class="min-w-0">
                 <CardHeader><CardTitle class="text-base">Matriks hak akses</CardTitle></CardHeader>
                 <CardContent>
-                    <div class="overflow-x-auto">
+                    <div class="min-w-0 overflow-x-auto">
                         <table class="w-full min-w-[760px] text-sm">
-                            <thead class="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
+                            <thead class="border-b border-border/60 text-left text-xs font-medium text-subtle-foreground">
                                 <tr>
                                     <th class="py-3 pr-4">Kemampuan</th>
                                     <th v-for="role in props.roles" :key="role.value" class="px-3 py-3 text-center">
@@ -75,7 +75,7 @@ const capabilities: { label: string; roles: string[] }[] = [
                                             class="inline-flex size-6 items-center justify-center rounded-full"
                                             :class="
                                                 capability.roles.includes(role.value)
-                                                    ? 'bg-emerald-100 text-emerald-700'
+                                                    ? 'bg-success-soft text-success-strong'
                                                     : 'bg-muted text-muted-foreground'
                                             "
                                             :aria-label="capability.roles.includes(role.value) ? 'Diizinkan' : 'Tidak diizinkan'"

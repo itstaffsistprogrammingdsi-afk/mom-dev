@@ -1,13 +1,18 @@
 <script setup lang="ts">
+import EmptyState from '@/components/EmptyState.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import Pagination from '@/components/Pagination.vue';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { roleLabels } from '@/lib/labels';
 import { type BreadcrumbItem, type Division, type UserRole } from '@/types';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { Plus, Search } from 'lucide-vue-next';
+import { Plus, Search, Users } from 'lucide-vue-next';
 import { ref } from 'vue';
 
 interface AdminUser {
@@ -79,7 +84,7 @@ function updateUser(user: AdminUser, field: 'role' | 'division_id' | 'is_active'
     <Head title="Pengguna" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex flex-col gap-6 p-4">
+        <div class="flex flex-col gap-section p-page lg:p-page-lg">
             <PageHeader title="Pengguna" description="Atur peran, divisi, dan status aktif pengguna.">
                 <template #actions>
                     <Button variant="outline" as-child>
@@ -88,93 +93,125 @@ function updateUser(user: AdminUser, field: 'role' | 'division_id' | 'is_active'
                 </template>
             </PageHeader>
 
-            <form class="grid gap-2 rounded-lg border bg-card p-3 md:grid-cols-7" @submit.prevent="createUser">
-                <input v-model="createForm.name" required placeholder="Nama" class="h-9 rounded-md border bg-background px-3 text-sm" />
-                <input
-                    v-model="createForm.email"
-                    required
-                    type="email"
-                    placeholder="Email"
-                    class="h-9 rounded-md border bg-background px-3 text-sm"
-                />
-                <input
-                    v-model="createForm.password"
-                    required
-                    type="password"
-                    placeholder="Kata sandi"
-                    class="h-9 rounded-md border bg-background px-3 text-sm"
-                />
-                <select v-model="createForm.role" class="h-9 rounded-md border bg-background px-3 text-sm">
-                    <option v-for="role in props.roles" :key="role.value" :value="role.value">{{ role.label }}</option>
-                </select>
-                <select v-model="createForm.division_id" class="h-9 rounded-md border bg-background px-3 text-sm">
-                    <option value="">Tanpa divisi</option>
-                    <option v-for="division in props.divisions" :key="division.id" :value="String(division.id)">{{ division.name }}</option>
-                </select>
-                <input v-model="createForm.job_title" placeholder="Jabatan" class="h-9 rounded-md border bg-background px-3 text-sm" />
-                <Button type="submit">
-                    <Plus class="size-4" />
-                    Tambah
-                </Button>
-            </form>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Tambah pengguna</CardTitle>
+                    <CardDescription>Buat akun baru dan tentukan peran awalnya.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <form class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" @submit.prevent="createUser">
+                        <div class="space-y-1.5">
+                            <Label for="new-user-name">Nama</Label>
+                            <Input id="new-user-name" v-model="createForm.name" required placeholder="Nama lengkap" />
+                        </div>
+                        <div class="space-y-1.5">
+                            <Label for="new-user-email">Email</Label>
+                            <Input id="new-user-email" v-model="createForm.email" required type="email" placeholder="nama@perusahaan.com" />
+                        </div>
+                        <div class="space-y-1.5">
+                            <Label for="new-user-password">Kata sandi</Label>
+                            <Input id="new-user-password" v-model="createForm.password" required type="password" placeholder="Kata sandi awal" />
+                        </div>
+                        <div class="space-y-1.5">
+                            <Label for="new-user-role">Peran</Label>
+                            <Select id="new-user-role" v-model="createForm.role">
+                                <option v-for="role in props.roles" :key="role.value" :value="role.value">{{ role.label }}</option>
+                            </Select>
+                        </div>
+                        <div class="space-y-1.5">
+                            <Label for="new-user-division">Divisi</Label>
+                            <Select id="new-user-division" v-model="createForm.division_id">
+                                <option value="">Tanpa divisi</option>
+                                <option v-for="division in props.divisions" :key="division.id" :value="String(division.id)">
+                                    {{ division.name }}
+                                </option>
+                            </Select>
+                        </div>
+                        <div class="space-y-1.5">
+                            <Label for="new-user-job">Jabatan</Label>
+                            <Input id="new-user-job" v-model="createForm.job_title" placeholder="Jabatan" />
+                        </div>
+                        <div class="flex items-end sm:col-span-2 xl:col-span-3">
+                            <Button type="submit" :loading="createForm.processing">
+                                <Plus class="size-4" aria-hidden="true" />
+                                Tambah pengguna
+                            </Button>
+                        </div>
+                    </form>
+                </CardContent>
+            </Card>
 
-            <form class="flex max-w-md gap-2" @submit.prevent="applySearch">
-                <div class="relative flex-1">
-                    <Search class="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-                    <Input v-model="search" placeholder="Cari nama atau email…" class="pl-8" />
+            <form class="flex max-w-md items-end gap-2" @submit.prevent="applySearch">
+                <div class="flex-1 space-y-1.5">
+                    <Label for="user-search">Cari pengguna</Label>
+                    <div class="relative">
+                        <Search
+                            class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-subtle-foreground"
+                            aria-hidden="true"
+                        />
+                        <Input id="user-search" v-model="search" placeholder="Nama atau email" class="pl-9" />
+                    </div>
                 </div>
                 <Button type="submit">Cari</Button>
             </form>
 
-            <div class="overflow-x-auto rounded-lg border bg-card">
+            <EmptyState
+                v-if="props.users.data.length === 0"
+                :icon="Users"
+                title="Tidak ada pengguna"
+                description="Ubah kata kunci atau tambahkan pengguna baru."
+            />
+
+            <div v-else class="min-w-0 overflow-x-auto rounded-lg border border-border/80 bg-card shadow-soft-sm">
                 <table class="w-full min-w-[820px] text-sm">
-                    <thead class="border-b bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
-                        <tr>
+                    <thead class="border-b border-border/60 text-left">
+                        <tr class="text-xs font-medium text-subtle-foreground">
                             <th class="p-3">Nama</th>
                             <th class="p-3">Divisi</th>
                             <th class="p-3">Peran</th>
                             <th class="p-3">Status</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y">
-                        <tr v-for="user in props.users.data" :key="user.id">
+                    <tbody class="divide-y divide-border/60">
+                        <tr v-for="user in props.users.data" :key="user.id" class="transition-colors hover:bg-muted/20">
                             <td class="p-3">
                                 <p class="font-medium">{{ user.name }}</p>
                                 <p class="text-xs text-muted-foreground">{{ user.email }}</p>
                             </td>
                             <td class="p-3">
-                                <select
-                                    :value="user.division_id ?? ''"
-                                    class="h-8 rounded-md border bg-background px-2 text-xs"
-                                    @change="
-                                        updateUser(
-                                            user,
-                                            'division_id',
-                                            ($event.target as HTMLSelectElement).value ? Number(($event.target as HTMLSelectElement).value) : '',
-                                        )
-                                    "
+                                <Select
+                                    :model-value="user.division_id ?? ''"
+                                    class="h-8 text-xs"
+                                    :aria-label="`Divisi ${user.name}`"
+                                    @update:model-value="updateUser(user, 'division_id', $event ? Number($event) : '')"
                                 >
                                     <option value="">Tanpa divisi</option>
-                                    <option v-for="division in props.divisions" :key="division.id" :value="division.id">{{ division.name }}</option>
-                                </select>
+                                    <option v-for="division in props.divisions" :key="division.id" :value="String(division.id)">
+                                        {{ division.name }}
+                                    </option>
+                                </Select>
                             </td>
                             <td class="p-3">
-                                <select
-                                    :value="user.role"
-                                    class="h-8 rounded-md border bg-background px-2 text-xs"
-                                    @change="updateUser(user, 'role', ($event.target as HTMLSelectElement).value)"
+                                <Select
+                                    :model-value="user.role"
+                                    class="h-8 text-xs"
+                                    :aria-label="`Peran ${user.name}`"
+                                    @update:model-value="updateUser(user, 'role', String($event))"
                                 >
                                     <option v-for="(label, value) in roleLabels" :key="value" :value="value">{{ label }}</option>
-                                </select>
+                                </Select>
                             </td>
                             <td class="p-3">
                                 <button
                                     type="button"
-                                    class="rounded-full px-2 py-0.5 text-xs font-medium"
-                                    :class="user.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-zinc-200 text-zinc-700'"
+                                    class="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2"
+                                    :aria-pressed="user.is_active"
+                                    :aria-label="`Ubah status ${user.name}`"
                                     @click="updateUser(user, 'is_active', !user.is_active)"
                                 >
-                                    {{ user.is_active ? 'Aktif' : 'Nonaktif' }}
+                                    <Badge :variant="user.is_active ? 'success' : 'neutral'">
+                                        {{ user.is_active ? 'Aktif' : 'Nonaktif' }}
+                                    </Badge>
                                 </button>
                             </td>
                         </tr>

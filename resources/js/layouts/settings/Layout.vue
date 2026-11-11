@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import Heading from '@/components/Heading.vue';
-import { Button } from '@/components/ui/button';
+import PageHeader from '@/components/PageHeader.vue';
 import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/vue3';
 
@@ -24,30 +24,35 @@ const currentPath = window.location.pathname;
 </script>
 
 <template>
-    <div class="px-4 py-6">
-        <Heading title="Pengaturan" description="Kelola profil, keamanan, dan tampilan akun Anda." />
+    <div class="flex flex-col gap-section p-page lg:p-page-lg">
+        <PageHeader title="Pengaturan" description="Kelola profil, keamanan, dan tampilan akun Anda." />
 
-        <div class="flex flex-col space-y-8 md:space-y-0 lg:flex-row lg:space-x-12 lg:space-y-0">
-            <aside class="w-full max-w-xl lg:w-48">
-                <nav class="flex flex-col space-x-0 space-y-1">
-                    <Button
+        <div class="grid gap-6 lg:grid-cols-[200px_minmax(0,1fr)] lg:items-start">
+            <aside class="lg:sticky lg:top-20">
+                <nav class="flex flex-col gap-1" aria-label="Menu pengaturan">
+                    <Link
                         v-for="item in sidebarNavItems"
                         :key="item.url"
-                        variant="ghost"
-                        :class="['w-full justify-start', { 'bg-muted': currentPath === item.url }]"
-                        as-child
+                        :href="item.url"
+                        :aria-current="currentPath === item.url ? 'page' : undefined"
+                        :class="
+                            cn(
+                                'rounded-md px-3 py-2 text-sm font-medium transition-colors duration-fast ease-out-soft',
+                                currentPath === item.url
+                                    ? 'bg-surface text-foreground shadow-soft-xs ring-1 ring-border/70'
+                                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                            )
+                        "
                     >
-                        <Link :href="item.url">
-                            {{ item.title }}
-                        </Link>
-                    </Button>
+                        {{ item.title }}
+                    </Link>
                 </nav>
             </aside>
 
-            <Separator class="my-6 md:hidden" />
+            <Separator class="lg:hidden" />
 
-            <div class="flex-1 md:max-w-2xl">
-                <section class="max-w-xl space-y-12">
+            <div class="min-w-0 max-w-2xl">
+                <section class="space-y-10">
                     <slot />
                 </section>
             </div>
