@@ -23,7 +23,7 @@ const submit = () => {
 </script>
 
 <template>
-    <AuthBase kicker="AKUN BARU" title="Buat akun baru" description="Lengkapi data berikut untuk mulai menggunakan sistem.">
+    <AuthBase kicker="Akun baru" title="Buat akun" description="Lengkapi data berikut untuk mulai menggunakan sistem.">
         <Head title="Daftar" />
 
         <form class="login-form" @submit.prevent="submit">

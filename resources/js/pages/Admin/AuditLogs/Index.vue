@@ -6,6 +6,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDateTime } from '@/lib/labels';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/vue3';
+import { ScrollText } from 'lucide-vue-next';
 
 interface AuditRow {
     id: number;
@@ -36,15 +37,15 @@ const breadcrumbs: BreadcrumbItem[] = [{ title: 'Audit Log', href: '/admin/audit
     <Head title="Audit Log" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex flex-col gap-6 p-4">
+        <div class="flex flex-col gap-section p-page lg:p-page-lg">
             <PageHeader title="Audit Log" description="Jejak akses dan perubahan notulen untuk kebutuhan kepatuhan." />
 
-            <EmptyState v-if="props.logs.data.length === 0" title="Belum ada aktivitas" />
+            <EmptyState v-if="props.logs.data.length === 0" :icon="ScrollText" title="Belum ada aktivitas" />
 
-            <div v-else class="overflow-x-auto rounded-lg border bg-card">
+            <div v-else class="min-w-0 overflow-x-auto rounded-lg border border-border/80 bg-card shadow-soft-sm">
                 <table class="w-full min-w-[720px] text-sm">
-                    <thead class="border-b bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
-                        <tr>
+                    <thead class="border-b border-border/60 text-left">
+                        <tr class="text-xs font-medium text-subtle-foreground">
                             <th class="p-3">Waktu</th>
                             <th class="p-3">Pengguna</th>
                             <th class="p-3">Aksi</th>
@@ -52,8 +53,8 @@ const breadcrumbs: BreadcrumbItem[] = [{ title: 'Audit Log', href: '/admin/audit
                             <th class="p-3">IP</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y">
-                        <tr v-for="log in props.logs.data" :key="log.id">
+                    <tbody class="divide-y divide-border/60">
+                        <tr v-for="log in props.logs.data" :key="log.id" class="transition-colors hover:bg-muted/20">
                             <td class="whitespace-nowrap p-3">{{ formatDateTime(log.created_at) }}</td>
                             <td class="p-3">{{ log.user?.name ?? 'Sistem' }}</td>
                             <td class="p-3">
@@ -64,9 +65,9 @@ const breadcrumbs: BreadcrumbItem[] = [{ title: 'Audit Log', href: '/admin/audit
                                 <Link v-if="log.meeting" :href="route('meetings.show', log.meeting.id)" class="text-primary underline">
                                     {{ log.meeting.title }}
                                 </Link>
-                                <span v-else>—</span>
+                                <span v-else>-</span>
                             </td>
-                            <td class="p-3 text-xs text-muted-foreground">{{ log.ip_address ?? '—' }}</td>
+                            <td class="p-3 text-xs text-muted-foreground">{{ log.ip_address ?? '-' }}</td>
                         </tr>
                     </tbody>
                 </table>

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ActionItemFeedbackStatus;
 use App\Enums\ActionItemStatus;
 use App\Models\ActionItem;
 use App\Models\Division;
@@ -20,12 +21,12 @@ class ActionItemController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
-        $filters = $request->only(['search', 'status', 'pic', 'division', 'overdue']);
+        $filters = $request->only(['search', 'status', 'pic', 'division', 'overdue', 'owner']);
 
         $query = ActionItem::query()
             ->visibleTo($user)
             ->filter($filters)
-            ->with(['meeting:id,title,scheduled_at', 'pic:id,name', 'division:id,name'])
+            ->with(['meeting:id,title,scheduled_at', 'pic:id,name', 'division:id,name', 'feedback.user:id,name'])
             ->orderByRaw('due_date IS NULL')
             ->orderBy('due_date');
 
@@ -41,7 +42,7 @@ class ActionItemController extends Controller
                 ->visibleTo($user)
                 ->filter($filters)
                 ->open()
-                ->with(['meeting:id,title,scheduled_at', 'pic:id,name', 'division:id,name'])
+                ->with(['meeting:id,title,scheduled_at', 'pic:id,name', 'division:id,name', 'feedback.user:id,name'])
                 ->orderByRaw('due_date IS NULL')
                 ->orderBy('due_date')
                 ->limit(200)
@@ -168,10 +169,16 @@ class ActionItemController extends Controller
 
         abort_unless($request->user()->canWriteMinutes() || $isMine, 403);
 
-        $actionItem->update([
+        $attributes = [
             'status' => $status,
             'completed_at' => $status === ActionItemStatus::Done ? now() : null,
-        ]);
+        ];
+
+        if ($isMine && ! $actionItem->first_responded_at) {
+            $attributes['first_responded_at'] = now();
+        }
+
+        $actionItem->update($attributes);
 
         $audit->log(
             'action_item.status_updated',
@@ -182,5 +189,41 @@ class ActionItemController extends Controller
         );
 
         return back()->with('success', 'Status action item diperbarui.');
+    }
+
+    public function storeFeedback(
+        Request $request,
+        ActionItem $actionItem,
+        AuditLogger $audit,
+    ): RedirectResponse {
+        $this->authorize('view', $actionItem->meeting);
+
+        $isMine = $actionItem->pic_id === $request->user()->id;
+
+        abort_unless($request->user()->canWriteMinutes() || $isMine, 403);
+
+        $validated = $request->validate([
+            'body' => ['required', 'string', 'max:2000'],
+            'response_status' => ['required', Rule::enum(ActionItemFeedbackStatus::class)],
+        ]);
+
+        $actionItem->feedback()->create([
+            'user_id' => $request->user()->id,
+            'body' => $validated['body'],
+            'response_status' => ActionItemFeedbackStatus::from($validated['response_status']),
+        ]);
+
+        if ($isMine && ! $actionItem->first_responded_at) {
+            $actionItem->update(['first_responded_at' => now()]);
+        }
+
+        $audit->log(
+            'action_item.feedback_created',
+            $actionItem,
+            'Menambahkan respons pada action item',
+            meetingId: $actionItem->meeting_id,
+        );
+
+        return back()->with('success', 'Respons berhasil ditambahkan.');
     }
 }

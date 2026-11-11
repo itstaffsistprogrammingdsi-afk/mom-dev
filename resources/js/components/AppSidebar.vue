@@ -1,7 +1,17 @@
 <script setup lang="ts">
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
+import {
+    Sidebar,
+    SidebarContent,
+    SidebarFooter,
+    SidebarHeader,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+    SidebarRail,
+    SidebarSeparator,
+} from '@/components/ui/sidebar';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 import { Bell, Building2, FileStack, FileText, Hash, Inbox, LayoutGrid, ListChecks, ScrollText, ShieldCheck, Users } from 'lucide-vue-next';
@@ -38,11 +48,11 @@ const isAdmin = computed(() => page.props.auth.user?.role === 'admin');
 
 <template>
     <Sidebar collapsible="icon" variant="inset">
-        <SidebarHeader>
+        <SidebarHeader class="p-3 pb-1">
             <SidebarMenu>
                 <SidebarMenuItem>
                     <SidebarMenuButton size="lg" as-child>
-                        <Link :href="route('dashboard')">
+                        <Link :href="route('dashboard')" aria-label="Ke dashboard MoM">
                             <AppLogo />
                         </Link>
                     </SidebarMenuButton>
@@ -50,14 +60,17 @@ const isAdmin = computed(() => page.props.auth.user?.role === 'admin');
             </SidebarMenu>
         </SidebarHeader>
 
-        <SidebarContent>
+        <SidebarContent class="py-1">
             <NavMain :items="mainNavItems" label="Ruang Kerja" />
+            <SidebarSeparator v-if="isAdmin" class="my-2" />
             <NavMain v-if="isAdmin" :items="adminNavItems" label="Administrasi" />
         </SidebarContent>
 
-        <SidebarFooter>
+        <SidebarFooter class="p-2">
             <NavUser />
         </SidebarFooter>
+
+        <SidebarRail />
     </Sidebar>
     <slot />
 </template>

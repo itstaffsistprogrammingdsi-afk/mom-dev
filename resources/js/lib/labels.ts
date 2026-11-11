@@ -78,7 +78,7 @@ export const roleLabels: Record<string, string> = {
 };
 
 export function formatDate(value?: string | null): string {
-    if (!value) return '—';
+    if (!value) return '-';
 
     return new Intl.DateTimeFormat('id-ID', {
         day: 'numeric',
@@ -88,7 +88,7 @@ export function formatDate(value?: string | null): string {
 }
 
 export function formatDateTime(value?: string | null): string {
-    if (!value) return '—';
+    if (!value) return '-';
 
     return new Intl.DateTimeFormat('id-ID', {
         day: 'numeric',

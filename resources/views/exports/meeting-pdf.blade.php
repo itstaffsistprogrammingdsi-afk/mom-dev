@@ -7,17 +7,17 @@
             font-family: "dejavusans", sans-serif;
             font-size: 10pt;
             line-height: 1.55;
-            color: #1f2937;
+            color: #172033;
         }
 
         h1, h2, h3, h4 {
-            color: #1f3864;
+            color: #172033;
             line-height: 1.25;
             margin: 14px 0 6px;
         }
 
         h1 { font-size: 18pt; }
-        h2 { font-size: 13pt; border-bottom: 1px solid #dbe3f0; padding-bottom: 3px; }
+        h2 { font-size: 13pt; border-bottom: 1px solid #e2e7f0; padding-bottom: 3px; }
         h3 { font-size: 11pt; }
 
         p { margin: 0 0 7px; }
@@ -25,27 +25,25 @@
         li { margin-bottom: 3px; }
 
         table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; }
-        th, td { border: 1px solid #d9e2f3; padding: 6px 7px; vertical-align: top; text-align: left; }
-        th { background: #1f3864; color: #ffffff; font-size: 8.5pt; }
+        th, td { border: 1px solid #e2e7f0; padding: 6px 7px; vertical-align: top; text-align: left; }
+        th { background: #2456c7; color: #ffffff; font-size: 8.5pt; }
         td { font-size: 8.8pt; }
 
         .brand {
-            font-size: 8pt;
-            letter-spacing: 0.12em;
-            color: #6b7280;
-            text-transform: uppercase;
+            font-size: 8.5pt;
+            color: #536079;
             margin-bottom: 6px;
         }
 
         .title {
             font-size: 20pt;
             font-weight: bold;
-            color: #1f3864;
+            color: #172033;
             margin: 0 0 6px;
         }
 
         .subtitle {
-            color: #6b7280;
+            color: #536079;
             font-size: 9pt;
             margin-bottom: 12px;
         }
@@ -59,45 +57,45 @@
             margin-right: 4px;
         }
 
-        .badge-blue { background: #e0edff; color: #1d4ed8; }
-        .badge-green { background: #dcfce7; color: #166534; }
-        .badge-amber { background: #fef3c7; color: #92400e; }
-        .badge-red { background: #ffe4e6; color: #9f1239; }
+        .badge-blue { background: #e8f0fe; color: #1f4fa8; }
+        .badge-green { background: #e9f7f0; color: #11663f; }
+        .badge-amber { background: #fff4e2; color: #7a4400; }
+        .badge-red { background: #fdecee; color: #a61b2b; }
 
-        .meta-table td { border: 0; border-bottom: 1px solid #eef2f7; padding: 4px 0; }
-        .meta-label { width: 120px; color: #6b7280; font-size: 9pt; }
-        .meta-value { color: #1f3864; font-size: 9pt; font-weight: bold; }
+        .meta-table td { border: 0; border-bottom: 1px solid #f1f4f9; padding: 4px 0; }
+        .meta-label { width: 120px; color: #536079; font-size: 9pt; }
+        .meta-value { color: #172033; font-size: 9pt; font-weight: bold; }
 
         .section-title {
             font-size: 12.5pt;
-            color: #1f3864;
-            border-bottom: 1px solid #dbe3f0;
+            color: #172033;
+            border-bottom: 1px solid #e2e7f0;
             padding-bottom: 3px;
             margin: 18px 0 8px;
         }
 
         .mention {
-            background: #eef2f7;
-            border-radius: 4px;
-            padding: 1px 4px;
+            border-radius: 9999px;
+            padding: 1px 5px;
             font-weight: bold;
         }
 
-        .mention-topic { color: #1d4ed8; }
-        .mention-division { color: #047857; }
+        .mention-person { background: #e8f0fe; color: #1f4fa8; }
+        .mention-division { background: #e3f5f1; color: #0b655d; }
+        .mention-topic { background: #fff2d9; color: #7a4a00; }
 
         .task-list { list-style: none; margin-left: 0; padding-left: 0; }
         .task-item { margin-bottom: 4px; }
         .task-mark { font-weight: bold; margin-right: 4px; }
 
-        .muted { color: #6b7280; }
+        .muted { color: #536079; }
         .small { font-size: 8.5pt; }
         .confidentiality {
-            border-left: 3px solid #2f5597;
-            background: #eef3fa;
+            border-left: 3px solid #2456c7;
+            background: #eaf4fc;
             padding: 7px 9px;
             font-size: 8.5pt;
-            color: #1f3864;
+            color: #1e3f85;
             margin: 10px 0 14px;
         }
     </style>

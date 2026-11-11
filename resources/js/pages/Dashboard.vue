@@ -42,10 +42,7 @@ const today = new Intl.DateTimeFormat('id-ID', {
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex flex-col gap-6 p-4">
-            <PageHeader
-                :title="`Selamat datang, ${user.name.split(' ')[0]}`"
-                :description="`${today} · ${user.division?.name ?? 'Belum ada divisi'}`"
-            >
+            <PageHeader title="Ringkasan hari ini" :description="`${today} · ${user.division?.name ?? 'Belum ada divisi'}`">
                 <template #actions>
                     <Button v-if="user.role === 'admin' || user.role === 'notulis'" as-child>
                         <Link :href="route('meetings.create')">

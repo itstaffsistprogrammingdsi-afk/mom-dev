@@ -72,6 +72,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('tugas/{actionItem}', [ActionItemController::class, 'update'])->name('action-items.update');
     Route::delete('tugas/{actionItem}', [ActionItemController::class, 'destroy'])->name('action-items.destroy');
     Route::patch('tugas/{actionItem}/status', [ActionItemController::class, 'updateStatus'])->name('action-items.status');
+    Route::post('tugas/{actionItem}/feedback', [ActionItemController::class, 'storeFeedback'])->name('action-items.feedback.store');
 
     Route::get('notifikasi', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('notifikasi/baca-semua', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');

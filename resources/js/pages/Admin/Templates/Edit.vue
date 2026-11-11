@@ -1,14 +1,24 @@
 <script setup lang="ts">
-import MeetingEditor from '@/components/MeetingEditor.vue';
+import EditorSkeleton from '@/components/editor/EditorSkeleton.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import type { JSONContent } from '@tiptap/core';
 import { ArrowLeft } from 'lucide-vue-next';
-import { computed } from 'vue';
+import { computed, defineAsyncComponent } from 'vue';
+
+const MeetingEditor = defineAsyncComponent({
+    loader: () => import('@/components/MeetingEditor.vue'),
+    loadingComponent: EditorSkeleton,
+    delay: 120,
+});
 
 interface Template {
     id: number;
@@ -52,7 +62,7 @@ function submit() {
     <Head :title="`Sunting ${props.template.name}`" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <form class="flex flex-col gap-6 p-4" @submit.prevent="submit">
+        <form class="flex flex-col gap-section p-page lg:p-page-lg" @submit.prevent="submit">
             <PageHeader :title="`Sunting ${props.template.name}`" description="Atur metadata dan struktur isi template.">
                 <template #actions>
                     <Button variant="outline" as-child>
@@ -61,20 +71,20 @@ function submit() {
                             Kembali
                         </Link>
                     </Button>
-                    <Button type="submit" :disabled="form.processing">Simpan template</Button>
+                    <Button type="submit" :loading="form.processing">Simpan template</Button>
                 </template>
             </PageHeader>
 
             <div class="grid gap-4 lg:grid-cols-4">
                 <div class="space-y-4 lg:col-span-3">
-                    <div class="space-y-2">
-                        <label for="template-name" class="text-sm font-medium">Nama template</label>
-                        <input id="template-name" v-model="form.name" required class="h-9 w-full rounded-md border bg-background px-3 text-sm" />
-                        <p v-if="form.errors.name" class="text-xs text-rose-600">{{ form.errors.name }}</p>
+                    <div class="space-y-1.5">
+                        <Label for="template-name">Nama template</Label>
+                        <Input id="template-name" v-model="form.name" required />
+                        <p v-if="form.errors.name" class="text-xs font-medium text-destructive-strong">{{ form.errors.name }}</p>
                     </div>
 
-                    <div class="space-y-2">
-                        <label class="text-sm font-medium">Isi template</label>
+                    <div class="space-y-1.5">
+                        <Label>Isi template</Label>
                         <MeetingEditor v-model="form.content" :show-tag-picker="false" />
                         <p class="text-xs text-muted-foreground">
                             Gunakan heading, daftar, dan tabel untuk membentuk struktur dokumen. Teks ini akan otomatis menjadi isi awal saat template
@@ -87,37 +97,28 @@ function submit() {
                     <Card>
                         <CardHeader><CardTitle class="text-base">Pengaturan</CardTitle></CardHeader>
                         <CardContent class="space-y-3">
-                            <div class="space-y-2">
-                                <label for="document-type" class="text-sm font-medium">Jenis dokumen</label>
-                                <select
-                                    id="document-type"
-                                    v-model="form.document_type"
-                                    class="h-9 w-full rounded-md border bg-background px-3 text-sm"
-                                >
+                            <div class="space-y-1.5">
+                                <Label for="document-type">Jenis dokumen</Label>
+                                <Select id="document-type" v-model="form.document_type">
                                     <option v-for="type in props.documentTypes" :key="type.value" :value="type.value">{{ type.label }}</option>
-                                </select>
+                                </Select>
                                 <p v-if="selectedType" class="text-xs text-muted-foreground">{{ selectedType.description }}</p>
                             </div>
 
-                            <div class="space-y-2">
-                                <label for="meeting-type" class="text-sm font-medium">Jenis rapat</label>
-                                <select id="meeting-type" v-model="form.meeting_type" class="h-9 w-full rounded-md border bg-background px-3 text-sm">
+                            <div class="space-y-1.5">
+                                <Label for="meeting-type">Jenis rapat</Label>
+                                <Select id="meeting-type" v-model="form.meeting_type">
                                     <option v-for="type in props.meetingTypes" :key="type.value" :value="type.value">{{ type.label }}</option>
-                                </select>
+                                </Select>
                             </div>
 
-                            <div class="space-y-2">
-                                <label for="description" class="text-sm font-medium">Deskripsi</label>
-                                <textarea
-                                    id="description"
-                                    v-model="form.description"
-                                    rows="3"
-                                    class="w-full rounded-md border bg-background px-3 py-2 text-sm"
-                                />
+                            <div class="space-y-1.5">
+                                <Label for="description">Deskripsi</Label>
+                                <Textarea id="description" v-model="form.description" rows="3" />
                             </div>
 
-                            <label class="flex items-center gap-2 text-sm">
-                                <input v-model="form.is_active" type="checkbox" class="size-4 rounded border" />
+                            <label class="flex cursor-pointer items-center gap-2 text-sm">
+                                <input v-model="form.is_active" type="checkbox" class="size-4 rounded border-input accent-primary" />
                                 Aktif dan dapat dipilih pengguna
                             </label>
                         </CardContent>

@@ -1,5 +1,11 @@
 <script setup lang="ts">
+import { SlashCommand } from '@/components/editor/slashCommand';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
+import { getInitials } from '@/composables/useInitials';
 import type { Division, User } from '@/types';
 import { HocuspocusProvider } from '@hocuspocus/provider';
 import type { JSONContent } from '@tiptap/core';
@@ -16,14 +22,31 @@ import TaskItem from '@tiptap/extension-task-item';
 import TaskList from '@tiptap/extension-task-list';
 import StarterKit from '@tiptap/starter-kit';
 import { EditorContent, useEditor } from '@tiptap/vue-3';
-import { AtSign, Bold, Heading2, Italic, Link2, List, ListOrdered, ListTodo, Mic, MicOff, Redo2, Table2, Undo2 } from 'lucide-vue-next';
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import {
+    AlignCenterVertical,
+    AtSign,
+    Bold,
+    Heading2,
+    Italic,
+    Link2,
+    List,
+    ListOrdered,
+    ListTodo,
+    Maximize2,
+    Mic,
+    MicOff,
+    Minimize2,
+    Redo2,
+    Table2,
+    Undo2,
+} from 'lucide-vue-next';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import * as Y from 'yjs';
 
 interface Props {
     modelValue?: JSONContent | Record<string, unknown> | null;
     editable?: boolean;
-    users?: Pick<User, 'id' | 'name'>[];
+    users?: (Pick<User, 'id' | 'name'> & { division_id?: number | null })[];
     divisions?: Division[];
     topics?: { id: number; name: string }[];
     collabUrl?: string | null;
@@ -78,6 +101,7 @@ interface MentionItem {
     label: string;
     type: 'person' | 'division' | 'topic';
     hint: string;
+    initials: string;
 }
 
 function personAndDivisionItems(query: string): MentionItem[] {
@@ -85,11 +109,17 @@ function personAndDivisionItems(query: string): MentionItem[] {
 
     const people = props.users
         .filter((user) => user.name.toLowerCase().includes(normalized))
-        .map((user) => ({ id: user.id, label: user.name, type: 'person' as const, hint: 'Orang' }));
+        .map((user) => ({
+            id: user.id,
+            label: user.name,
+            type: 'person' as const,
+            hint: props.divisions.find((division) => division.id === user.division_id)?.name ?? 'Orang',
+            initials: getInitials(user.name),
+        }));
 
     const divisions = props.divisions
         .filter((division) => division.name.toLowerCase().includes(normalized))
-        .map((division) => ({ id: division.id, label: division.name, type: 'division' as const, hint: 'Divisi' }));
+        .map((division) => ({ id: division.id, label: division.name, type: 'division' as const, hint: 'Divisi', initials: '' }));
 
     return [...people, ...divisions];
 }
@@ -99,7 +129,7 @@ function topicItems(query: string): MentionItem[] {
 
     return props.topics
         .filter((topic) => topic.name.toLowerCase().includes(normalized))
-        .map((topic) => ({ id: topic.id, label: topic.name, type: 'topic' as const, hint: 'Topik' }));
+        .map((topic) => ({ id: topic.id, label: topic.name, type: 'topic' as const, hint: 'Topik', initials: '' }));
 }
 
 function escapeHtml(value: string): string {
@@ -149,21 +179,30 @@ function createSuggestion(getItems: (query: string) => MentionItem[], char: '@' 
                     items.length === 0
                         ? '<div class="mention-suggestion-empty">Tidak ada hasil</div>'
                         : items
-                              .map(
-                                  (item, index) => `
-                                    <button type="button" role="option" aria-selected="${index === selected}" data-selected="${index === selected}" data-index="${index}" class="mention-suggestion-item">
-                                        <span class="mention-suggestion-prefix">${char}</span>
-                                        <span class="truncate">${escapeHtml(item.label)}</span>
-                                        <span class="mention-suggestion-hint">${escapeHtml(item.hint)}</span>
-                                    </button>
-                                `,
-                              )
+                              .map((item, index) => {
+                                  const avatar =
+                                      item.type === 'person'
+                                          ? `<span class="mention-suggestion-avatar" aria-hidden="true">${escapeHtml(item.initials)}</span>`
+                                          : `<span class="mention-suggestion-type" data-type="${item.type}" aria-hidden="true">${char}</span>`;
+
+                                  return `
+                                    <div role="option" id="mention-option-${index}" aria-selected="${index === selected}" data-selected="${index === selected}" data-index="${index}" data-type="${item.type}" class="mention-suggestion-item">
+                                        ${avatar}
+                                        <span class="mention-suggestion-copy">
+                                            <span class="mention-suggestion-label">${escapeHtml(item.label)}</span>
+                                            <span class="mention-suggestion-hint">${escapeHtml(item.hint)}</span>
+                                        </span>
+                                    </div>
+                                `;
+                              })
                               .join('');
 
-                popup.querySelectorAll<HTMLButtonElement>('[data-index]').forEach((button) => {
-                    button.addEventListener('mousedown', (event) => {
+                popup.setAttribute('aria-activedescendant', items.length > 0 ? `mention-option-${selected}` : '');
+
+                popup.querySelectorAll<HTMLElement>('[data-index]').forEach((option) => {
+                    option.addEventListener('mousedown', (event) => {
                         event.preventDefault();
-                        select(items[Number(button.dataset.index)]);
+                        select(items[Number(option.dataset.index)]);
                     });
                 });
             };
@@ -191,8 +230,12 @@ function createSuggestion(getItems: (query: string) => MentionItem[], char: '@' 
                     return;
                 }
 
-                popup.style.top = `${Math.min(bounds.bottom + window.scrollY + 6, window.innerHeight + window.scrollY - 260)}px`;
-                popup.style.left = `${Math.min(bounds.left + window.scrollX, window.innerWidth - 340)}px`;
+                const popupWidth = 320;
+                const left = Math.min(bounds.left + window.scrollX, window.scrollX + window.innerWidth - popupWidth - 16);
+                const top = Math.min(bounds.bottom + window.scrollY + 8, window.scrollY + window.innerHeight - 300);
+
+                popup.style.left = `${Math.max(window.scrollX + 12, left)}px`;
+                popup.style.top = `${Math.max(window.scrollY + 12, top)}px`;
             };
 
             return {
@@ -234,6 +277,20 @@ function createSuggestion(getItems: (query: string) => MentionItem[], char: '@' 
                         return true;
                     }
 
+                    if (props.event.key === 'Home') {
+                        selected = 0;
+                        paint();
+
+                        return true;
+                    }
+
+                    if (props.event.key === 'End') {
+                        selected = Math.max(items.length - 1, 0);
+                        paint();
+
+                        return true;
+                    }
+
                     if (props.event.key === 'Enter') {
                         select(items[selected]);
 
@@ -256,6 +313,10 @@ function createSuggestion(getItems: (query: string) => MentionItem[], char: '@' 
 
 const TopicMentionNode = MentionNode.extend({ name: 'topicMention' });
 
+const focusMode = ref(false);
+const typewriterMode = ref(false);
+const editorScroll = ref<HTMLElement | null>(null);
+
 const editor = useEditor({
     content: props.modelValue ?? { type: 'doc', content: [{ type: 'paragraph' }] },
     editable: props.editable,
@@ -266,6 +327,7 @@ const editor = useEditor({
         Placeholder.configure({
             placeholder: 'Tulis pembahasan rapat di sini…',
         }),
+        SlashCommand,
         Link.configure({
             openOnClick: false,
             autolink: true,
@@ -289,13 +351,17 @@ const editor = useEditor({
                   Collaboration.configure({ document: ydoc }),
                   CollaborationCursor.configure({
                       provider,
-                      user: { name: props.collabUser ?? 'Pengguna', color: '#2563eb' },
+                      user: { name: props.collabUser ?? 'Pengguna', color: '#2456C7' },
                   }),
               ]
             : []),
     ],
     onUpdate: ({ editor: instance }) => {
         emit('update:modelValue', instance.getJSON());
+        updateWordCount();
+    },
+    onSelectionUpdate: () => {
+        centerCaret();
     },
 });
 
@@ -421,8 +487,9 @@ const tagOptions = computed(() => [
     })),
 ]);
 
-function insertTag() {
-    const selected = tagOptions.value.find((option) => option.key === tagSelection.value);
+function insertTag(value?: string | number) {
+    const key = String(value ?? tagSelection.value);
+    const selected = tagOptions.value.find((option) => option.key === key);
 
     if (!selected || !editor.value) {
         return;
@@ -440,15 +507,86 @@ function insertTag() {
     tagSelection.value = '';
 }
 
-function setLink() {
-    const url = window.prompt('Alamat tautan');
+const linkOpen = ref(false);
+const linkUrl = ref('');
 
-    if (!url) {
+function openLinkDialog() {
+    if (!editor.value) {
         return;
     }
 
-    editor.value?.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+    linkUrl.value = (editor.value.getAttributes('link').href as string | undefined) ?? '';
+    linkOpen.value = true;
 }
+
+function applyLink() {
+    if (!editor.value) {
+        return;
+    }
+
+    const url = linkUrl.value.trim();
+
+    if (!url) {
+        editor.value.chain().focus().extendMarkRange('link').unsetLink().run();
+    } else {
+        editor.value.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+    }
+
+    linkOpen.value = false;
+}
+
+function removeLink() {
+    editor.value?.chain().focus().extendMarkRange('link').unsetLink().run();
+    linkOpen.value = false;
+}
+
+const wordCount = ref(0);
+const readingTime = computed(() => Math.max(1, Math.ceil(wordCount.value / 200)));
+
+function updateWordCount() {
+    const text = editor.value?.getText() ?? '';
+    const trimmed = text.trim();
+    wordCount.value = trimmed ? trimmed.split(/\s+/).length : 0;
+}
+
+function centerCaret() {
+    if (!typewriterMode.value || !editor.value) {
+        return;
+    }
+
+    const view = editor.value.view;
+    const coords = view.coordsAtPos(view.state.selection.head);
+    const behavior: ScrollBehavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+    const container = focusMode.value ? editorScroll.value : null;
+
+    if (container) {
+        const rect = container.getBoundingClientRect();
+        container.scrollBy({ top: coords.top - rect.top - rect.height / 2, behavior });
+    } else {
+        window.scrollBy({ top: coords.top - window.innerHeight / 2, behavior });
+    }
+}
+
+function toggleFocusMode() {
+    focusMode.value = !focusMode.value;
+}
+
+function handleEscape(event: KeyboardEvent) {
+    if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'f') {
+        event.preventDefault();
+        focusMode.value = !focusMode.value;
+
+        return;
+    }
+
+    if (event.key === 'Escape' && focusMode.value && !document.querySelector('.mention-suggestion')) {
+        focusMode.value = false;
+    }
+}
+
+watch(focusMode, (value) => {
+    document.body.classList.toggle('overflow-hidden', value);
+});
 
 watch(
     () => props.modelValue,
@@ -469,11 +607,18 @@ watch(
     (editable) => editor.value?.setEditable(editable),
 );
 
+onMounted(() => {
+    document.addEventListener('keydown', handleEscape);
+    window.setTimeout(updateWordCount, 200);
+});
+
 onBeforeUnmount(() => {
     if (seedTimer) {
         clearTimeout(seedTimer);
     }
 
+    document.removeEventListener('keydown', handleEscape);
+    document.body.classList.remove('overflow-hidden');
     recognition?.stop();
     provider?.destroy();
     ydoc?.destroy();
@@ -486,49 +631,150 @@ defineExpose({
 </script>
 
 <template>
-    <div class="overflow-hidden rounded-lg border bg-card">
-        <div v-if="editor && editable" class="flex flex-wrap items-center gap-1 border-b bg-muted/40 p-2">
-            <Button type="button" variant="ghost" size="icon" title="Tebal" @click="editor.chain().focus().toggleBold().run()">
-                <Bold />
-            </Button>
-            <Button type="button" variant="ghost" size="icon" title="Miring" @click="editor.chain().focus().toggleItalic().run()">
-                <Italic />
-            </Button>
-            <Button type="button" variant="ghost" size="icon" title="Judul" @click="editor.chain().focus().toggleHeading({ level: 2 }).run()">
-                <Heading2 />
-            </Button>
-            <Button type="button" variant="ghost" size="icon" title="Daftar" @click="editor.chain().focus().toggleBulletList().run()">
-                <List />
-            </Button>
-            <Button type="button" variant="ghost" size="icon" title="Daftar bernomor" @click="editor.chain().focus().toggleOrderedList().run()">
-                <ListOrdered />
-            </Button>
-            <Button type="button" variant="ghost" size="icon" title="Daftar tugas" @click="editor.chain().focus().toggleTaskList().run()">
-                <ListTodo />
-            </Button>
+    <div
+        :class="
+            focusMode
+                ? 'fixed inset-0 z-[70] flex flex-col bg-background'
+                : 'group rounded-lg border border-border/80 bg-card shadow-soft-sm transition-[border-color,box-shadow] duration-base ease-out-soft focus-within:border-primary/40 focus-within:shadow-soft-md'
+        "
+    >
+        <div
+            v-if="editor && editable"
+            role="toolbar"
+            aria-label="Pemformatan dokumen"
+            :class="
+                focusMode
+                    ? 'sticky top-0 z-20 flex flex-wrap items-center gap-1 border-b border-border/70 bg-surface px-3 py-2'
+                    : 'sticky top-16 z-20 flex flex-wrap items-center gap-1 rounded-t-lg border-b border-border/70 bg-surface px-2 py-2'
+            "
+        >
+            <div class="flex items-center gap-0.5">
+                <Button
+                    type="button"
+                    :variant="editor.isActive('bold') ? 'secondary' : 'ghost'"
+                    size="icon"
+                    class="size-8"
+                    aria-label="Tebal"
+                    :aria-pressed="editor.isActive('bold')"
+                    @click="editor.chain().focus().toggleBold().run()"
+                >
+                    <Bold />
+                </Button>
+                <Button
+                    type="button"
+                    :variant="editor.isActive('italic') ? 'secondary' : 'ghost'"
+                    size="icon"
+                    class="size-8"
+                    aria-label="Miring"
+                    :aria-pressed="editor.isActive('italic')"
+                    @click="editor.chain().focus().toggleItalic().run()"
+                >
+                    <Italic />
+                </Button>
+                <Button
+                    type="button"
+                    :variant="editor.isActive('heading', { level: 2 }) ? 'secondary' : 'ghost'"
+                    size="icon"
+                    class="size-8"
+                    aria-label="Judul bagian"
+                    :aria-pressed="editor.isActive('heading', { level: 2 })"
+                    @click="editor.chain().focus().toggleHeading({ level: 2 }).run()"
+                >
+                    <Heading2 />
+                </Button>
+            </div>
+
+            <span class="mx-1 h-5 w-px bg-border" aria-hidden="true" />
+
+            <div class="flex items-center gap-0.5">
+                <Button
+                    type="button"
+                    :variant="editor.isActive('bulletList') ? 'secondary' : 'ghost'"
+                    size="icon"
+                    class="size-8"
+                    aria-label="Daftar butir"
+                    :aria-pressed="editor.isActive('bulletList')"
+                    @click="editor.chain().focus().toggleBulletList().run()"
+                >
+                    <List />
+                </Button>
+                <Button
+                    type="button"
+                    :variant="editor.isActive('orderedList') ? 'secondary' : 'ghost'"
+                    size="icon"
+                    class="size-8"
+                    aria-label="Daftar bernomor"
+                    :aria-pressed="editor.isActive('orderedList')"
+                    @click="editor.chain().focus().toggleOrderedList().run()"
+                >
+                    <ListOrdered />
+                </Button>
+                <Button
+                    type="button"
+                    :variant="editor.isActive('taskList') ? 'secondary' : 'ghost'"
+                    size="icon"
+                    class="size-8"
+                    aria-label="Daftar tugas"
+                    :aria-pressed="editor.isActive('taskList')"
+                    @click="editor.chain().focus().toggleTaskList().run()"
+                >
+                    <ListTodo />
+                </Button>
+            </div>
+
+            <span class="mx-1 h-5 w-px bg-border" aria-hidden="true" />
+
+            <div class="flex items-center gap-0.5">
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    class="size-8"
+                    aria-label="Sisipkan tabel"
+                    @click="editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()"
+                >
+                    <Table2 />
+                </Button>
+                <Button type="button" variant="ghost" size="icon" class="size-8" aria-label="Sisipkan tautan" @click="openLinkDialog">
+                    <Link2 />
+                </Button>
+            </div>
+
+            <span class="mx-1 h-5 w-px bg-border" aria-hidden="true" />
+
+            <div class="flex items-center gap-0.5">
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    class="size-8"
+                    aria-label="Urungkan"
+                    :disabled="!editor.can().undo()"
+                    @click="editor.chain().focus().undo().run()"
+                >
+                    <Undo2 />
+                </Button>
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    class="size-8"
+                    aria-label="Ulangi"
+                    :disabled="!editor.can().redo()"
+                    @click="editor.chain().focus().redo().run()"
+                >
+                    <Redo2 />
+                </Button>
+            </div>
+
+            <span class="mx-1 h-5 w-px bg-border" aria-hidden="true" />
+
             <Button
                 type="button"
-                variant="ghost"
+                :variant="isListening ? 'destructive' : 'ghost'"
                 size="icon"
-                title="Sisipkan tabel"
-                @click="editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()"
-            >
-                <Table2 />
-            </Button>
-            <Button type="button" variant="ghost" size="icon" title="Tautan" @click="setLink">
-                <Link2 />
-            </Button>
-            <Button type="button" variant="ghost" size="icon" title="Urungkan" @click="editor.chain().focus().undo().run()">
-                <Undo2 />
-            </Button>
-            <Button type="button" variant="ghost" size="icon" title="Ulangi" @click="editor.chain().focus().redo().run()">
-                <Redo2 />
-            </Button>
-            <Button
-                type="button"
-                :variant="isListening ? 'default' : 'ghost'"
-                size="icon"
-                :title="speechSupported ? (isListening ? 'Hentikan dikte' : 'Dikte suara') : 'Browser tidak mendukung dikte suara'"
+                class="size-8"
+                :aria-label="speechSupported ? (isListening ? 'Hentikan dikte' : 'Dikte suara') : 'Browser tidak mendukung dikte suara'"
                 :aria-pressed="isListening"
                 :disabled="!speechSupported"
                 @click="toggleDictation"
@@ -536,35 +782,112 @@ defineExpose({
                 <MicOff v-if="isListening" />
                 <Mic v-else />
             </Button>
-            <span v-if="isListening" class="ml-1 text-xs font-medium text-rose-600" aria-live="polite">Mendengarkan…</span>
 
-            <div v-if="props.showTagPicker" class="ml-auto flex items-center gap-1">
-                <AtSign class="size-4 text-muted-foreground" />
-                <select v-model="tagSelection" class="h-8 rounded-md border bg-background px-2 text-xs" @change="insertTag">
-                    <option value="">Sisipkan tag…</option>
-                    <optgroup label="Orang">
-                        <option v-for="option in tagOptions.filter((item) => item.type === 'person')" :key="option.key" :value="option.key">
-                            @{{ option.label }}
-                        </option>
-                    </optgroup>
-                    <optgroup label="Divisi">
-                        <option v-for="option in tagOptions.filter((item) => item.type === 'division')" :key="option.key" :value="option.key">
-                            @{{ option.label }}
-                        </option>
-                    </optgroup>
-                    <optgroup label="Topik">
-                        <option v-for="option in tagOptions.filter((item) => item.type === 'topic')" :key="option.key" :value="option.key">
-                            #{{ option.label }}
-                        </option>
-                    </optgroup>
-                </select>
+            <span
+                v-if="isListening"
+                class="ml-1 inline-flex items-center gap-1.5 rounded-full bg-destructive-soft px-2 py-1 text-xs font-medium text-destructive-strong"
+            >
+                <span class="size-1.5 animate-pulse rounded-full bg-destructive" aria-hidden="true" />
+                Mendengarkan
+            </span>
+
+            <div class="ml-auto flex items-center gap-1">
+                <template v-if="props.showTagPicker && !focusMode">
+                    <AtSign class="size-4 text-subtle-foreground" aria-hidden="true" />
+                    <Select
+                        v-model="tagSelection"
+                        wrapper-class="w-48 shrink-0"
+                        class="h-8 text-xs"
+                        aria-label="Sisipkan tag"
+                        @update:model-value="insertTag"
+                    >
+                        <option value="">Sisipkan tag…</option>
+                        <optgroup label="Orang">
+                            <option v-for="option in tagOptions.filter((item) => item.type === 'person')" :key="option.key" :value="option.key">
+                                @{{ option.label }}
+                            </option>
+                        </optgroup>
+                        <optgroup label="Divisi">
+                            <option v-for="option in tagOptions.filter((item) => item.type === 'division')" :key="option.key" :value="option.key">
+                                @{{ option.label }}
+                            </option>
+                        </optgroup>
+                        <optgroup label="Topik">
+                            <option v-for="option in tagOptions.filter((item) => item.type === 'topic')" :key="option.key" :value="option.key">
+                                #{{ option.label }}
+                            </option>
+                        </optgroup>
+                    </Select>
+                </template>
+
+                <Button
+                    type="button"
+                    :variant="typewriterMode ? 'secondary' : 'ghost'"
+                    size="icon"
+                    class="size-8"
+                    aria-label="Typewriter scrolling"
+                    :aria-pressed="typewriterMode"
+                    @click="typewriterMode = !typewriterMode"
+                >
+                    <AlignCenterVertical />
+                </Button>
+
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    class="size-8"
+                    :aria-label="focusMode ? 'Keluar mode fokus (Ctrl+Shift+F)' : 'Mode fokus (Ctrl+Shift+F)'"
+                    :aria-pressed="focusMode"
+                    @click="toggleFocusMode"
+                >
+                    <Minimize2 v-if="focusMode" />
+                    <Maximize2 v-else />
+                </Button>
             </div>
         </div>
 
-        <p v-if="speechError" class="border-t border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+        <p
+            v-if="speechError"
+            class="mx-3 mt-3 flex items-start gap-2 rounded-md border border-destructive/20 bg-destructive-soft px-3 py-2 text-xs leading-relaxed text-destructive-strong"
+            role="alert"
+        >
             {{ speechError }}
         </p>
 
-        <EditorContent :editor="editor" class="meeting-editor" />
+        <div ref="editorScroll" :class="focusMode ? 'min-h-0 flex-1 overflow-y-auto' : ''">
+            <EditorContent :editor="editor" class="meeting-editor" />
+        </div>
+
+        <div
+            v-if="editor && editable"
+            class="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 px-4 py-2 text-xs text-muted-foreground"
+        >
+            <span class="tabular-nums">{{ wordCount }} kata</span>
+            <span class="tabular-nums">± {{ readingTime }} menit baca</span>
+            <span v-if="focusMode" class="hidden sm:inline">Esc untuk keluar dari mode fokus</span>
+        </div>
+
+        <Dialog v-model:open="linkOpen">
+            <DialogContent class="z-[80] sm:max-w-md">
+                <form class="space-y-4" @submit.prevent="applyLink">
+                    <DialogHeader>
+                        <DialogTitle>Tautan</DialogTitle>
+                        <DialogDescription>Masukkan alamat tautan untuk teks yang dipilih.</DialogDescription>
+                    </DialogHeader>
+
+                    <div class="space-y-1.5">
+                        <Label for="editor-link-url">Alamat tautan</Label>
+                        <Input id="editor-link-url" v-model="linkUrl" placeholder="https://…" autofocus />
+                    </div>
+
+                    <DialogFooter>
+                        <Button v-if="editor?.isActive('link')" type="button" variant="ghost" @click="removeLink">Hapus tautan</Button>
+                        <Button type="button" variant="outline" @click="linkOpen = false">Batal</Button>
+                        <Button type="submit">Terapkan</Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
     </div>
 </template>
