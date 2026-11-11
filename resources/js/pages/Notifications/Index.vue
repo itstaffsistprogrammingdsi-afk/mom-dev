@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDateTime } from '@/lib/labels';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 
 interface NotificationRow {
     id: string;
@@ -31,6 +31,10 @@ const breadcrumbs: BreadcrumbItem[] = [{ title: 'Notifikasi', href: '/notifikasi
 function markAllRead() {
     router.post(route('notifications.read-all'));
 }
+
+function openNotification(notification: NotificationRow) {
+    router.post(route('notifications.read', notification.id));
+}
 </script>
 
 <template>
@@ -52,13 +56,13 @@ function markAllRead() {
 
             <Card v-else>
                 <CardContent class="divide-y p-0">
-                    <component
-                        :is="notification.data.url ? Link : 'div'"
+                    <button
                         v-for="notification in props.notifications.data"
                         :key="notification.id"
-                        :href="notification.data.url"
-                        class="flex items-start justify-between gap-4 p-4"
+                        type="button"
+                        class="flex w-full items-start justify-between gap-4 p-4 text-left transition hover:bg-muted/40"
                         :class="{ 'bg-muted/40': !notification.read_at }"
+                        @click="openNotification(notification)"
                     >
                         <div class="space-y-1">
                             <p class="font-medium">{{ notification.data.title ?? 'Pemberitahuan' }}</p>
@@ -66,7 +70,7 @@ function markAllRead() {
                             <p class="text-xs text-muted-foreground">{{ formatDateTime(notification.created_at) }}</p>
                         </div>
                         <span v-if="!notification.read_at" class="mt-1 size-2 shrink-0 rounded-full bg-primary" />
-                    </component>
+                    </button>
                 </CardContent>
             </Card>
 

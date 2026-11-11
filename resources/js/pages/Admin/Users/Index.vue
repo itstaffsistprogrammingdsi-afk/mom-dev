@@ -90,8 +90,20 @@ function updateUser(user: AdminUser, field: 'role' | 'division_id' | 'is_active'
 
             <form class="grid gap-2 rounded-lg border bg-card p-3 md:grid-cols-7" @submit.prevent="createUser">
                 <input v-model="createForm.name" required placeholder="Nama" class="h-9 rounded-md border bg-background px-3 text-sm" />
-                <input v-model="createForm.email" required type="email" placeholder="Email" class="h-9 rounded-md border bg-background px-3 text-sm" />
-                <input v-model="createForm.password" required type="password" placeholder="Password" class="h-9 rounded-md border bg-background px-3 text-sm" />
+                <input
+                    v-model="createForm.email"
+                    required
+                    type="email"
+                    placeholder="Email"
+                    class="h-9 rounded-md border bg-background px-3 text-sm"
+                />
+                <input
+                    v-model="createForm.password"
+                    required
+                    type="password"
+                    placeholder="Kata sandi"
+                    class="h-9 rounded-md border bg-background px-3 text-sm"
+                />
                 <select v-model="createForm.role" class="h-9 rounded-md border bg-background px-3 text-sm">
                     <option v-for="role in props.roles" :key="role.value" :value="role.value">{{ role.label }}</option>
                 </select>

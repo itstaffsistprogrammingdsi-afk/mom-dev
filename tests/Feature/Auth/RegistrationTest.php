@@ -33,5 +33,6 @@ class RegistrationTest extends TestCase
         $user = User::query()->where('email', 'test@example.com')->firstOrFail();
         $this->assertSame(UserRole::Member, $user->role);
         $this->assertTrue($user->is_active);
+        $this->assertNotNull($user->email_verified_at);
     }
 }

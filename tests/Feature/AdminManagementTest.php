@@ -31,7 +31,8 @@ class AdminManagementTest extends TestCase
             ])
             ->assertRedirect();
 
-        $this->assertDatabaseHas('users', ['email' => 'baru@mom.test']);
+        $created = User::query()->where('email', 'baru@mom.test')->firstOrFail();
+        $this->assertNotNull($created->email_verified_at);
 
         $this->actingAs($admin)
             ->post(route('admin.templates.store'), [

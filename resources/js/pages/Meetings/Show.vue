@@ -7,11 +7,46 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { attendanceLabels, confidentialityLabels, documentTypeClasses, documentTypeLabels, formatDate, formatDateTime, meetingTypeLabels } from '@/lib/labels';
-import { type ActionItem, type BreadcrumbItem, type Decision, type Division, type Meeting, type Participant, type SharedData, type Tag } from '@/types';
+import {
+    attendanceLabels,
+    confidentialityLabels,
+    documentTypeClasses,
+    documentTypeLabels,
+    formatDate,
+    formatDateTime,
+    meetingTypeLabels,
+} from '@/lib/labels';
+import {
+    type ActionItem,
+    type BreadcrumbItem,
+    type Decision,
+    type Division,
+    type Meeting,
+    type Participant,
+    type SharedData,
+    type Tag,
+} from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { CalendarClock, CheckCircle2, Download, ExternalLink, FileUp, Lock, MapPin, Paperclip, Pencil, Plus, Share2, Sparkles, Trash2, Unlock, UserRound, X } from 'lucide-vue-next';
-import { computed, reactive, ref } from 'vue';
+import {
+    CalendarClock,
+    CheckCircle2,
+    Download,
+    ExternalLink,
+    FileUp,
+    Loader2,
+    Lock,
+    MapPin,
+    Paperclip,
+    Pencil,
+    Plus,
+    Share2,
+    Sparkles,
+    Trash2,
+    Unlock,
+    UserRound,
+    X,
+} from 'lucide-vue-next';
+import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue';
 
 interface Summary {
     id: number;
@@ -19,7 +54,13 @@ interface Summary {
         ringkasan?: string;
         poin?: string[];
         keputusan?: string[];
-        action_items?: { title: string; description?: string | null; pic_name?: string | null; division_name?: string | null; due_date?: string | null }[];
+        action_items?: {
+            title: string;
+            description?: string | null;
+            pic_name?: string | null;
+            division_name?: string | null;
+            due_date?: string | null;
+        }[];
         saran_tag?: Record<string, string[]>;
     } & Record<string, unknown>;
     version: number;
@@ -60,7 +101,7 @@ interface FullMeeting extends Meeting {
 
 const props = defineProps<{
     meeting: FullMeeting;
-    can: { update: boolean; finalize: boolean; generateAi?: boolean; manage?: boolean };
+    can: { update: boolean; finalize: boolean; generateAi?: boolean; manage?: boolean; share?: boolean };
     users?: { id: number; name: string }[];
     divisions?: Division[];
 }>();
@@ -113,6 +154,89 @@ const canManage = computed(() => props.can.manage ?? props.can.update);
 const requiresShareConfirmation = computed(() => ['restricted', 'secret'].includes(props.meeting.confidentiality));
 const taskUsers = computed(() => props.users ?? []);
 const taskDivisions = computed(() => props.divisions ?? []);
+
+const summaryStatusLabels: Record<string, string> = {
+    draft: 'Draf',
+    approved: 'Disetujui',
+    rejected: 'Ditolak',
+};
+
+const summaryGenerationLabels: Record<string, string> = {
+    queued: 'Menunggu',
+    processing: 'Diproses',
+    completed: 'Selesai',
+    failed: 'Gagal',
+};
+
+const aiSummaries = ref<Summary[]>([...props.meeting.summaries]);
+const aiPollAttempts = ref(0);
+let aiPollTimer: ReturnType<typeof setInterval> | null = null;
+
+const hasPendingAiSummary = computed(() => aiSummaries.value.some((summary) => ['queued', 'processing'].includes(summary.generation_status)));
+
+watch(
+    () => props.meeting.summaries,
+    (summaries) => {
+        aiSummaries.value = summaries;
+    },
+);
+
+async function fetchAiSummaries() {
+    try {
+        const response = await fetch(route('meetings.ai.status', props.meeting.id), {
+            headers: { Accept: 'application/json' },
+            credentials: 'same-origin',
+        });
+
+        if (!response.ok) {
+            return;
+        }
+
+        const payload = (await response.json()) as { summaries: Summary[] };
+        aiSummaries.value = payload.summaries;
+    } catch {
+        return;
+    }
+}
+
+function stopAiPolling() {
+    if (aiPollTimer) {
+        clearInterval(aiPollTimer);
+        aiPollTimer = null;
+    }
+}
+
+function startAiPolling() {
+    if (aiPollTimer) {
+        return;
+    }
+
+    aiPollAttempts.value = 0;
+
+    aiPollTimer = setInterval(async () => {
+        aiPollAttempts.value += 1;
+
+        await fetchAiSummaries();
+
+        if (!hasPendingAiSummary.value || aiPollAttempts.value >= 120) {
+            stopAiPolling();
+        }
+    }, 2500);
+}
+
+watch(
+    hasPendingAiSummary,
+    (pending) => {
+        if (pending) {
+            startAiPolling();
+        } else {
+            stopAiPolling();
+        }
+    },
+    { immediate: true },
+);
+
+onBeforeUnmount(stopAiPolling);
 
 const attachmentUrl = (attachment: Attachment) => route('attachments.download', attachment.id);
 
@@ -180,12 +304,16 @@ function canEditTask(task: ActionItem) {
 }
 
 function addTask() {
-    router.post(route('action-items.store', props.meeting.id), { ...taskForm }, {
-        preserveScroll: true,
-        onSuccess: () => {
-            Object.assign(taskForm, { title: '', description: '', pic_id: '', division_id: '', due_date: '', status: 'new' });
+    router.post(
+        route('action-items.store', props.meeting.id),
+        { ...taskForm },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                Object.assign(taskForm, { title: '', description: '', pic_id: '', division_id: '', due_date: '', status: 'new' });
+            },
         },
-    });
+    );
 }
 
 function startEditTask(task: ActionItem) {
@@ -201,12 +329,16 @@ function startEditTask(task: ActionItem) {
 }
 
 function saveEditTask(task: ActionItem) {
-    router.patch(route('action-items.update', task.id), { ...editTaskForm }, {
-        preserveScroll: true,
-        onSuccess: () => {
-            editingTaskId.value = null;
+    router.patch(
+        route('action-items.update', task.id),
+        { ...editTaskForm },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                editingTaskId.value = null;
+            },
         },
-    });
+    );
 }
 
 function deleteTask(task: ActionItem) {
@@ -223,19 +355,23 @@ function onFileChange(event: Event) {
 }
 
 function uploadAttachment() {
-    router.post(route('attachments.store', props.meeting.id), {
-        file: attachmentForm.file,
-        url: attachmentForm.url || null,
-        name: attachmentForm.name || null,
-    }, {
-        forceFormData: true,
-        preserveScroll: true,
-        onSuccess: () => {
-            attachmentForm.file = null;
-            attachmentForm.url = '';
-            attachmentForm.name = '';
+    router.post(
+        route('attachments.store', props.meeting.id),
+        {
+            file: attachmentForm.file,
+            url: attachmentForm.url || null,
+            name: attachmentForm.name || null,
         },
-    });
+        {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                attachmentForm.file = null;
+                attachmentForm.url = '';
+                attachmentForm.name = '';
+            },
+        },
+    );
 }
 
 function deleteAttachment(attachment: Attachment) {
@@ -262,7 +398,7 @@ function restoreVersion(version: Version) {
         <div class="flex flex-col gap-6 p-4">
             <PageHeader :title="props.meeting.title">
                 <template #actions>
-                    <Button variant="outline" @click="openShare">
+                    <Button v-if="props.can.share" variant="outline" @click="openShare">
                         <Share2 class="size-4" />
                         Bagikan
                     </Button>
@@ -291,9 +427,15 @@ function restoreVersion(version: Version) {
                     <Button v-if="props.can.update" as-child variant="outline">
                         <Link :href="route('meetings.edit', props.meeting.id)">Sunting</Link>
                     </Button>
-                    <Button v-if="props.can.generateAi && props.meeting.status !== 'locked'" variant="outline" @click="generateAi">
-                        <Sparkles class="size-4" />
-                        Resume AI
+                    <Button
+                        v-if="props.can.generateAi && props.meeting.status !== 'locked'"
+                        variant="outline"
+                        :disabled="hasPendingAiSummary"
+                        @click="generateAi"
+                    >
+                        <Loader2 v-if="hasPendingAiSummary" class="size-4 animate-spin" />
+                        <Sparkles v-else class="size-4" />
+                        {{ hasPendingAiSummary ? 'Memproses…' : 'Resume AI' }}
                     </Button>
                     <Button v-if="props.can.finalize && props.meeting.status === 'draft'" @click="finalize">
                         {{ props.meeting.document_type === 'meeting' ? 'Finalkan notulen' : 'Finalkan dokumen' }}
@@ -330,7 +472,11 @@ function restoreVersion(version: Version) {
 
             <div class="grid gap-4 lg:grid-cols-3">
                 <Card>
-                    <CardHeader><CardTitle class="text-base">{{ props.meeting.document_type === 'meeting' ? 'Informasi rapat' : 'Informasi dokumen' }}</CardTitle></CardHeader>
+                    <CardHeader
+                        ><CardTitle class="text-base">{{
+                            props.meeting.document_type === 'meeting' ? 'Informasi rapat' : 'Informasi dokumen'
+                        }}</CardTitle></CardHeader
+                    >
                     <CardContent class="space-y-3 text-sm">
                         <div class="flex items-center gap-2">
                             <CalendarClock class="size-4 text-muted-foreground" />
@@ -348,7 +494,10 @@ function restoreVersion(version: Version) {
                         </div>
                         <div class="flex items-center gap-2">
                             <UserRound class="size-4 text-muted-foreground" />
-                            <span>{{ props.meeting.document_type === 'meeting' ? 'Notulis' : 'Pembuat' }}: {{ props.meeting.creator?.name ?? '—' }}</span>
+                            <span
+                                >{{ props.meeting.document_type === 'meeting' ? 'Notulis' : 'Pembuat' }}:
+                                {{ props.meeting.creator?.name ?? '—' }}</span
+                            >
                         </div>
                         <p class="text-muted-foreground">Divisi: {{ props.meeting.division?.name ?? 'Tanpa divisi' }}</p>
                         <p v-if="props.meeting.template" class="text-muted-foreground">Template: {{ props.meeting.template.name }}</p>
@@ -424,17 +573,24 @@ function restoreVersion(version: Version) {
                         <span class="text-xs text-muted-foreground">Dibuat AI · perlu verifikasi</span>
                     </CardHeader>
                     <CardContent class="space-y-3 text-sm">
-                        <p v-if="props.meeting.summaries.length === 0" class="text-muted-foreground">
+                        <p v-if="aiSummaries.length === 0" class="text-muted-foreground">
                             Belum ada resume. Klik "Resume AI" untuk membuat ringkasan.
                         </p>
-                        <div v-for="summary in props.meeting.summaries" :key="summary.id" class="space-y-3 rounded-lg border p-3">
+                        <div v-for="summary in aiSummaries" :key="summary.id" class="space-y-3 rounded-lg border p-3">
                             <div class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                                 <Sparkles class="size-3.5" />
-                                <span>v{{ summary.version }} · {{ summary.status }} · {{ summary.generation_status }}</span>
+                                <span>
+                                    v{{ summary.version }} · {{ summaryStatusLabels[summary.status] ?? summary.status }} ·
+                                    {{ summaryGenerationLabels[summary.generation_status] ?? summary.generation_status }}
+                                </span>
                                 <span v-if="summary.model">· {{ summary.model }}</span>
                             </div>
 
-                            <p v-if="summary.generation_status === 'queued' || summary.generation_status === 'processing'" class="text-muted-foreground">
+                            <p
+                                v-if="summary.generation_status === 'queued' || summary.generation_status === 'processing'"
+                                class="flex items-center gap-2 text-muted-foreground"
+                            >
+                                <Loader2 class="size-3.5 animate-spin" />
                                 Resume sedang diproses…
                             </p>
                             <p v-if="summary.generation_status === 'failed'" class="text-rose-600">
@@ -458,7 +614,10 @@ function restoreVersion(version: Version) {
                                 </ul>
                             </div>
 
-                            <div v-if="summary.status === 'draft' && summary.generation_status === 'completed' && canManage" class="flex flex-wrap gap-2">
+                            <div
+                                v-if="summary.status === 'draft' && summary.generation_status === 'completed' && canManage"
+                                class="flex flex-wrap gap-2"
+                            >
                                 <Button size="sm" @click="approveSummary(summary)">Setujui</Button>
                                 <Button size="sm" variant="outline" @click="rejectSummary(summary)">Tolak</Button>
                                 <Button v-if="summary.content.action_items?.length" size="sm" variant="outline" @click="applySummaryActions(summary)">
@@ -476,8 +635,17 @@ function restoreVersion(version: Version) {
                     <span class="text-xs text-muted-foreground">PIC dan tenggat wajib sebelum finalisasi</span>
                 </CardHeader>
                 <CardContent class="space-y-4">
-                    <form v-if="canManage && props.meeting.status === 'draft'" class="grid gap-2 rounded-lg border bg-muted/20 p-3 md:grid-cols-6" @submit.prevent="addTask">
-                        <input v-model="taskForm.title" required placeholder="Tugas baru…" class="h-9 rounded-md border bg-background px-3 text-sm md:col-span-2" />
+                    <form
+                        v-if="canManage && props.meeting.status === 'draft'"
+                        class="grid gap-2 rounded-lg border bg-muted/20 p-3 md:grid-cols-6"
+                        @submit.prevent="addTask"
+                    >
+                        <input
+                            v-model="taskForm.title"
+                            required
+                            placeholder="Tugas baru…"
+                            class="h-9 rounded-md border bg-background px-3 text-sm md:col-span-2"
+                        />
                         <select v-model="taskForm.pic_id" class="h-9 rounded-md border bg-background px-3 text-sm">
                             <option value="">PIC…</option>
                             <option v-for="person in taskUsers" :key="person.id" :value="String(person.id)">{{ person.name }}</option>
@@ -517,14 +685,23 @@ function restoreVersion(version: Version) {
                                         </template>
                                     </td>
                                     <td class="py-2 pr-3">
-                                        <select v-if="editingTaskId === task.id" v-model="editTaskForm.pic_id" class="h-8 rounded-md border bg-background px-2 text-xs">
+                                        <select
+                                            v-if="editingTaskId === task.id"
+                                            v-model="editTaskForm.pic_id"
+                                            class="h-8 rounded-md border bg-background px-2 text-xs"
+                                        >
                                             <option value="">—</option>
                                             <option v-for="person in taskUsers" :key="person.id" :value="String(person.id)">{{ person.name }}</option>
                                         </select>
                                         <span v-else>{{ task.pic?.name ?? task.pic_name ?? task.division?.name ?? '—' }}</span>
                                     </td>
                                     <td class="py-2 pr-3" :class="{ 'font-medium text-rose-600': task.is_overdue }">
-                                        <input v-if="editingTaskId === task.id" v-model="editTaskForm.due_date" type="date" class="h-8 rounded-md border bg-background px-2 text-xs" />
+                                        <input
+                                            v-if="editingTaskId === task.id"
+                                            v-model="editTaskForm.due_date"
+                                            type="date"
+                                            class="h-8 rounded-md border bg-background px-2 text-xs"
+                                        />
                                         <span v-else>{{ formatDate(task.due_date) }}</span>
                                     </td>
                                     <td class="py-2 pr-3">
@@ -539,7 +716,11 @@ function restoreVersion(version: Version) {
                                             <option value="done">Selesai</option>
                                             <option value="cancelled">Dibatalkan</option>
                                         </select>
-                                        <select v-else-if="editingTaskId === task.id" v-model="editTaskForm.status" class="h-8 rounded-md border bg-background px-2 text-xs">
+                                        <select
+                                            v-else-if="editingTaskId === task.id"
+                                            v-model="editTaskForm.status"
+                                            class="h-8 rounded-md border bg-background px-2 text-xs"
+                                        >
                                             <option value="new">Baru</option>
                                             <option value="in_progress">Berjalan</option>
                                             <option value="done">Selesai</option>
@@ -574,10 +755,19 @@ function restoreVersion(version: Version) {
                             <div class="flex flex-wrap items-center gap-2">
                                 <input type="file" class="text-xs" @change="onFileChange" />
                                 <span class="text-xs text-muted-foreground">atau</span>
-                                <input v-model="attachmentForm.url" type="url" placeholder="https://…" class="h-8 flex-1 rounded-md border bg-background px-2 text-xs" />
+                                <input
+                                    v-model="attachmentForm.url"
+                                    type="url"
+                                    placeholder="https://…"
+                                    class="h-8 flex-1 rounded-md border bg-background px-2 text-xs"
+                                />
                             </div>
                             <div class="flex gap-2">
-                                <input v-model="attachmentForm.name" placeholder="Nama lampiran (opsional)" class="h-8 flex-1 rounded-md border bg-background px-2 text-xs" />
+                                <input
+                                    v-model="attachmentForm.name"
+                                    placeholder="Nama lampiran (opsional)"
+                                    class="h-8 flex-1 rounded-md border bg-background px-2 text-xs"
+                                />
                                 <Button type="submit" size="sm">
                                     <FileUp class="size-4" />
                                     Unggah
@@ -586,8 +776,17 @@ function restoreVersion(version: Version) {
                         </form>
 
                         <p v-if="props.meeting.attachments.length === 0" class="text-muted-foreground">Belum ada lampiran.</p>
-                        <div v-for="attachment in props.meeting.attachments" :key="attachment.id" class="flex items-center justify-between gap-2 rounded-md border p-2">
-                            <a :href="attachmentUrl(attachment)" target="_blank" rel="noopener" class="flex min-w-0 items-center gap-2 hover:text-primary">
+                        <div
+                            v-for="attachment in props.meeting.attachments"
+                            :key="attachment.id"
+                            class="flex items-center justify-between gap-2 rounded-md border p-2"
+                        >
+                            <a
+                                :href="attachmentUrl(attachment)"
+                                target="_blank"
+                                rel="noopener"
+                                class="flex min-w-0 items-center gap-2 hover:text-primary"
+                            >
                                 <Paperclip class="size-4 shrink-0 text-muted-foreground" />
                                 <span class="truncate">{{ attachment.original_name }}</span>
                             </a>
@@ -605,7 +804,11 @@ function restoreVersion(version: Version) {
                     <CardHeader><CardTitle class="text-base">Riwayat versi</CardTitle></CardHeader>
                     <CardContent class="space-y-2 text-sm">
                         <p v-if="props.meeting.versions.length === 0" class="text-muted-foreground">Belum ada snapshot versi.</p>
-                        <div v-for="version in props.meeting.versions" :key="version.id" class="flex items-center justify-between gap-2 rounded-md border p-2">
+                        <div
+                            v-for="version in props.meeting.versions"
+                            :key="version.id"
+                            class="flex items-center justify-between gap-2 rounded-md border p-2"
+                        >
                             <div>
                                 <p class="font-medium">Versi {{ version.version }}</p>
                                 <p class="text-xs text-muted-foreground">{{ version.reason }}</p>
@@ -625,9 +828,7 @@ function restoreVersion(version: Version) {
                 <form class="space-y-4" @submit.prevent="submitShare">
                     <DialogHeader>
                         <DialogTitle>Bagikan dokumen</DialogTitle>
-                        <DialogDescription>
-                            Kirim tautan dan, jika dipilih, salinan PDF ke alamat email penerima.
-                        </DialogDescription>
+                        <DialogDescription> Kirim tautan dan, jika dipilih, salinan PDF ke alamat email penerima. </DialogDescription>
                     </DialogHeader>
 
                     <div class="space-y-2">
@@ -662,8 +863,8 @@ function restoreVersion(version: Version) {
 
                     <div v-if="requiresShareConfirmation" class="space-y-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
                         <p>
-                            Dokumen ini berlabel <strong>{{ confidentialityLabels[props.meeting.confidentiality] }}</strong>.
-                            Pastikan seluruh penerima berhak menerima dokumen.
+                            Dokumen ini berlabel <strong>{{ confidentialityLabels[props.meeting.confidentiality] }}</strong
+                            >. Pastikan seluruh penerima berhak menerima dokumen.
                         </p>
                         <label class="flex items-center gap-2">
                             <input v-model="shareForm.confirm_share" type="checkbox" class="size-4 rounded border" />

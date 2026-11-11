@@ -23,11 +23,7 @@ const submit = () => {
 </script>
 
 <template>
-    <AuthBase
-        kicker="AKUN BARU"
-        title="Buat akun baru"
-        description="Lengkapi data berikut untuk mulai menggunakan sistem."
-    >
+    <AuthBase kicker="AKUN BARU" title="Buat akun baru" description="Lengkapi data berikut untuk mulai menggunakan sistem.">
         <Head title="Daftar" />
 
         <form class="login-form" @submit.prevent="submit">
@@ -126,13 +122,7 @@ const submit = () => {
                 <small id="password-confirmation-error" class="field-error" aria-live="polite">{{ form.errors.password_confirmation }}</small>
             </div>
 
-            <button
-                type="submit"
-                class="primary-button"
-                :class="{ 'is-loading': form.processing }"
-                :disabled="form.processing"
-                tabindex="5"
-            >
+            <button type="submit" class="primary-button" :class="{ 'is-loading': form.processing }" :disabled="form.processing" tabindex="5">
                 <span class="button-label">Buat akun</span>
                 <UserRoundPlus class="button-arrow" aria-hidden="true" />
                 <span class="button-spinner" aria-hidden="true"></span>

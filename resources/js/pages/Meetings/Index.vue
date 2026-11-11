@@ -112,7 +112,10 @@ function resetFilters() {
                             <span class="rounded-full px-2 py-0.5 text-xs font-medium" :class="documentTypeClasses[meeting.document_type]">
                                 {{ documentTypeLabels[meeting.document_type] ?? meeting.document_type }}
                             </span>
-                            <span class="text-xs text-muted-foreground">{{ meetingTypeLabels[meeting.meeting_type] }} · {{ formatDateTime(meeting.scheduled_at) }} · {{ meeting.division?.name ?? 'Tanpa divisi' }} · Notulis: {{ meeting.creator?.name ?? '—' }}</span>
+                            <span class="text-xs text-muted-foreground"
+                                >{{ meetingTypeLabels[meeting.meeting_type] }} · {{ formatDateTime(meeting.scheduled_at) }} ·
+                                {{ meeting.division?.name ?? 'Tanpa divisi' }} · Notulis: {{ meeting.creator?.name ?? '—' }}</span
+                            >
                         </div>
                     </div>
                     <div class="flex shrink-0 items-center gap-2">

@@ -1,15 +1,14 @@
 <script setup lang="ts">
-import InputError from '@/components/InputError.vue';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import { LoaderCircle } from 'lucide-vue-next';
+import { Eye, EyeOff, LockKeyhole } from 'lucide-vue-next';
+import { ref } from 'vue';
 
 const form = useForm({
     password: '',
 });
+
+const showPassword = ref(false);
 
 const submit = () => {
     form.post(route('password.confirm'), {
@@ -21,33 +20,43 @@ const submit = () => {
 </script>
 
 <template>
-    <AuthLayout title="Confirm your password" description="This is a secure area of the application. Please confirm your password before continuing.">
-        <Head title="Confirm password" />
+    <AuthLayout title="Konfirmasi kata sandi" description="Area ini dilindungi. Konfirmasi kata sandi Anda untuk melanjutkan.">
+        <Head title="Konfirmasi kata sandi" />
 
-        <form @submit.prevent="submit">
-            <div class="space-y-6">
-                <div class="grid gap-2">
-                    <Label htmlFor="password">Password</Label>
-                    <Input
+        <form class="login-form" @submit.prevent="submit">
+            <div class="field-group">
+                <label for="password">Kata sandi</label>
+                <div class="input-wrap" :class="{ 'has-error': form.errors.password }">
+                    <LockKeyhole class="field-icon" aria-hidden="true" />
+                    <input
                         id="password"
-                        type="password"
-                        class="mt-1 block w-full"
                         v-model="form.password"
+                        :type="showPassword ? 'text' : 'password'"
                         required
-                        autocomplete="current-password"
                         autofocus
+                        autocomplete="current-password"
+                        placeholder="Masukkan kata sandi"
+                        :aria-invalid="!!form.errors.password"
+                        aria-describedby="password-error"
                     />
-
-                    <InputError :message="form.errors.password" />
+                    <button
+                        type="button"
+                        class="password-toggle"
+                        :aria-label="showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'"
+                        @click="showPassword = !showPassword"
+                    >
+                        <EyeOff v-if="showPassword" aria-hidden="true" />
+                        <Eye v-else aria-hidden="true" />
+                    </button>
                 </div>
-
-                <div class="flex items-center">
-                    <Button class="w-full" :disabled="form.processing">
-                        <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />
-                        Confirm Password
-                    </Button>
-                </div>
+                <small id="password-error" class="field-error" aria-live="polite">{{ form.errors.password }}</small>
             </div>
+
+            <button type="submit" class="primary-button" :class="{ 'is-loading': form.processing }" :disabled="form.processing">
+                <span class="button-label">Konfirmasi</span>
+                <LockKeyhole class="button-arrow" aria-hidden="true" />
+                <span class="button-spinner" aria-hidden="true"></span>
+            </button>
         </form>
     </AuthLayout>
 </template>

@@ -69,12 +69,7 @@ function submit() {
                 <div class="space-y-4 lg:col-span-3">
                     <div class="space-y-2">
                         <label for="template-name" class="text-sm font-medium">Nama template</label>
-                        <input
-                            id="template-name"
-                            v-model="form.name"
-                            required
-                            class="h-9 w-full rounded-md border bg-background px-3 text-sm"
-                        />
+                        <input id="template-name" v-model="form.name" required class="h-9 w-full rounded-md border bg-background px-3 text-sm" />
                         <p v-if="form.errors.name" class="text-xs text-rose-600">{{ form.errors.name }}</p>
                     </div>
 
@@ -82,7 +77,8 @@ function submit() {
                         <label class="text-sm font-medium">Isi template</label>
                         <MeetingEditor v-model="form.content" :show-tag-picker="false" />
                         <p class="text-xs text-muted-foreground">
-                            Gunakan heading, daftar, dan tabel untuk membentuk struktur dokumen. Teks ini akan otomatis menjadi isi awal saat template dipakai.
+                            Gunakan heading, daftar, dan tabel untuk membentuk struktur dokumen. Teks ini akan otomatis menjadi isi awal saat template
+                            dipakai.
                         </p>
                     </div>
                 </div>
@@ -93,7 +89,11 @@ function submit() {
                         <CardContent class="space-y-3">
                             <div class="space-y-2">
                                 <label for="document-type" class="text-sm font-medium">Jenis dokumen</label>
-                                <select id="document-type" v-model="form.document_type" class="h-9 w-full rounded-md border bg-background px-3 text-sm">
+                                <select
+                                    id="document-type"
+                                    v-model="form.document_type"
+                                    class="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                                >
                                     <option v-for="type in props.documentTypes" :key="type.value" :value="type.value">{{ type.label }}</option>
                                 </select>
                                 <p v-if="selectedType" class="text-xs text-muted-foreground">{{ selectedType.description }}</p>

@@ -73,8 +73,11 @@ class ActionItemController extends Controller
         $this->authorize('update', $meeting);
 
         $validated = $this->validatePayload($request);
+        $status = ActionItemStatus::from($validated['status'] ?? ActionItemStatus::New->value);
         $item = $meeting->actionItems()->create([
             ...$validated,
+            'status' => $status,
+            'completed_at' => $status === ActionItemStatus::Done ? now() : null,
             'source' => 'manual',
             'ai_confirmed' => true,
         ]);
@@ -91,7 +94,14 @@ class ActionItemController extends Controller
 
         $previousPic = $actionItem->pic_id;
         $validated = $this->validatePayload($request);
-        $actionItem->update($validated);
+        $status = isset($validated['status'])
+            ? ActionItemStatus::from($validated['status'])
+            : $actionItem->status;
+
+        $actionItem->update([
+            ...$validated,
+            'completed_at' => $status === ActionItemStatus::Done ? ($actionItem->completed_at ?? now()) : null,
+        ]);
 
         $audit->log('action_item.updated', $actionItem, 'Memperbarui action item', meetingId: $actionItem->meeting_id);
 

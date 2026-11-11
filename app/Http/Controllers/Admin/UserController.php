@@ -20,9 +20,11 @@ class UserController extends Controller
     {
         $users = User::query()
             ->with('division:id,name')
-            ->when($request->string('search')->toString(), fn ($query, $search) => $query
-                ->whereLike('name', "%{$search}%", caseSensitive: false)
-                ->orWhereLike('email', "%{$search}%", caseSensitive: false))
+            ->when($request->string('search')->toString(), fn ($query, $search) => $query->where(
+                fn ($query) => $query
+                    ->whereLike('name', "%{$search}%", caseSensitive: false)
+                    ->orWhereLike('email', "%{$search}%", caseSensitive: false)
+            ))
             ->orderBy('name')
             ->paginate(20)
             ->withQueryString();

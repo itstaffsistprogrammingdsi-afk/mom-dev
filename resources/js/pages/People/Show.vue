@@ -24,7 +24,7 @@ const props = defineProps<{
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Orang', href: `/orang/${props.person.id}` },
+    { title: 'Dashboard', href: '/dashboard' },
     { title: props.person.name, href: `/orang/${props.person.id}` },
 ];
 </script>
@@ -53,7 +53,9 @@ const breadcrumbs: BreadcrumbItem[] = [
                         >
                             <div>
                                 <p class="font-medium">{{ meeting.title }}</p>
-                                <p class="text-xs text-muted-foreground">{{ meetingTypeLabels[meeting.meeting_type] }} · {{ formatDate(meeting.scheduled_at) }}</p>
+                                <p class="text-xs text-muted-foreground">
+                                    {{ meetingTypeLabels[meeting.meeting_type] }} · {{ formatDate(meeting.scheduled_at) }}
+                                </p>
                             </div>
                             <StatusBadge kind="meeting" :value="meeting.status" />
                         </Link>

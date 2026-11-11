@@ -12,6 +12,7 @@ use App\Models\Meeting;
 use App\Models\User;
 use App\Notifications\ActionItemAssignedNotification;
 use App\Services\AuditLogger;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -40,6 +41,16 @@ class MeetingAiController extends Controller
             ]);
         }
 
+        $this->failStaleSummaries($meeting);
+
+        $pending = $meeting->summaries()
+            ->whereIn('generation_status', ['queued', 'processing'])
+            ->exists();
+
+        if ($pending) {
+            return back()->with('error', 'Resume AI masih diproses. Tunggu hingga selesai.');
+        }
+
         $version = (int) $meeting->summaries()->max('version') + 1;
 
         $summary = $meeting->summaries()->create([
@@ -54,7 +65,32 @@ class MeetingAiController extends Controller
 
         GenerateMeetingSummary::dispatch($summary);
 
-        return back()->with('success', 'Permintaan resume AI dibuat. Hasil akan muncul di panel Resume AI.');
+        return back()->with('success', 'Permintaan resume AI dibuat. Hasil akan muncul otomatis di panel Resume AI.');
+    }
+
+    public function status(Request $request, Meeting $meeting): JsonResponse
+    {
+        $this->authorize('view', $meeting);
+
+        $this->failStaleSummaries($meeting);
+
+        $summaries = $meeting->summaries()
+            ->latest('version')
+            ->limit(5)
+            ->get()
+            ->map(fn (AiSummary $summary) => [
+                'id' => $summary->id,
+                'version' => $summary->version,
+                'status' => $summary->status->value,
+                'generation_status' => $summary->generation_status,
+                'error_message' => $summary->error_message,
+                'model' => $summary->model,
+                'approved_at' => $summary->approved_at?->toIso8601String(),
+                'content' => $summary->content ?? [],
+            ])
+            ->values();
+
+        return response()->json(['summaries' => $summaries]);
     }
 
     public function approve(Request $request, AiSummary $aiSummary, AuditLogger $audit): RedirectResponse
@@ -182,5 +218,17 @@ class MeetingAiController extends Controller
         );
 
         return back()->with('success', "{$created} action item dari AI ditambahkan. Lengkapi PIC dan tenggat sebelum finalisasi.");
+    }
+
+    private function failStaleSummaries(Meeting $meeting): void
+    {
+        $meeting->summaries()
+            ->whereIn('generation_status', ['queued', 'processing'])
+            ->where('updated_at', '<', now()->subMinutes(10))
+            ->update([
+                'generation_status' => 'failed',
+                'error_message' => 'Proses AI melewati batas waktu. Silakan jalankan ulang resume.',
+                'completed_at' => now(),
+            ]);
     }
 }

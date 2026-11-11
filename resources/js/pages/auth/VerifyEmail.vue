@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import TextLink from '@/components/TextLink.vue';
-import { Button } from '@/components/ui/button';
 import AuthLayout from '@/layouts/AuthLayout.vue';
-import { Head, useForm } from '@inertiajs/vue3';
-import { LoaderCircle } from 'lucide-vue-next';
+import { Head, Link, useForm } from '@inertiajs/vue3';
+import { MailCheck } from 'lucide-vue-next';
 
 defineProps<{
     status?: string;
@@ -17,20 +15,27 @@ const submit = () => {
 </script>
 
 <template>
-    <AuthLayout title="Verify email" description="Please verify your email address by clicking on the link we just emailed to you.">
-        <Head title="Email verification" />
+    <AuthLayout title="Verifikasi email" description="Verifikasi alamat email Anda melalui tautan yang telah kami kirimkan.">
+        <Head title="Verifikasi email" />
 
-        <div v-if="status === 'verification-link-sent'" class="mb-4 text-center text-sm font-medium text-green-600">
-            A new verification link has been sent to the email address you provided during registration.
+        <div
+            v-if="status === 'verification-link-sent'"
+            class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-center text-xs font-medium text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200"
+        >
+            Tautan verifikasi baru telah dikirim ke alamat email yang Anda gunakan saat mendaftar.
         </div>
 
-        <form @submit.prevent="submit" class="space-y-6 text-center">
-            <Button :disabled="form.processing" variant="secondary">
-                <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />
-                Resend verification email
-            </Button>
-
-            <TextLink :href="route('logout')" method="post" as="button" class="mx-auto block text-sm"> Log out </TextLink>
+        <form class="login-form" @submit.prevent="submit">
+            <button type="submit" class="primary-button" :class="{ 'is-loading': form.processing }" :disabled="form.processing">
+                <span class="button-label">Kirim ulang email verifikasi</span>
+                <MailCheck class="button-arrow" aria-hidden="true" />
+                <span class="button-spinner" aria-hidden="true"></span>
+            </button>
         </form>
+
+        <p class="signup-note">
+            Ingin keluar dari akun ini?
+            <Link :href="route('logout')" method="post" as="button" class="text-link">Keluar</Link>
+        </p>
     </AuthLayout>
 </template>

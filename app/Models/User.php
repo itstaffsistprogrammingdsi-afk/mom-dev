@@ -24,6 +24,7 @@ class User extends Authenticatable
         'job_title',
         'is_active',
         'notification_preferences',
+        'email_verified_at',
         'last_login_at',
     ];
 

@@ -120,62 +120,62 @@ function canEdit(task: ActionItem) {
             </form>
 
             <template v-if="props.view !== 'board'">
-            <EmptyState
-                v-if="props.items.data.length === 0"
-                title="Tidak ada tugas"
-                description="Ubah filter atau tambahkan action item dari halaman notulen."
-            />
+                <EmptyState
+                    v-if="props.items.data.length === 0"
+                    title="Tidak ada tugas"
+                    description="Ubah filter atau tambahkan action item dari halaman notulen."
+                />
 
-            <div v-else class="overflow-x-auto rounded-lg border bg-card">
-                <table class="w-full min-w-[760px] text-sm">
-                    <thead class="border-b bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
-                        <tr>
-                            <th class="p-3">Tugas</th>
-                            <th class="p-3">Notulen</th>
-                            <th class="p-3">PIC</th>
-                            <th class="p-3">Tenggat</th>
-                            <th class="p-3">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y">
-                        <tr v-for="task in props.items.data" :key="task.id">
-                            <td class="p-3">
-                                <p class="font-medium">{{ task.title }}</p>
-                                <p class="text-xs text-muted-foreground">{{ task.division?.name ?? 'Tanpa divisi' }}</p>
-                            </td>
-                            <td class="p-3">
-                                <Link v-if="task.meeting" :href="route('meetings.show', task.meeting.id)" class="text-primary underline">
-                                    {{ task.meeting.title }}
-                                </Link>
-                                <span v-else>—</span>
-                            </td>
-                            <td class="p-3">{{ task.pic?.name ?? task.pic_name ?? '—' }}</td>
-                            <td class="p-3" :class="{ 'font-medium text-rose-600': task.is_overdue }">{{ formatDate(task.due_date) }}</td>
-                            <td class="p-3">
-                                <select
-                                    v-if="canEdit(task)"
-                                    :value="task.status"
-                                    class="h-8 rounded-md border bg-background px-2 text-xs"
-                                    @change="updateStatus(task, ($event.target as HTMLSelectElement).value)"
-                                >
-                                    <option value="new">Baru</option>
-                                    <option value="in_progress">Berjalan</option>
-                                    <option value="done">Selesai</option>
-                                    <option value="cancelled">Dibatalkan</option>
-                                </select>
-                                <StatusBadge v-else kind="action" :value="task.status" />
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+                <div v-else class="overflow-x-auto rounded-lg border bg-card">
+                    <table class="w-full min-w-[760px] text-sm">
+                        <thead class="border-b bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                            <tr>
+                                <th class="p-3">Tugas</th>
+                                <th class="p-3">Notulen</th>
+                                <th class="p-3">PIC</th>
+                                <th class="p-3">Tenggat</th>
+                                <th class="p-3">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y">
+                            <tr v-for="task in props.items.data" :key="task.id">
+                                <td class="p-3">
+                                    <p class="font-medium">{{ task.title }}</p>
+                                    <p class="text-xs text-muted-foreground">{{ task.division?.name ?? 'Tanpa divisi' }}</p>
+                                </td>
+                                <td class="p-3">
+                                    <Link v-if="task.meeting" :href="route('meetings.show', task.meeting.id)" class="text-primary underline">
+                                        {{ task.meeting.title }}
+                                    </Link>
+                                    <span v-else>—</span>
+                                </td>
+                                <td class="p-3">{{ task.pic?.name ?? task.pic_name ?? '—' }}</td>
+                                <td class="p-3" :class="{ 'font-medium text-rose-600': task.is_overdue }">{{ formatDate(task.due_date) }}</td>
+                                <td class="p-3">
+                                    <select
+                                        v-if="canEdit(task)"
+                                        :value="task.status"
+                                        class="h-8 rounded-md border bg-background px-2 text-xs"
+                                        @change="updateStatus(task, ($event.target as HTMLSelectElement).value)"
+                                    >
+                                        <option value="new">Baru</option>
+                                        <option value="in_progress">Berjalan</option>
+                                        <option value="done">Selesai</option>
+                                        <option value="cancelled">Dibatalkan</option>
+                                    </select>
+                                    <StatusBadge v-else kind="action" :value="task.status" />
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
 
-            <div class="flex flex-wrap items-center justify-between gap-3">
-                <p class="text-sm text-muted-foreground">
-                    Menampilkan {{ props.items.from ?? 0 }}–{{ props.items.to ?? 0 }} dari {{ props.items.total }} tugas
-                </p>
-                <Pagination :links="props.items.links" />
-            </div>
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <p class="text-sm text-muted-foreground">
+                        Menampilkan {{ props.items.from ?? 0 }}–{{ props.items.to ?? 0 }} dari {{ props.items.total }} tugas
+                    </p>
+                    <Pagination :links="props.items.links" />
+                </div>
             </template>
 
             <div v-if="props.view === 'board'" class="grid gap-3 lg:grid-cols-4">
@@ -204,7 +204,12 @@ function canEdit(task: ActionItem) {
                                 <option value="cancelled">Dibatalkan</option>
                             </select>
                         </div>
-                        <p v-if="(props.board?.[column.key]?.length ?? 0) === 0" class="rounded-md border border-dashed p-3 text-center text-xs text-muted-foreground">Kosong</p>
+                        <p
+                            v-if="(props.board?.[column.key]?.length ?? 0) === 0"
+                            class="rounded-md border border-dashed p-3 text-center text-xs text-muted-foreground"
+                        >
+                            Kosong
+                        </p>
                     </div>
                 </div>
             </div>

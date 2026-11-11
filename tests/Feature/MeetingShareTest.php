@@ -81,6 +81,25 @@ class MeetingShareTest extends TestCase
         Mail::assertNothingSent();
     }
 
+    public function test_reader_cannot_share_document(): void
+    {
+        Mail::fake();
+
+        $reader = User::factory()->create(['role' => 'reader']);
+        $meeting = Meeting::factory()->create([
+            'confidentiality' => Confidentiality::Open->value,
+        ]);
+
+        $this->actingAs($reader)
+            ->post(route('meetings.share', $meeting), [
+                'recipients' => 'satu@example.com',
+                'include_pdf' => false,
+            ])
+            ->assertForbidden();
+
+        Mail::assertNothingSent();
+    }
+
     public function test_unrelated_user_cannot_share_restricted_meeting(): void
     {
         $owner = User::factory()->create(['role' => 'notulis']);

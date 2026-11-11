@@ -67,7 +67,7 @@ class ActionItem extends Model
     protected function isOverdue(): Attribute
     {
         return Attribute::get(fn () => $this->due_date
-            && $this->due_date->isPast()
+            && $this->due_date->lt(today())
             && ! in_array($this->status, [ActionItemStatus::Done, ActionItemStatus::Cancelled], true));
     }
 

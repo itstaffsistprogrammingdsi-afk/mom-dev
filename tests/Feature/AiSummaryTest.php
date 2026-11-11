@@ -38,6 +38,90 @@ class AiSummaryTest extends TestCase
         $this->assertNotEmpty($summary->content['ringkasan']);
     }
 
+    public function test_summary_status_endpoint_returns_latest_summaries(): void
+    {
+        $user = User::factory()->create(['role' => 'notulis']);
+        $meeting = Meeting::factory()->create([
+            'created_by' => $user->id,
+            'confidentiality' => Confidentiality::Open->value,
+            'status' => MeetingStatus::Draft->value,
+        ]);
+
+        $summary = $meeting->summaries()->create([
+            'scope' => 'meeting',
+            'content' => ['ringkasan' => 'Ringkasan uji.'],
+            'version' => 1,
+            'status' => AiSummaryStatus::Draft,
+            'generation_status' => 'completed',
+            'language' => 'id',
+            'generated_by' => $user->id,
+        ]);
+
+        $this->actingAs($user)
+            ->getJson(route('meetings.ai.status', $meeting))
+            ->assertOk()
+            ->assertJsonPath('summaries.0.id', $summary->id)
+            ->assertJsonPath('summaries.0.generation_status', 'completed')
+            ->assertJsonPath('summaries.0.content.ringkasan', 'Ringkasan uji.');
+    }
+
+    public function test_stale_processing_summary_is_marked_failed_by_status_endpoint(): void
+    {
+        $user = User::factory()->create(['role' => 'notulis']);
+        $meeting = Meeting::factory()->create([
+            'created_by' => $user->id,
+            'confidentiality' => Confidentiality::Open->value,
+            'status' => MeetingStatus::Draft->value,
+        ]);
+
+        $summary = $meeting->summaries()->create([
+            'scope' => 'meeting',
+            'content' => [],
+            'version' => 1,
+            'status' => AiSummaryStatus::Draft,
+            'generation_status' => 'processing',
+            'language' => 'id',
+            'generated_by' => $user->id,
+        ]);
+
+        $summary->timestamps = false;
+        $summary->forceFill(['updated_at' => now()->subMinutes(15)])->save();
+
+        $this->actingAs($user)
+            ->getJson(route('meetings.ai.status', $meeting))
+            ->assertOk()
+            ->assertJsonPath('summaries.0.generation_status', 'failed');
+    }
+
+    public function test_generate_is_blocked_while_previous_summary_is_still_processing(): void
+    {
+        $user = User::factory()->create(['role' => 'notulis']);
+        $meeting = Meeting::factory()->create([
+            'created_by' => $user->id,
+            'confidentiality' => Confidentiality::Open->value,
+            'status' => MeetingStatus::Draft->value,
+            'content_text' => 'Rapat membahas efisiensi anggaran.',
+        ]);
+
+        $meeting->summaries()->create([
+            'scope' => 'meeting',
+            'content' => [],
+            'version' => 1,
+            'status' => AiSummaryStatus::Draft,
+            'generation_status' => 'queued',
+            'language' => 'id',
+            'generated_by' => $user->id,
+        ]);
+
+        $this->actingAs($user)
+            ->from(route('meetings.show', $meeting))
+            ->post(route('meetings.ai.generate', $meeting))
+            ->assertRedirect(route('meetings.show', $meeting))
+            ->assertSessionHas('error');
+
+        $this->assertDatabaseCount('ai_summaries', 1);
+    }
+
     public function test_secret_meeting_requires_explicit_ai_consent(): void
     {
         $user = User::factory()->create(['role' => 'notulis']);

@@ -51,6 +51,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('meetings.share');
 
     Route::post('notulen/{meeting}/ai/resume', [MeetingAiController::class, 'generate'])->name('meetings.ai.generate');
+    Route::get('notulen/{meeting}/ai/resume/status', [MeetingAiController::class, 'status'])->name('meetings.ai.status');
     Route::post('ai-summaries/{aiSummary}/approve', [MeetingAiController::class, 'approve'])->name('ai-summaries.approve');
     Route::post('ai-summaries/{aiSummary}/reject', [MeetingAiController::class, 'reject'])->name('ai-summaries.reject');
     Route::patch('ai-summaries/{aiSummary}', [MeetingAiController::class, 'update'])->name('ai-summaries.update');

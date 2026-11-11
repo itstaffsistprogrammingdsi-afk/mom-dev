@@ -24,12 +24,7 @@ const current = computed(() => options.find((option) => option.value === appeara
             </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" class="w-44">
-            <DropdownMenuItem
-                v-for="option in options"
-                :key="option.value"
-                class="flex items-center gap-2"
-                @click="updateAppearance(option.value)"
-            >
+            <DropdownMenuItem v-for="option in options" :key="option.value" class="flex items-center gap-2" @click="updateAppearance(option.value)">
                 <component :is="option.Icon" class="size-4" />
                 {{ option.label }}
                 <span v-if="appearance === option.value" class="ml-auto text-xs text-muted-foreground">Aktif</span>

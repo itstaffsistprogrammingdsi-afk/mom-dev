@@ -62,7 +62,7 @@ const capabilities: { label: string; roles: string[] }[] = [
                             <thead class="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
                                 <tr>
                                     <th class="py-3 pr-4">Kemampuan</th>
-                                    <th v-for="role in props.roles" :key="role.value" class="py-3 px-3 text-center">
+                                    <th v-for="role in props.roles" :key="role.value" class="px-3 py-3 text-center">
                                         {{ roleLabels[role.value] ?? role.label }}
                                     </th>
                                 </tr>
@@ -70,10 +70,14 @@ const capabilities: { label: string; roles: string[] }[] = [
                             <tbody class="divide-y">
                                 <tr v-for="capability in capabilities" :key="capability.label">
                                     <td class="py-3 pr-4">{{ capability.label }}</td>
-                                    <td v-for="role in props.roles" :key="role.value" class="py-3 px-3 text-center">
+                                    <td v-for="role in props.roles" :key="role.value" class="px-3 py-3 text-center">
                                         <span
                                             class="inline-flex size-6 items-center justify-center rounded-full"
-                                            :class="capability.roles.includes(role.value) ? 'bg-emerald-100 text-emerald-700' : 'bg-muted text-muted-foreground'"
+                                            :class="
+                                                capability.roles.includes(role.value)
+                                                    ? 'bg-emerald-100 text-emerald-700'
+                                                    : 'bg-muted text-muted-foreground'
+                                            "
                                             :aria-label="capability.roles.includes(role.value) ? 'Diizinkan' : 'Tidak diizinkan'"
                                         >
                                             <Check v-if="capability.roles.includes(role.value)" class="size-4" aria-hidden="true" />
@@ -88,7 +92,8 @@ const capabilities: { label: string; roles: string[] }[] = [
                         Hak baca tetap mengikuti tingkat kerahasiaan: terbuka, divisi, terbatas, atau rahasia. Admin dapat melihat seluruh dokumen.
                     </p>
                     <p class="mt-2 text-xs text-muted-foreground">
-                        Kepala divisi tidak memakai peran terpisah; ia memakai peran Notulis atau Anggota dan ditetapkan sebagai kepala divisi pada data divisi.
+                        Kepala divisi tidak memakai peran terpisah; ia memakai peran Notulis atau Anggota dan ditetapkan sebagai kepala divisi pada
+                        data divisi.
                     </p>
                 </CardContent>
             </Card>

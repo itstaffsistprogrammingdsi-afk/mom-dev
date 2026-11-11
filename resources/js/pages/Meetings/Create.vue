@@ -177,7 +177,11 @@ watch(
                         </div>
                         <p class="mt-1 text-sm text-muted-foreground">{{ selectedTemplate.description ?? 'Template siap digunakan.' }}</p>
                         <div v-if="selectedTemplate.sections?.length" class="mt-2 flex flex-wrap gap-1">
-                            <span v-for="section in selectedTemplate.sections" :key="section" class="rounded bg-background px-2 py-0.5 text-xs text-muted-foreground">
+                            <span
+                                v-for="section in selectedTemplate.sections"
+                                :key="section"
+                                class="rounded bg-background px-2 py-0.5 text-xs text-muted-foreground"
+                            >
                                 {{ section }}
                             </span>
                         </div>
@@ -233,7 +237,11 @@ watch(
                             <span class="text-xs text-muted-foreground">{{ participantCount }} dipilih</span>
                         </div>
                         <p class="text-xs text-muted-foreground">
-                            {{ selectedDivision ? `Anggota ${selectedDivision.name} otomatis dipilih.` : 'Pilih divisi untuk memilih peserta secara otomatis.' }}
+                            {{
+                                selectedDivision
+                                    ? `Anggota ${selectedDivision.name} otomatis dipilih.`
+                                    : 'Pilih divisi untuk memilih peserta secara otomatis.'
+                            }}
                         </p>
                         <div class="flex gap-2">
                             <Button type="button" size="sm" variant="outline" @click="selectAllParticipants">Pilih semua</Button>

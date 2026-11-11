@@ -58,14 +58,13 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <AuthBase
-        kicker="SISTEM NOTULENSI"
-        title="Selamat datang kembali"
-        description="Masuk ke akun MoM untuk melanjutkan ke ruang rapat Anda."
-    >
+    <AuthBase kicker="SISTEM NOTULENSI" title="Selamat datang kembali" description="Masuk ke akun MoM untuk melanjutkan ke ruang rapat Anda.">
         <Head title="Masuk" />
 
-        <div v-if="props.status" class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-center text-xs font-medium text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200">
+        <div
+            v-if="props.status"
+            class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-center text-xs font-medium text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200"
+        >
             {{ props.status }}
         </div>
 
@@ -127,18 +126,10 @@ onBeforeUnmount(() => {
                     </span>
                     <span>Ingat saya</span>
                 </label>
-                <Link v-if="props.canResetPassword" :href="route('password.request')" class="text-link" tabindex="5">
-                    Lupa password?
-                </Link>
+                <Link v-if="props.canResetPassword" :href="route('password.request')" class="text-link" tabindex="5"> Lupa password? </Link>
             </div>
 
-            <button
-                type="submit"
-                class="primary-button"
-                :class="{ 'is-loading': form.processing }"
-                :disabled="form.processing"
-                tabindex="4"
-            >
+            <button type="submit" class="primary-button" :class="{ 'is-loading': form.processing }" :disabled="form.processing" tabindex="4">
                 <span class="button-label">Masuk</span>
                 <LogIn class="button-arrow" aria-hidden="true" />
                 <span class="button-spinner" aria-hidden="true"></span>
@@ -169,7 +160,12 @@ onBeforeUnmount(() => {
         <dialog ref="helpDialog" class="help-dialog">
             <div class="dialog-icon">
                 <svg viewBox="0 0 24 24" fill="none">
-                    <path d="M12 17.5v.01M9.1 9a3 3 0 1 1 5.2 2c-1 .9-2.3 1.4-2.3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                    <path
+                        d="M12 17.5v.01M9.1 9a3 3 0 1 1 5.2 2c-1 .9-2.3 1.4-2.3 3"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                    />
                     <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" />
                 </svg>
             </div>

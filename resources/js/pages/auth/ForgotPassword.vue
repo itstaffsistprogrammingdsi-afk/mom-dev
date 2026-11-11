@@ -1,12 +1,7 @@
 <script setup lang="ts">
-import InputError from '@/components/InputError.vue';
-import TextLink from '@/components/TextLink.vue';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/AuthLayout.vue';
-import { Head, useForm } from '@inertiajs/vue3';
-import { LoaderCircle } from 'lucide-vue-next';
+import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Mail, Send } from 'lucide-vue-next';
 
 defineProps<{
     status?: string;
@@ -22,33 +17,46 @@ const submit = () => {
 </script>
 
 <template>
-    <AuthLayout title="Forgot password" description="Enter your email to receive a password reset link">
-        <Head title="Forgot password" />
+    <AuthLayout title="Lupa kata sandi" description="Masukkan alamat email Anda untuk menerima tautan pengaturan ulang kata sandi.">
+        <Head title="Lupa kata sandi" />
 
-        <div v-if="status" class="mb-4 text-center text-sm font-medium text-green-600">
+        <div
+            v-if="status"
+            class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-center text-xs font-medium text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200"
+        >
             {{ status }}
         </div>
 
-        <div class="space-y-6">
-            <form @submit.prevent="submit">
-                <div class="grid gap-2">
-                    <Label for="email">Email address</Label>
-                    <Input id="email" type="email" name="email" autocomplete="off" v-model="form.email" autofocus placeholder="email@example.com" />
-                    <InputError :message="form.errors.email" />
+        <form class="login-form" @submit.prevent="submit">
+            <div class="field-group">
+                <label for="email">Email</label>
+                <div class="input-wrap" :class="{ 'has-error': form.errors.email }">
+                    <Mail class="field-icon" aria-hidden="true" />
+                    <input
+                        id="email"
+                        v-model="form.email"
+                        type="email"
+                        required
+                        autofocus
+                        autocomplete="email"
+                        placeholder="nama@perusahaan.com"
+                        :aria-invalid="!!form.errors.email"
+                        aria-describedby="email-error"
+                    />
                 </div>
-
-                <div class="my-6 flex items-center justify-start">
-                    <Button class="w-full" :disabled="form.processing">
-                        <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />
-                        Email password reset link
-                    </Button>
-                </div>
-            </form>
-
-            <div class="space-x-1 text-center text-sm text-muted-foreground">
-                <span>Or, return to</span>
-                <TextLink :href="route('login')">log in</TextLink>
+                <small id="email-error" class="field-error" aria-live="polite">{{ form.errors.email }}</small>
             </div>
-        </div>
+
+            <button type="submit" class="primary-button" :class="{ 'is-loading': form.processing }" :disabled="form.processing">
+                <span class="button-label">Kirim tautan reset</span>
+                <Send class="button-arrow" aria-hidden="true" />
+                <span class="button-spinner" aria-hidden="true"></span>
+            </button>
+        </form>
+
+        <p class="signup-note">
+            Ingat kata sandi Anda?
+            <Link :href="route('login')" class="text-link">Masuk</Link>
+        </p>
     </AuthLayout>
 </template>

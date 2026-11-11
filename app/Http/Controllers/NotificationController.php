@@ -33,6 +33,19 @@ class NotificationController extends Controller
         $row = $request->user()->notifications()->findOrFail($notification);
         $row->markAsRead();
 
+        $url = $row->data['url'] ?? null;
+
+        if (is_string($url) && $url !== '') {
+            $path = parse_url($url, PHP_URL_PATH);
+            $query = parse_url($url, PHP_URL_QUERY);
+
+            if (is_string($path) && $path !== '') {
+                return redirect()->to($path.($query ? '?'.$query : ''));
+            }
+
+            return redirect()->to($url);
+        }
+
         return back()->with('success', 'Notifikasi ditandai terbaca.');
     }
 }

@@ -63,10 +63,7 @@ function toggle(template: Template) {
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex flex-col gap-6 p-4">
-            <PageHeader
-                title="Template Dokumen"
-                description="Kelola struktur notulen, proposal, laporan, brosur, dan dokumen lain."
-            />
+            <PageHeader title="Template Dokumen" description="Kelola struktur notulen, proposal, laporan, brosur, dan dokumen lain." />
 
             <Card>
                 <CardHeader><CardTitle class="text-base">Tambah template</CardTitle></CardHeader>
@@ -84,11 +81,7 @@ function toggle(template: Template) {
                         <select v-model="form.meeting_type" class="h-9 rounded-md border bg-background px-3 text-sm">
                             <option v-for="type in props.meetingTypes" :key="type.value" :value="type.value">{{ type.label }}</option>
                         </select>
-                        <input
-                            v-model="form.description"
-                            placeholder="Deskripsi singkat"
-                            class="h-9 rounded-md border bg-background px-3 text-sm"
-                        />
+                        <input v-model="form.description" placeholder="Deskripsi singkat" class="h-9 rounded-md border bg-background px-3 text-sm" />
                         <Button type="submit" :disabled="form.processing">
                             <Plus class="size-4" />
                             Buat
@@ -127,7 +120,9 @@ function toggle(template: Template) {
                                             {{ documentTypeLabels[template.document_type] ?? template.document_type }}
                                         </span>
                                     </td>
-                                    <td class="py-3 pr-3 text-muted-foreground">{{ meetingTypeLabels[template.meeting_type] ?? template.meeting_type }}</td>
+                                    <td class="py-3 pr-3 text-muted-foreground">
+                                        {{ meetingTypeLabels[template.meeting_type] ?? template.meeting_type }}
+                                    </td>
                                     <td class="py-3 pr-3 text-xs text-muted-foreground">
                                         {{ template.sections?.length ?? 0 }} bagian
                                         <span v-if="template.sections?.length" class="block max-w-xs truncate">

@@ -44,7 +44,7 @@ const today = new Intl.DateTimeFormat('id-ID', {
         <div class="flex flex-col gap-6 p-4">
             <PageHeader
                 :title="`Selamat datang, ${user.name.split(' ')[0]}`"
-                :description="`${today} Â· ${user.division?.name ?? 'Belum ada divisi'}`"
+                :description="`${today} · ${user.division?.name ?? 'Belum ada divisi'}`"
             >
                 <template #actions>
                     <Button v-if="user.role === 'admin' || user.role === 'notulis'" as-child>
@@ -93,7 +93,7 @@ const today = new Intl.DateTimeFormat('id-ID', {
                                 <p class="font-medium leading-tight">{{ meeting.title }}</p>
                                 <p class="text-xs text-muted-foreground">
                                     {{ formatDateTime(meeting.scheduled_at) }}
-                                    <span v-if="meeting.division">Â· {{ meeting.division.name }}</span>
+                                    <span v-if="meeting.division">· {{ meeting.division.name }}</span>
                                 </p>
                             </div>
                             <StatusBadge kind="meeting" :value="meeting.status" />
@@ -118,7 +118,7 @@ const today = new Intl.DateTimeFormat('id-ID', {
                         >
                             <div class="space-y-1">
                                 <p class="font-medium leading-tight">{{ task.title }}</p>
-                                <p class="text-xs text-muted-foreground">{{ task.meeting?.title }} Â· tenggat {{ formatDate(task.due_date) }}</p>
+                                <p class="text-xs text-muted-foreground">{{ task.meeting?.title }} · tenggat {{ formatDate(task.due_date) }}</p>
                             </div>
                             <span v-if="task.is_overdue" class="text-xs font-medium text-rose-600">Terlambat</span>
                             <StatusBadge v-else kind="action" :value="task.status" />
@@ -135,11 +135,7 @@ const today = new Intl.DateTimeFormat('id-ID', {
                     </Button>
                 </CardHeader>
                 <CardContent>
-                    <EmptyState
-                        v-if="props.recent.length === 0"
-                        title="Belum ada dokumen"
-                        description="Mulai dengan membuat dokumen pertama."
-                    />
+                    <EmptyState v-if="props.recent.length === 0" title="Belum ada dokumen" description="Mulai dengan membuat dokumen pertama." />
                     <div class="divide-y">
                         <Link
                             v-for="meeting in props.recent"
@@ -150,7 +146,8 @@ const today = new Intl.DateTimeFormat('id-ID', {
                             <div>
                                 <p class="font-medium">{{ meeting.title }}</p>
                                 <p class="text-xs text-muted-foreground">
-                                    {{ documentTypeLabels[meeting.document_type] ?? meetingTypeLabels[meeting.meeting_type] }} Â· {{ formatDate(meeting.scheduled_at) }} Â·
+                                    {{ documentTypeLabels[meeting.document_type] ?? meetingTypeLabels[meeting.meeting_type] }} ·
+                                    {{ formatDate(meeting.scheduled_at) }} ·
                                     {{ meeting.division?.name ?? 'Tanpa divisi' }}
                                 </p>
                             </div>
@@ -165,4 +162,3 @@ const today = new Intl.DateTimeFormat('id-ID', {
         </div>
     </AppLayout>
 </template>
-

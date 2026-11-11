@@ -107,7 +107,7 @@ Jika service kolaborasi tidak tersedia, editor tetap dapat dipakai dalam mode tu
 
 ## Queue dan Scheduler
 
-Lokal default memakai `QUEUE_CONNECTION=sync`. Untuk produksi, gunakan `database` atau Redis dan jalankan worker:
+Default `.env.example` memakai `QUEUE_CONNECTION=database`, sehingga worker wajib berjalan agar job (termasuk resume AI) diproses. Untuk produksi gunakan `database` atau Redis lalu jalankan worker:
 
 ```bash
 php artisan queue:work
@@ -228,4 +228,3 @@ Regenerate paket dokumentasi:
 ```bash
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-client-package.ps1
 ```
-"# mom-dev" 

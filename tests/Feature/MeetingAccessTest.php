@@ -102,6 +102,90 @@ class MeetingAccessTest extends TestCase
             );
     }
 
+    public function test_notulis_cannot_change_meetings_they_cannot_view(): void
+    {
+        $outsider = $this->userWithRole('notulis');
+        $meeting = $this->meeting([
+            'confidentiality' => Confidentiality::Restricted->value,
+            'status' => MeetingStatus::Draft->value,
+        ]);
+
+        $this->actingAs($outsider)
+            ->patch(route('meetings.autosave', $meeting), ['title' => 'Perubahan tidak sah'])
+            ->assertForbidden();
+
+        $this->actingAs($outsider)
+            ->post(route('meetings.finalize', $meeting))
+            ->assertForbidden();
+
+        $this->assertNotSame('Perubahan tidak sah', $meeting->fresh()->title);
+        $this->assertSame(MeetingStatus::Draft, $meeting->fresh()->status);
+    }
+
+    public function test_meeting_search_returns_only_visible_results(): void
+    {
+        $viewer = $this->userWithRole('member');
+
+        $visible = $this->meeting([
+            'title' => 'Rapat Anggaran Tahunan',
+            'confidentiality' => Confidentiality::Open->value,
+        ]);
+        $this->meeting([
+            'title' => 'Rapat Anggaran Rahasia',
+            'confidentiality' => Confidentiality::Restricted->value,
+        ]);
+
+        $this->actingAs($viewer)
+            ->get(route('meetings.index', ['search' => 'Anggaran']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Meetings/Index')
+                ->has('meetings.data', 1)
+                ->where('meetings.data.0.id', $visible->id)
+            );
+    }
+
+    public function test_topic_page_hides_decisions_and_summaries_from_inaccessible_meetings(): void
+    {
+        $viewer = $this->userWithRole('member');
+        $topic = Topic::factory()->create();
+
+        $visible = $this->meeting(['confidentiality' => Confidentiality::Open->value]);
+        $hidden = $this->meeting(['confidentiality' => Confidentiality::Restricted->value]);
+
+        $visible->decisions()->create(['content' => 'Keputusan terbuka', 'topic_id' => $topic->id]);
+        $hidden->decisions()->create(['content' => 'Keputusan rahasia', 'topic_id' => $topic->id]);
+
+        $topic->summaries()->create([
+            'scope' => 'topic',
+            'meeting_id' => null,
+            'content' => ['ringkasan' => 'Ringkasan terbuka'],
+            'version' => 1,
+            'status' => 'approved',
+            'generation_status' => 'completed',
+            'language' => 'id',
+        ]);
+        $topic->summaries()->create([
+            'scope' => 'meeting',
+            'meeting_id' => $hidden->id,
+            'content' => ['ringkasan' => 'Ringkasan rahasia'],
+            'version' => 1,
+            'status' => 'approved',
+            'generation_status' => 'completed',
+            'language' => 'id',
+        ]);
+
+        $this->actingAs($viewer)
+            ->get(route('topics.show', $topic))
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Topics/Show')
+                ->has('decisions', 1)
+                ->where('decisions.0.content', 'Keputusan terbuka')
+                ->has('summaries', 1)
+                ->where('summaries.0.content.ringkasan', 'Ringkasan terbuka')
+            );
+    }
+
     public function test_creator_can_finalize_but_cannot_edit_after_final(): void
     {
         $notulis = $this->userWithRole('notulis');

@@ -42,6 +42,7 @@ class TopicController extends Controller
             ->get();
 
         $decisions = $topic->decisions()
+            ->whereHas('meeting', fn ($query) => $query->visibleTo($user))
             ->with('meeting:id,title,scheduled_at,confidentiality')
             ->latest('decided_at')
             ->limit(50)
@@ -49,6 +50,10 @@ class TopicController extends Controller
 
         $summaries = $topic->summaries()
             ->where('status', 'approved')
+            ->where(function ($query) use ($user) {
+                $query->whereNull('meeting_id')
+                    ->orWhereHas('meeting', fn ($meeting) => $meeting->visibleTo($user));
+            })
             ->latest('version')
             ->limit(5)
             ->get();

@@ -20,7 +20,7 @@ class MeetingShareController extends Controller
         AuditLogger $audit,
         MeetingExportService $exporter,
     ): RedirectResponse {
-        $this->authorize('view', $meeting);
+        $this->authorize('share', $meeting);
 
         $validated = $request->validate([
             'recipients' => ['required', 'string', 'max:1000'],

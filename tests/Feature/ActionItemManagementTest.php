@@ -50,6 +50,49 @@ class ActionItemManagementTest extends TestCase
         $this->assertDatabaseMissing('action_items', ['id' => $item->id]);
     }
 
+    public function test_updating_status_to_done_sets_completed_at(): void
+    {
+        $notulis = User::factory()->create(['role' => 'notulis']);
+        $meeting = Meeting::factory()->create([
+            'created_by' => $notulis->id,
+            'status' => MeetingStatus::Draft->value,
+            'confidentiality' => Confidentiality::Open->value,
+        ]);
+        $item = ActionItem::factory()->create([
+            'meeting_id' => $meeting->id,
+            'status' => 'new',
+            'completed_at' => null,
+        ]);
+
+        $this->actingAs($notulis)
+            ->patch(route('action-items.update', $item), [
+                'title' => $item->title,
+                'status' => 'done',
+            ])
+            ->assertRedirect();
+
+        $this->assertNotNull($item->fresh()->completed_at);
+
+        $this->actingAs($notulis)
+            ->patch(route('action-items.update', $item), [
+                'title' => $item->title,
+                'status' => 'in_progress',
+            ])
+            ->assertRedirect();
+
+        $this->assertNull($item->fresh()->completed_at);
+    }
+
+    public function test_action_item_due_today_is_not_overdue(): void
+    {
+        $item = ActionItem::factory()->create([
+            'due_date' => today(),
+            'status' => 'new',
+        ]);
+
+        $this->assertFalse($item->is_overdue);
+    }
+
     public function test_board_view_returns_grouped_action_items(): void
     {
         $user = User::factory()->create(['role' => 'admin']);

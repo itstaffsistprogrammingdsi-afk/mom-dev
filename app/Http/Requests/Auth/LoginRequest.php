@@ -50,6 +50,19 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        $user = Auth::user();
+
+        if ($user && ! $user->is_active) {
+            Auth::guard('web')->logout();
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'email' => 'Akun Anda tidak aktif. Hubungi administrator.',
+            ]);
+        }
+
+        $user?->forceFill(['last_login_at' => now()])->save();
+
         RateLimiter::clear($this->throttleKey());
     }
 

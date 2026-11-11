@@ -25,7 +25,7 @@ class MeetingPolicy
 
     public function update(User $user, Meeting $meeting): bool
     {
-        if ($meeting->isLocked()) {
+        if ($meeting->isLocked() || ! $this->view($user, $meeting)) {
             return false;
         }
 
@@ -40,6 +40,13 @@ class MeetingPolicy
     public function finalize(User $user, Meeting $meeting): bool
     {
         return ! $meeting->isLocked()
+            && $this->view($user, $meeting)
+            && ($user->isAdmin() || $meeting->created_by === $user->id || $user->canWriteMinutes());
+    }
+
+    public function share(User $user, Meeting $meeting): bool
+    {
+        return $this->view($user, $meeting)
             && ($user->isAdmin() || $meeting->created_by === $user->id || $user->canWriteMinutes());
     }
 

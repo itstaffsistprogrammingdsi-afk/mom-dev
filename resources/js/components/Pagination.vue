@@ -15,7 +15,9 @@ function prettyLabel(label: string): string {
     return label
         .replace(/&laquo;/g, '«')
         .replace(/&raquo;/g, '»')
-        .replace(/&amp;/g, '&');
+        .replace(/&amp;/g, '&')
+        .replace(/Previous/g, 'Sebelumnya')
+        .replace(/Next/g, 'Berikutnya');
 }
 </script>
 

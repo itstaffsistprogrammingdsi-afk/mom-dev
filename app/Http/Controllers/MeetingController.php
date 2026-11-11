@@ -190,6 +190,7 @@ class MeetingController extends Controller
                 'finalize' => $request->user()->can('finalize', $meeting),
                 'generateAi' => $request->user()->can('update', $meeting),
                 'manage' => $request->user()->can('update', $meeting),
+                'share' => $request->user()->can('share', $meeting),
             ],
             'users' => User::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'divisions' => Division::query()->orderBy('name')->get(['id', 'name']),
@@ -268,7 +269,7 @@ class MeetingController extends Controller
             'content' => ['nullable', 'array'],
         ]);
 
-        $content = $validated['content'] ?? null;
+        $content = $validated['content'] ?? $meeting->content;
 
         $meeting->update([
             ...$validated,
@@ -307,7 +308,7 @@ class MeetingController extends Controller
         $meeting->loadMissing('actionItems');
 
         $incomplete = $meeting->actionItems->filter(
-            fn ($item) => blank($item->pic_id) && blank($item->pic_name) || blank($item->due_date)
+            fn ($item) => (blank($item->pic_id) && blank($item->pic_name)) || blank($item->due_date)
         );
 
         if ($incomplete->isNotEmpty()) {
