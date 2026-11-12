@@ -5,10 +5,11 @@ export { default as AvatarFallback } from './AvatarFallback.vue';
 export { default as AvatarImage } from './AvatarImage.vue';
 
 export const avatarVariant = cva(
-    'inline-flex items-center justify-center font-normal text-foreground select-none shrink-0 bg-secondary overflow-hidden',
+    'inline-flex items-center justify-center font-normal text-foreground select-none shrink-0 bg-secondary overflow-hidden ring-1 ring-border',
     {
         variants: {
             size: {
+                xs: 'h-8 w-8 text-[10px]',
                 sm: 'h-10 w-10 text-xs',
                 base: 'h-16 w-16 text-2xl',
                 lg: 'h-32 w-32 text-5xl',

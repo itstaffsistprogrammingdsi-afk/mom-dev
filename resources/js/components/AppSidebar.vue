@@ -38,10 +38,10 @@ const isAdmin = computed(() => page.props.auth.user?.role === 'admin');
 
 <template>
     <Sidebar collapsible="icon" variant="inset">
-        <SidebarHeader>
+        <SidebarHeader class="border-b border-sidebar-border/70 px-3 py-3 pr-12 md:pr-3">
             <SidebarMenu>
                 <SidebarMenuItem>
-                    <SidebarMenuButton size="lg" as-child>
+                    <SidebarMenuButton size="lg" as-child class="rounded-lg px-2 hover:bg-sidebar-accent">
                         <Link :href="route('dashboard')">
                             <AppLogo />
                         </Link>
@@ -50,12 +50,12 @@ const isAdmin = computed(() => page.props.auth.user?.role === 'admin');
             </SidebarMenu>
         </SidebarHeader>
 
-        <SidebarContent>
+        <SidebarContent role="navigation" aria-label="Navigasi utama" class="gap-4 px-1 py-4">
             <NavMain :items="mainNavItems" label="Ruang Kerja" />
             <NavMain v-if="isAdmin" :items="adminNavItems" label="Administrasi" />
         </SidebarContent>
 
-        <SidebarFooter>
+        <SidebarFooter class="border-t border-sidebar-border/70 p-3">
             <NavUser />
         </SidebarFooter>
     </Sidebar>

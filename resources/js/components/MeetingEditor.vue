@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button';
+import { Select } from '@/components/ui/select';
 import type { Division, User } from '@/types';
 import { HocuspocusProvider } from '@hocuspocus/provider';
 import type { JSONContent } from '@tiptap/core';
@@ -16,8 +17,24 @@ import TaskItem from '@tiptap/extension-task-item';
 import TaskList from '@tiptap/extension-task-list';
 import StarterKit from '@tiptap/starter-kit';
 import { EditorContent, useEditor } from '@tiptap/vue-3';
-import { AtSign, Bold, Heading2, Italic, Link2, List, ListOrdered, ListTodo, Mic, MicOff, Redo2, Table2, Undo2 } from 'lucide-vue-next';
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import {
+    AtSign,
+    Bold,
+    Heading2,
+    Italic,
+    Link2,
+    List,
+    ListOrdered,
+    ListTodo,
+    Maximize2,
+    Mic,
+    MicOff,
+    Minimize2,
+    Redo2,
+    Table2,
+    Undo2,
+} from 'lucide-vue-next';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import * as Y from 'yjs';
 
 interface Props {
@@ -116,6 +133,15 @@ function escapeHtml(value: string): string {
     });
 }
 
+function initials(name: string): string {
+    return name
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase() ?? '')
+        .join('');
+}
+
 function createSuggestion(getItems: (query: string) => MentionItem[], char: '@' | '#') {
     return {
         char,
@@ -152,7 +178,7 @@ function createSuggestion(getItems: (query: string) => MentionItem[], char: '@' 
                               .map(
                                   (item, index) => `
                                     <button type="button" role="option" aria-selected="${index === selected}" data-selected="${index === selected}" data-index="${index}" class="mention-suggestion-item">
-                                        <span class="mention-suggestion-prefix">${char}</span>
+                                        <span class="mention-suggestion-avatar" data-type="${item.type}" aria-hidden="true">${item.type === 'person' ? escapeHtml(initials(item.label)) : char}</span>
                                         <span class="truncate">${escapeHtml(item.label)}</span>
                                         <span class="mention-suggestion-hint">${escapeHtml(item.hint)}</span>
                                     </button>
@@ -256,6 +282,9 @@ function createSuggestion(getItems: (query: string) => MentionItem[], char: '@' 
 
 const TopicMentionNode = MentionNode.extend({ name: 'topicMention' });
 
+const isFocusMode = ref(false);
+const toolbarRevision = ref(0);
+
 const editor = useEditor({
     content: props.modelValue ?? { type: 'doc', content: [{ type: 'paragraph' }] },
     editable: props.editable,
@@ -295,9 +324,24 @@ const editor = useEditor({
             : []),
     ],
     onUpdate: ({ editor: instance }) => {
+        toolbarRevision.value += 1;
         emit('update:modelValue', instance.getJSON());
     },
+    onSelectionUpdate: () => {
+        toolbarRevision.value += 1;
+    },
 });
+
+const activeFormats = computed(() => ({
+    revision: toolbarRevision.value,
+    bold: editor.value?.isActive('bold') ?? false,
+    italic: editor.value?.isActive('italic') ?? false,
+    heading: editor.value?.isActive('heading', { level: 2 }) ?? false,
+    bulletList: editor.value?.isActive('bulletList') ?? false,
+    orderedList: editor.value?.isActive('orderedList') ?? false,
+    taskList: editor.value?.isActive('taskList') ?? false,
+    link: editor.value?.isActive('link') ?? false,
+}));
 
 let seedTimer: ReturnType<typeof setTimeout> | null = null;
 let contentSeeded = !provider;
@@ -469,11 +513,27 @@ watch(
     (editable) => editor.value?.setEditable(editable),
 );
 
+function handleFocusModeKeydown(event: KeyboardEvent) {
+    if (event.key === 'Escape' && isFocusMode.value) {
+        isFocusMode.value = false;
+    }
+}
+
+watch(isFocusMode, (active) => {
+    document.body.classList.toggle('overflow-hidden', active);
+});
+
+onMounted(() => {
+    window.addEventListener('keydown', handleFocusModeKeydown);
+});
+
 onBeforeUnmount(() => {
     if (seedTimer) {
         clearTimeout(seedTimer);
     }
 
+    window.removeEventListener('keydown', handleFocusModeKeydown);
+    document.body.classList.remove('overflow-hidden');
     recognition?.stop();
     provider?.destroy();
     ydoc?.destroy();
@@ -486,42 +546,132 @@ defineExpose({
 </script>
 
 <template>
-    <div class="overflow-hidden rounded-lg border bg-card">
-        <div v-if="editor && editable" class="flex flex-wrap items-center gap-1 border-b bg-muted/40 p-2">
-            <Button type="button" variant="ghost" size="icon" title="Tebal" @click="editor.chain().focus().toggleBold().run()">
+    <div
+        class="meeting-editor rounded-lg border bg-card shadow-card"
+        :class="isFocusMode && 'fixed inset-0 z-40 overflow-y-auto rounded-none border-0 bg-background shadow-none'"
+        :data-readonly="!editable"
+    >
+        <div
+            v-if="editor && editable"
+            role="toolbar"
+            aria-label="Format notulensi"
+            class="sticky top-14 z-20 flex flex-nowrap items-center gap-0.5 overflow-x-auto rounded-t-lg border-b bg-card/95 p-2 shadow-sm backdrop-blur-md md:flex-wrap md:overflow-visible [&>button]:shrink-0"
+            :class="isFocusMode ? 'top-0 rounded-none' : 'md:top-16'"
+        >
+            <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                :title="isFocusMode ? 'Keluar mode fokus' : 'Mode fokus'"
+                :aria-label="isFocusMode ? 'Keluar mode fokus' : 'Mode fokus'"
+                :aria-pressed="isFocusMode"
+                @click="isFocusMode = !isFocusMode"
+            >
+                <Minimize2 v-if="isFocusMode" />
+                <Maximize2 v-else />
+            </Button>
+            <span aria-hidden="true" class="mx-1 h-5 w-px shrink-0 bg-border" />
+            <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                title="Tebal"
+                aria-label="Tebal"
+                :aria-pressed="activeFormats.bold"
+                :class="activeFormats.bold && 'bg-accent text-accent-foreground'"
+                @click="editor.chain().focus().toggleBold().run()"
+            >
                 <Bold />
-            </Button>
-            <Button type="button" variant="ghost" size="icon" title="Miring" @click="editor.chain().focus().toggleItalic().run()">
-                <Italic />
-            </Button>
-            <Button type="button" variant="ghost" size="icon" title="Judul" @click="editor.chain().focus().toggleHeading({ level: 2 }).run()">
-                <Heading2 />
-            </Button>
-            <Button type="button" variant="ghost" size="icon" title="Daftar" @click="editor.chain().focus().toggleBulletList().run()">
-                <List />
-            </Button>
-            <Button type="button" variant="ghost" size="icon" title="Daftar bernomor" @click="editor.chain().focus().toggleOrderedList().run()">
-                <ListOrdered />
-            </Button>
-            <Button type="button" variant="ghost" size="icon" title="Daftar tugas" @click="editor.chain().focus().toggleTaskList().run()">
-                <ListTodo />
             </Button>
             <Button
                 type="button"
                 variant="ghost"
                 size="icon"
+                title="Miring"
+                aria-label="Miring"
+                :aria-pressed="activeFormats.italic"
+                :class="activeFormats.italic && 'bg-accent text-accent-foreground'"
+                @click="editor.chain().focus().toggleItalic().run()"
+            >
+                <Italic />
+            </Button>
+            <span aria-hidden="true" class="mx-1 h-5 w-px shrink-0 bg-border" />
+            <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                title="Judul"
+                aria-label="Judul"
+                :aria-pressed="activeFormats.heading"
+                :class="activeFormats.heading && 'bg-accent text-accent-foreground'"
+                @click="editor.chain().focus().toggleHeading({ level: 2 }).run()"
+            >
+                <Heading2 />
+            </Button>
+            <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                title="Daftar"
+                aria-label="Daftar"
+                :aria-pressed="activeFormats.bulletList"
+                :class="activeFormats.bulletList && 'bg-accent text-accent-foreground'"
+                @click="editor.chain().focus().toggleBulletList().run()"
+            >
+                <List />
+            </Button>
+            <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                title="Daftar bernomor"
+                aria-label="Daftar bernomor"
+                :aria-pressed="activeFormats.orderedList"
+                :class="activeFormats.orderedList && 'bg-accent text-accent-foreground'"
+                @click="editor.chain().focus().toggleOrderedList().run()"
+            >
+                <ListOrdered />
+            </Button>
+            <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                title="Daftar tugas"
+                aria-label="Daftar tugas"
+                :aria-pressed="activeFormats.taskList"
+                :class="activeFormats.taskList && 'bg-accent text-accent-foreground'"
+                @click="editor.chain().focus().toggleTaskList().run()"
+            >
+                <ListTodo />
+            </Button>
+            <span aria-hidden="true" class="mx-1 h-5 w-px shrink-0 bg-border" />
+            <Button
+                type="button"
+                variant="ghost"
+                size="icon"
                 title="Sisipkan tabel"
+                aria-label="Sisipkan tabel"
                 @click="editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()"
             >
                 <Table2 />
             </Button>
-            <Button type="button" variant="ghost" size="icon" title="Tautan" @click="setLink">
+            <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                title="Tautan"
+                aria-label="Tautan"
+                :aria-pressed="activeFormats.link"
+                :class="activeFormats.link && 'bg-accent text-accent-foreground'"
+                @click="setLink"
+            >
                 <Link2 />
             </Button>
-            <Button type="button" variant="ghost" size="icon" title="Urungkan" @click="editor.chain().focus().undo().run()">
+            <span aria-hidden="true" class="mx-1 h-5 w-px shrink-0 bg-border" />
+            <Button type="button" variant="ghost" size="icon" title="Urungkan" aria-label="Urungkan" @click="editor.chain().focus().undo().run()">
                 <Undo2 />
             </Button>
-            <Button type="button" variant="ghost" size="icon" title="Ulangi" @click="editor.chain().focus().redo().run()">
+            <Button type="button" variant="ghost" size="icon" title="Ulangi" aria-label="Ulangi" @click="editor.chain().focus().redo().run()">
                 <Redo2 />
             </Button>
             <Button
@@ -529,6 +679,7 @@ defineExpose({
                 :variant="isListening ? 'default' : 'ghost'"
                 size="icon"
                 :title="speechSupported ? (isListening ? 'Hentikan dikte' : 'Dikte suara') : 'Browser tidak mendukung dikte suara'"
+                :aria-label="speechSupported ? (isListening ? 'Hentikan dikte' : 'Dikte suara') : 'Browser tidak mendukung dikte suara'"
                 :aria-pressed="isListening"
                 :disabled="!speechSupported"
                 @click="toggleDictation"
@@ -536,11 +687,11 @@ defineExpose({
                 <MicOff v-if="isListening" />
                 <Mic v-else />
             </Button>
-            <span v-if="isListening" class="ml-1 text-xs font-medium text-rose-600" aria-live="polite">Mendengarkan…</span>
+            <span v-if="isListening" class="ml-1 shrink-0 text-xs font-medium text-destructive" aria-live="polite">Mendengarkan…</span>
 
-            <div v-if="props.showTagPicker" class="ml-auto flex items-center gap-1">
-                <AtSign class="size-4 text-muted-foreground" />
-                <select v-model="tagSelection" class="h-8 rounded-md border bg-background px-2 text-xs" @change="insertTag">
+            <div v-if="props.showTagPicker" class="ml-auto flex shrink-0 items-center gap-2 border-l pl-3">
+                <AtSign class="size-4 text-muted-foreground" aria-hidden="true" />
+                <Select v-model="tagSelection" aria-label="Sisipkan tag anggota, divisi, atau topik" class="h-9 max-w-36 text-xs" @change="insertTag">
                     <option value="">Sisipkan tag…</option>
                     <optgroup label="Orang">
                         <option v-for="option in tagOptions.filter((item) => item.type === 'person')" :key="option.key" :value="option.key">
@@ -557,14 +708,14 @@ defineExpose({
                             #{{ option.label }}
                         </option>
                     </optgroup>
-                </select>
+                </Select>
             </div>
         </div>
 
-        <p v-if="speechError" class="border-t border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+        <p v-if="speechError" role="alert" class="border-t border-destructive/30 bg-destructive/10 px-4 py-2 text-xs text-destructive">
             {{ speechError }}
         </p>
 
-        <EditorContent :editor="editor" class="meeting-editor" />
+        <EditorContent :editor="editor" />
     </div>
 </template>

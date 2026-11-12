@@ -15,9 +15,22 @@ export default {
                 sans: ['Inter', ...defaultTheme.fontFamily.sans],
             },
             borderRadius: {
-                lg: 'var(--radius)',
-                md: 'calc(var(--radius) - 2px)',
-                sm: 'calc(var(--radius) - 4px)',
+                sm: 'var(--radius-sm)',
+                md: 'var(--radius-control)',
+                lg: 'var(--radius-panel)',
+                xl: 'var(--radius-dialog)',
+            },
+            boxShadow: {
+                card: 'var(--shadow-card)',
+                popover: 'var(--shadow-popover)',
+            },
+            transitionDuration: {
+                fast: 'var(--duration-fast)',
+                popover: 'var(--duration-popover)',
+                dialog: 'var(--duration-dialog)',
+            },
+            transitionTimingFunction: {
+                ui: 'var(--ease-ui)',
             },
             colors: {
                 background: 'hsl(var(--background))',
@@ -53,6 +66,25 @@ export default {
                 border: 'hsl(var(--border))',
                 input: 'hsl(var(--input))',
                 ring: 'hsl(var(--ring))',
+                success: 'hsl(var(--success))',
+                warning: 'hsl(var(--warning))',
+                info: 'hsl(var(--info))',
+                person: {
+                    DEFAULT: 'hsl(var(--person))',
+                    surface: 'hsl(var(--person-surface))',
+                },
+                division: {
+                    DEFAULT: 'hsl(var(--division))',
+                    surface: 'hsl(var(--division-surface))',
+                },
+                topic: {
+                    DEFAULT: 'hsl(var(--topic))',
+                    surface: 'hsl(var(--topic-surface))',
+                },
+                ai: {
+                    DEFAULT: 'hsl(var(--ai))',
+                    surface: 'hsl(var(--ai-surface))',
+                },
                 chart: {
                     1: 'hsl(var(--chart-1))',
                     2: 'hsl(var(--chart-2))',

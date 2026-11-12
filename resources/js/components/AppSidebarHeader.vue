@@ -16,20 +16,22 @@ withDefaults(
 
 <template>
     <header
-        class="flex h-16 shrink-0 items-center gap-2 border-b border-sidebar-border/70 px-6 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 md:px-4"
+        class="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 border-b border-border/70 bg-background/95 px-4 backdrop-blur-md md:h-16 md:px-6"
     >
-        <div class="flex items-center gap-2">
-            <SidebarTrigger class="-ml-1" />
+        <div class="flex min-w-0 items-center gap-3">
+            <SidebarTrigger class="-ml-1 size-9 rounded-md" />
+            <span v-if="breadcrumbs.length === 0" class="truncate text-sm font-semibold md:hidden">Meet-Go</span>
+            <span v-else class="min-w-0 flex-1 truncate text-sm font-medium md:hidden">{{ breadcrumbs[breadcrumbs.length - 1].title }}</span>
             <template v-if="breadcrumbs.length > 0">
-                <Breadcrumb>
-                    <BreadcrumbList>
+                <Breadcrumb class="hidden min-w-0 overflow-hidden md:block">
+                    <BreadcrumbList class="flex-nowrap">
                         <template v-for="(item, index) in breadcrumbs" :key="index">
-                            <BreadcrumbItem>
+                            <BreadcrumbItem class="min-w-0">
                                 <template v-if="index === breadcrumbs.length - 1">
-                                    <BreadcrumbPage>{{ item.title }}</BreadcrumbPage>
+                                    <BreadcrumbPage class="truncate">{{ item.title }}</BreadcrumbPage>
                                 </template>
                                 <template v-else>
-                                    <BreadcrumbLink :href="item.href">
+                                    <BreadcrumbLink :href="item.href" class="truncate">
                                         {{ item.title }}
                                     </BreadcrumbLink>
                                 </template>

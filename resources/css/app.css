@@ -9,74 +9,108 @@ html {
 
 @layer base {
     :root {
-        --background: 0 0% 100%;
-        --foreground: 0 0% 3.9%;
+        --background: 220 23% 97%;
+        --foreground: 216 41% 15%;
         --card: 0 0% 100%;
-        --card-foreground: 0 0% 3.9%;
+        --card-foreground: 216 41% 15%;
         --popover: 0 0% 100%;
-        --popover-foreground: 0 0% 3.9%;
-        --primary: 0 0% 9%;
-        --primary-foreground: 0 0% 98%;
-        --secondary: 0 0% 92.1%;
-        --secondary-foreground: 0 0% 9%;
-        --muted: 0 0% 96.1%;
-        --muted-foreground: 0 0% 45.1%;
-        --accent: 0 0% 96.1%;
-        --accent-foreground: 0 0% 9%;
-        --destructive: 0 84.2% 60.2%;
-        --destructive-foreground: 0 0% 98%;
-        --border: 0 0% 92.8%;
-        --input: 0 0% 89.8%;
-        --ring: 0 0% 3.9%;
+        --popover-foreground: 216 41% 15%;
+        --primary: 212 52% 30%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 210 40% 94%;
+        --secondary-foreground: 216 41% 15%;
+        --muted: 210 40% 94%;
+        --muted-foreground: 213 18% 39%;
+        --accent: 210 40% 94%;
+        --accent-foreground: 216 41% 15%;
+        --destructive: 354 67% 42%;
+        --destructive-foreground: 0 0% 100%;
+        --border: 210 25% 89%;
+        --input: 210 25% 89%;
+        --ring: 212 52% 30%;
+        --success: 157 63% 24%;
+        --warning: 30 47% 32%;
+        --info: 205 66% 33%;
+        --person: 205 66% 33%;
+        --person-surface: 205 68% 95%;
+        --division: 30 47% 32%;
+        --division-surface: 30 100% 95%;
+        --topic: 262 33% 45%;
+        --topic-surface: 266 58% 95%;
+        --ai: 177 75% 24%;
+        --ai-surface: 167 47% 94%;
         --chart-1: 12 76% 61%;
         --chart-2: 173 58% 39%;
         --chart-3: 197 37% 24%;
         --chart-4: 43 74% 66%;
         --chart-5: 27 87% 67%;
-        --radius: 0.5rem;
-        --sidebar-background: 0 0% 98%;
-        --sidebar-foreground: 240 5.3% 26.1%;
-        --sidebar-primary: 0 0% 10%;
-        --sidebar-primary-foreground: 0 0% 98%;
-        --sidebar-accent: 0 0% 94%;
-        --sidebar-accent-foreground: 0 0% 30%;
-        --sidebar-border: 0 0% 91%;
-        --sidebar-ring: 217.2 91.2% 59.8%;
+        --radius: 1rem;
+        --radius-sm: 0.5rem;
+        --radius-control: 0.75rem;
+        --radius-panel: 1rem;
+        --radius-dialog: 1.5rem;
+        --shadow-card: 0 2px 8px rgb(23 36 55 / 0.05), 0 12px 32px rgb(23 36 55 / 0.04);
+        --shadow-popover: 0 8px 24px rgb(23 36 55 / 0.1), 0 24px 64px rgb(23 36 55 / 0.08);
+        --duration-fast: 160ms;
+        --duration-popover: 220ms;
+        --duration-dialog: 240ms;
+        --ease-ui: cubic-bezier(0.2, 0.8, 0.2, 1);
+        --sidebar-background: 220 23% 97%;
+        --sidebar-foreground: 216 41% 15%;
+        --sidebar-primary: 212 52% 30%;
+        --sidebar-primary-foreground: 0 0% 100%;
+        --sidebar-accent: 210 40% 94%;
+        --sidebar-accent-foreground: 216 41% 15%;
+        --sidebar-border: 210 25% 89%;
+        --sidebar-ring: 212 52% 30%;
     }
 
     .dark {
-        --background: 0 0% 3.9%;
-        --foreground: 0 0% 98%;
-        --card: 0 0% 3.9%;
-        --card-foreground: 0 0% 98%;
-        --popover: 0 0% 3.9%;
-        --popover-foreground: 0 0% 98%;
-        --primary: 0 0% 98%;
-        --primary-foreground: 0 0% 9%;
-        --secondary: 0 0% 14.9%;
-        --secondary-foreground: 0 0% 98%;
-        --muted: 0 0% 6.9%;
-        --muted-foreground: 0 0% 63.9%;
-        --accent: 0 0% 14.9%;
-        --accent-foreground: 0 0% 98%;
-        --destructive: 0 84% 60%;
-        --destructive-foreground: 0 0% 98%;
-        --border: 0 0% 14.9%;
-        --input: 0 0% 14.9%;
-        --ring: 0 0% 83.1%;
+        --background: 215 39% 10%;
+        --foreground: 212 46% 93%;
+        --card: 211 34% 14%;
+        --card-foreground: 212 46% 93%;
+        --popover: 211 34% 14%;
+        --popover-foreground: 212 46% 93%;
+        --primary: 213 57% 79%;
+        --primary-foreground: 215 39% 10%;
+        --secondary: 213 31% 21%;
+        --secondary-foreground: 212 46% 93%;
+        --muted: 213 31% 21%;
+        --muted-foreground: 212 28% 77%;
+        --accent: 213 31% 21%;
+        --accent-foreground: 212 46% 93%;
+        --destructive: 354 76% 73%;
+        --destructive-foreground: 354 31% 13%;
+        --border: 213 23% 27%;
+        --input: 213 23% 27%;
+        --ring: 213 57% 79%;
+        --success: 151 47% 70%;
+        --warning: 35 77% 74%;
+        --info: 204 77% 81%;
+        --person: 204 77% 81%;
+        --person-surface: 205 48% 18%;
+        --division: 35 77% 74%;
+        --division-surface: 31 37% 17%;
+        --topic: 261 71% 84%;
+        --topic-surface: 265 24% 20%;
+        --ai: 186 36% 71%;
+        --ai-surface: 190 35% 14%;
+        --shadow-card: 0 2px 8px rgb(0 0 0 / 0.16), 0 12px 32px rgb(0 0 0 / 0.1);
+        --shadow-popover: 0 8px 24px rgb(0 0 0 / 0.24), 0 24px 64px rgb(0 0 0 / 0.16);
         --chart-1: 220 70% 50%;
         --chart-2: 160 60% 45%;
         --chart-3: 30 80% 55%;
         --chart-4: 280 65% 60%;
         --chart-5: 340 75% 55%;
-        --sidebar-background: 0 0% 7%;
-        --sidebar-foreground: 0 0% 95.9%;
-        --sidebar-primary: 360, 100%, 100%;
-        --sidebar-primary-foreground: 0 0% 100%;
-        --sidebar-accent: 0 0% 15.9%;
-        --sidebar-accent-foreground: 240 4.8% 95.9%;
-        --sidebar-border: 0 0% 15.9%;
-        --sidebar-ring: 217.2 91.2% 59.8%;
+        --sidebar-background: 215 39% 10%;
+        --sidebar-foreground: 212 46% 93%;
+        --sidebar-primary: 213 57% 79%;
+        --sidebar-primary-foreground: 215 39% 10%;
+        --sidebar-accent: 213 31% 21%;
+        --sidebar-accent-foreground: 212 46% 93%;
+        --sidebar-border: 213 23% 27%;
+        --sidebar-ring: 213 57% 79%;
     }
 }
 
@@ -93,8 +127,23 @@ html {
 @layer components {
     .meeting-editor .ProseMirror {
         min-height: 28rem;
-        padding: 1.5rem;
+        max-width: 72ch;
+        margin-inline: auto;
+        padding: clamp(1.25rem, 4vw, 2.5rem);
+        font-size: 1rem;
+        line-height: 1.7;
+        overflow-wrap: break-word;
         outline: none;
+    }
+
+    .meeting-editor[data-readonly='true'] .ProseMirror {
+        min-height: 0;
+    }
+
+    .meeting-editor .ProseMirror:focus-visible {
+        outline: 2px solid hsl(var(--ring));
+        outline-offset: -2px;
+        border-radius: var(--radius-sm);
     }
 
     .meeting-editor .ProseMirror > * + * {
@@ -162,6 +211,7 @@ html {
         border: 1px solid hsl(var(--border));
         padding: 0.5rem;
         vertical-align: top;
+        overflow-wrap: anywhere;
     }
 
     .meeting-editor .ProseMirror th {
@@ -179,34 +229,38 @@ html {
     }
 
     .mention {
-        border-radius: 0.375rem;
-        background: hsl(var(--muted));
-        padding: 0.1rem 0.35rem;
-        font-weight: 500;
+        border-radius: 9999px;
+        background: hsl(var(--person-surface));
+        color: hsl(var(--person));
+        padding: 0.15rem 0.45rem;
+        font-weight: 600;
         white-space: nowrap;
     }
 
     .mention[data-mention-type='topic'] {
-        color: hsl(217 91% 45%);
+        background: hsl(var(--topic-surface));
+        color: hsl(var(--topic));
     }
 
     .mention[data-mention-type='division'] {
-        color: hsl(160 84% 30%);
+        background: hsl(var(--division-surface));
+        color: hsl(var(--division));
     }
 }
 
 .mention-suggestion {
     position: absolute;
     z-index: 80;
-    width: 20rem;
+    width: min(20rem, calc(100vw - 2rem));
     max-height: 16rem;
     overflow-y: auto;
-    padding: 0.3rem;
+    padding: 0.4rem;
     border: 1px solid hsl(var(--border));
-    border-radius: 0.6rem;
+    border-radius: var(--radius-panel);
     background: hsl(var(--popover));
     color: hsl(var(--popover-foreground));
-    box-shadow: 0 12px 30px rgb(0 0 0 / 0.12);
+    box-shadow: var(--shadow-popover);
+    animation: mention-enter var(--duration-popover) var(--ease-ui);
 }
 
 .mention-suggestion-item {
@@ -215,9 +269,10 @@ html {
     align-items: center;
     gap: 0.55rem;
     padding: 0.5rem 0.6rem;
-    border-radius: 0.4rem;
+    border-radius: var(--radius-control);
     text-align: left;
     font-size: 0.875rem;
+    transition: background-color var(--duration-fast) var(--ease-ui);
 }
 
 .mention-suggestion-item[data-selected='true'],
@@ -230,12 +285,29 @@ html {
     outline-offset: 1px;
 }
 
-.mention-suggestion-prefix {
+.mention-suggestion-avatar {
     display: inline-flex;
-    min-width: 1.1rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    flex-shrink: 0;
+    align-items: center;
     justify-content: center;
-    font-weight: 600;
-    color: hsl(var(--muted-foreground));
+    border-radius: 9999px;
+    background: hsl(var(--person-surface));
+    color: hsl(var(--person));
+    font-size: 0.625rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.mention-suggestion-avatar[data-type='division'] {
+    background: hsl(var(--division-surface));
+    color: hsl(var(--division));
+}
+
+.mention-suggestion-avatar[data-type='topic'] {
+    background: hsl(var(--topic-surface));
+    color: hsl(var(--topic));
 }
 
 .mention-suggestion-hint {
@@ -255,4 +327,26 @@ html {
     background: transparent;
     cursor: pointer;
     font-family: inherit;
+}
+
+@keyframes mention-enter {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
 }
