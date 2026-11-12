@@ -32,6 +32,9 @@ export default {
                 '2xl': 'var(--radius-2xl)',
                 '3xl': 'var(--radius-3xl)',
                 pill: 'var(--radius-pill)',
+                control: 'var(--radius-md)',
+                panel: 'var(--radius-lg)',
+                dialog: 'var(--radius-xl)',
             },
             spacing: {
                 page: 'var(--page-gutter)',
@@ -52,15 +55,19 @@ export default {
                 popover: '0 12px 32px -8px hsl(var(--shadow-color) / 0.16), 0 4px 12px -4px hsl(var(--shadow-color) / 0.08)',
                 modal: '0 32px 80px -24px hsl(var(--shadow-color) / 0.3), 0 12px 32px -12px hsl(var(--shadow-color) / 0.16)',
                 focus: '0 0 0 4px hsl(var(--ring) / 0.18)',
+                card: '0 1px 3px 0 hsl(var(--shadow-color) / 0.05), 0 1px 2px -1px hsl(var(--shadow-color) / 0.05)',
             },
             transitionDuration: {
                 fast: 'var(--duration-fast)',
                 base: 'var(--duration-base)',
                 slow: 'var(--duration-slow)',
+                popover: 'var(--duration-base)',
+                dialog: 'var(--duration-slow)',
             },
             transitionTimingFunction: {
                 'out-soft': 'var(--ease-out)',
                 'in-out-soft': 'var(--ease-in-out)',
+                ui: 'var(--ease-out)',
             },
             colors: {
                 background: 'hsl(var(--background) / <alpha-value>)',
@@ -121,7 +128,23 @@ export default {
                     DEFAULT: 'hsl(var(--ai) / <alpha-value>)',
                     foreground: 'hsl(var(--ai-foreground) / <alpha-value>)',
                     soft: 'hsl(var(--ai-soft) / <alpha-value>)',
+                    surface: 'hsl(var(--ai-soft) / <alpha-value>)',
                     border: 'hsl(var(--ai-border) / <alpha-value>)',
+                },
+                person: {
+                    DEFAULT: 'hsl(var(--tag-person) / <alpha-value>)',
+                    surface: 'hsl(var(--tag-person-soft) / <alpha-value>)',
+                    border: 'hsl(var(--tag-person-border) / <alpha-value>)',
+                },
+                division: {
+                    DEFAULT: 'hsl(var(--tag-division) / <alpha-value>)',
+                    surface: 'hsl(var(--tag-division-soft) / <alpha-value>)',
+                    border: 'hsl(var(--tag-division-border) / <alpha-value>)',
+                },
+                topic: {
+                    DEFAULT: 'hsl(var(--tag-topic) / <alpha-value>)',
+                    surface: 'hsl(var(--tag-topic-soft) / <alpha-value>)',
+                    border: 'hsl(var(--tag-topic-border) / <alpha-value>)',
                 },
                 tag: {
                     person: 'hsl(var(--tag-person) / <alpha-value>)',

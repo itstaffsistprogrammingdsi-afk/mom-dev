@@ -1,64 +1,44 @@
 <script setup lang="ts">
-import { Badge, type BadgeVariants } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Link } from '@inertiajs/vue3';
-import { Building2, Hash, UserRound } from 'lucide-vue-next';
-import { computed } from 'vue';
+import { computed, type HTMLAttributes } from 'vue';
 
 type TagType = 'person' | 'division' | 'topic';
 
-const props = withDefaults(
-    defineProps<{
-        type: TagType;
-        label: string;
-        href?: string | null;
-        class?: string;
-    }>(),
-    {
-        href: null,
-    },
+const props = defineProps<{
+    kind?: TagType;
+    type?: TagType;
+    label: string;
+    href?: string;
+    class?: HTMLAttributes['class'];
+}>();
+
+const resolvedKind = computed<TagType>(() => props.kind ?? props.type ?? 'person');
+const prefix = computed(() => (resolvedKind.value === 'topic' ? '#' : '@'));
+const kindClass = computed(
+    () =>
+        ({
+            person: 'bg-person-surface text-person hover:bg-person-surface/75',
+            division: 'bg-division-surface text-division hover:bg-division-surface/75',
+            topic: 'bg-topic-surface text-topic hover:bg-topic-surface/75',
+        })[resolvedKind.value],
 );
-
-const icons = {
-    person: UserRound,
-    division: Building2,
-    topic: Hash,
-};
-
-const variants: Record<TagType, BadgeVariants['variant']> = {
-    person: 'tag-person',
-    division: 'tag-division',
-    topic: 'tag-topic',
-};
-
-const icon = computed(() => icons[props.type]);
-const variant = computed(() => variants[props.type]);
-const clickable = computed(() => Boolean(props.href));
 </script>
 
 <template>
     <component
         :is="href ? Link : 'span'"
-        :href="href || undefined"
+        :href="href"
         :class="
             cn(
-                'inline-flex rounded-full outline-none',
-                clickable && 'focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2',
+                'inline-flex max-w-full items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold leading-5 transition-colors duration-fast ease-ui',
+                href && 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                kindClass,
                 props.class,
             )
         "
     >
-        <Badge
-            :variant="variant"
-            :class="
-                cn(
-                    'gap-1.5 py-1 transition-[background-color,border-color,color] duration-fast ease-out-soft',
-                    clickable && 'hover:brightness-[0.97]',
-                )
-            "
-        >
-            <component :is="icon" class="size-3.5" aria-hidden="true" />
-            {{ label }}
-        </Badge>
+        <span aria-hidden="true">{{ prefix }}</span>
+        <span class="truncate">{{ label }}</span>
     </component>
 </template>

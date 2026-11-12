@@ -16,11 +16,11 @@ export const documentTypeLabels: Record<string, string> = {
 };
 
 export const documentTypeClasses: Record<string, string> = {
-    meeting: 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300',
-    proposal: 'bg-violet-100 text-violet-800 dark:bg-violet-950 dark:text-violet-300',
-    brochure: 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300',
-    report: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
-    other: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+    meeting: 'bg-person-surface text-person',
+    proposal: 'bg-topic-surface text-topic',
+    brochure: 'bg-division-surface text-division',
+    report: 'bg-success/10 text-success',
+    other: 'bg-muted text-muted-foreground',
 };
 
 export const statusLabels: Record<string, string> = {
@@ -37,16 +37,16 @@ export const confidentialityLabels: Record<string, string> = {
 };
 
 export const confidentialityClasses: Record<string, string> = {
-    open: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
-    division: 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300',
-    restricted: 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300',
-    secret: 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300',
+    open: 'bg-success/10 text-success',
+    division: 'bg-person-surface text-person',
+    restricted: 'bg-division-surface text-division',
+    secret: 'bg-destructive/10 text-destructive',
 };
 
 export const statusClasses: Record<string, string> = {
-    draft: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
-    final: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
-    locked: 'bg-zinc-200 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200',
+    draft: 'bg-muted text-muted-foreground',
+    final: 'bg-success/10 text-success',
+    locked: 'bg-secondary text-secondary-foreground',
 };
 
 export const actionStatusLabels: Record<string, string> = {
@@ -57,10 +57,10 @@ export const actionStatusLabels: Record<string, string> = {
 };
 
 export const actionStatusClasses: Record<string, string> = {
-    new: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
-    in_progress: 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300',
-    done: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
-    cancelled: 'bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300',
+    new: 'bg-muted text-muted-foreground',
+    in_progress: 'bg-person-surface text-person',
+    done: 'bg-success/10 text-success',
+    cancelled: 'bg-secondary text-secondary-foreground',
 };
 
 export const attendanceLabels: Record<string, string> = {

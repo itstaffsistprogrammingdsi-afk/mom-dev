@@ -632,6 +632,7 @@ defineExpose({
 
 <template>
     <div
+        :data-readonly="!editable"
         :class="
             focusMode
                 ? 'fixed inset-0 z-[70] flex flex-col bg-background'
@@ -641,11 +642,11 @@ defineExpose({
         <div
             v-if="editor && editable"
             role="toolbar"
-            aria-label="Pemformatan dokumen"
+            aria-label="Format notulensi"
             :class="
                 focusMode
-                    ? 'sticky top-0 z-20 flex flex-wrap items-center gap-1 border-b border-border/70 bg-surface px-3 py-2'
-                    : 'sticky top-16 z-20 flex flex-wrap items-center gap-1 rounded-t-lg border-b border-border/70 bg-surface px-2 py-2'
+                    ? 'sticky top-0 z-20 flex flex-nowrap items-center gap-0.5 overflow-x-auto border-b border-border/70 bg-surface px-3 py-2 [&>button]:shrink-0'
+                    : 'sticky top-14 z-20 flex flex-nowrap items-center gap-0.5 overflow-x-auto rounded-t-lg border-b border-border/70 bg-surface px-2 py-2 shadow-sm md:top-16 md:flex-wrap md:overflow-visible [&>button]:shrink-0'
             "
         >
             <div class="flex items-center gap-0.5">

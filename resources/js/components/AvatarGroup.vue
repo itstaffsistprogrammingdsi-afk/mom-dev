@@ -1,21 +1,18 @@
 <script setup lang="ts">
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getInitials } from '@/composables/useInitials';
 import { cn } from '@/lib/utils';
-import { computed } from 'vue';
+import { computed, type HTMLAttributes } from 'vue';
 
-interface AvatarUser {
-    id: number | string;
-    name: string;
-    avatar?: string | null;
-}
+type Person = { id: number | string; name: string; avatar?: string | null };
+type AvatarSize = 'xs' | 'sm' | 'md';
 
 const props = withDefaults(
     defineProps<{
-        users: AvatarUser[];
+        people?: Person[];
+        users?: Person[];
         max?: number;
-        size?: 'xs' | 'sm' | 'md';
-        class?: string;
+        size?: AvatarSize;
+        class?: HTMLAttributes['class'];
     }>(),
     {
         max: 4,
@@ -23,35 +20,50 @@ const props = withDefaults(
     },
 );
 
-const sizeClasses = {
-    xs: 'h-6 w-6 text-[10px]',
-    sm: 'h-8 w-8 text-xs',
-    md: 'h-10 w-10 text-sm',
+const people = computed(() => props.people ?? props.users ?? []);
+const visiblePeople = computed(() => people.value.slice(0, Math.max(0, props.max)));
+const extraCount = computed(() => Math.max(0, people.value.length - visiblePeople.value.length));
+
+const sizeClasses: Record<AvatarSize, string> = {
+    xs: 'size-6 text-[10px]',
+    sm: 'size-8 text-xs',
+    md: 'size-10 text-sm',
 };
 
-const visibleUsers = computed(() => props.users.slice(0, props.max));
-const remaining = computed(() => Math.max(0, props.users.length - props.max));
 const sizeClass = computed(() => sizeClasses[props.size]);
+
+function initials(name: string): string {
+    return name
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase() ?? '')
+        .join('');
+}
 </script>
 
 <template>
-    <div :class="cn('flex items-center', props.class)" role="group" :aria-label="`${props.users.length} peserta`">
-        <div class="flex -space-x-2">
-            <Avatar v-for="user in visibleUsers" :key="user.id" :class="cn(sizeClass, 'ring-2 ring-card')">
-                <AvatarImage v-if="user.avatar" :src="user.avatar" :alt="user.name" />
-                <AvatarFallback class="bg-secondary font-medium text-secondary-foreground">
-                    {{ getInitials(user.name) }}
-                </AvatarFallback>
-            </Avatar>
-            <span
-                v-if="remaining > 0"
-                :class="
-                    cn(sizeClass, 'inline-flex items-center justify-center rounded-full bg-muted font-medium text-muted-foreground ring-2 ring-card')
-                "
-                :aria-label="`${remaining} peserta lain`"
-            >
-                +{{ remaining }}
-            </span>
-        </div>
+    <div
+        v-if="people.length"
+        role="group"
+        :class="cn('flex items-center -space-x-2', props.class)"
+        :aria-label="`Peserta: ${people.map((person) => person.name).join(', ')}`"
+    >
+        <Avatar v-for="person in visiblePeople" :key="person.id" :size="size" class="ring-2 ring-card" :title="person.name">
+            <AvatarImage v-if="person.avatar" :src="person.avatar" :alt="person.name" />
+            <AvatarFallback class="bg-secondary font-semibold text-secondary-foreground">{{ initials(person.name) }}</AvatarFallback>
+        </Avatar>
+        <span
+            v-if="extraCount"
+            :class="
+                cn(
+                    sizeClass,
+                    'relative inline-flex shrink-0 items-center justify-center rounded-full bg-secondary font-semibold text-secondary-foreground ring-2 ring-card',
+                )
+            "
+            :title="`${extraCount} peserta lainnya`"
+        >
+            +{{ extraCount }}
+        </span>
     </div>
 </template>

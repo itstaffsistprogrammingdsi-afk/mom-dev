@@ -1,17 +1,7 @@
 <script setup lang="ts">
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
-import {
-    Sidebar,
-    SidebarContent,
-    SidebarFooter,
-    SidebarHeader,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
-    SidebarRail,
-    SidebarSeparator,
-} from '@/components/ui/sidebar';
+import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 import { Bell, Building2, FileStack, FileText, Hash, Inbox, LayoutGrid, ListChecks, ScrollText, ShieldCheck, Users } from 'lucide-vue-next';
@@ -48,11 +38,11 @@ const isAdmin = computed(() => page.props.auth.user?.role === 'admin');
 
 <template>
     <Sidebar collapsible="icon" variant="inset">
-        <SidebarHeader class="p-3 pb-1">
+        <SidebarHeader class="border-b border-sidebar-border/70 px-3 py-3 pr-12 md:pr-3">
             <SidebarMenu>
                 <SidebarMenuItem>
-                    <SidebarMenuButton size="lg" as-child>
-                        <Link :href="route('dashboard')" aria-label="Ke dashboard MoM">
+                    <SidebarMenuButton size="lg" as-child class="rounded-lg px-2 hover:bg-sidebar-accent">
+                        <Link :href="route('dashboard')">
                             <AppLogo />
                         </Link>
                     </SidebarMenuButton>
@@ -60,17 +50,14 @@ const isAdmin = computed(() => page.props.auth.user?.role === 'admin');
             </SidebarMenu>
         </SidebarHeader>
 
-        <SidebarContent class="py-1">
+        <SidebarContent role="navigation" aria-label="Navigasi utama" class="gap-4 px-1 py-4">
             <NavMain :items="mainNavItems" label="Ruang Kerja" />
-            <SidebarSeparator v-if="isAdmin" class="my-2" />
             <NavMain v-if="isAdmin" :items="adminNavItems" label="Administrasi" />
         </SidebarContent>
 
-        <SidebarFooter class="p-2">
+        <SidebarFooter class="border-t border-sidebar-border/70 p-3">
             <NavUser />
         </SidebarFooter>
-
-        <SidebarRail />
     </Sidebar>
     <slot />
 </template>

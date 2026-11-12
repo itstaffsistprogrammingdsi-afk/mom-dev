@@ -3,14 +3,13 @@ import DocumentTypeBadge from '@/components/DocumentTypeBadge.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate, formatDateTime, meetingTypeLabels } from '@/lib/labels';
 import { type BreadcrumbItem, type Decision, type Meeting } from '@/types';
 import { Head, Link } from '@inertiajs/vue3';
-import { CheckCircle2, FileText, Hash, Sparkles } from 'lucide-vue-next';
+import { CalendarDays, CheckCircle2, FileText, Hash, Sparkles } from 'lucide-vue-next';
 
 interface Topic {
     id: number;
@@ -44,78 +43,113 @@ const breadcrumbs: BreadcrumbItem[] = [
     <Head :title="`#${props.topic.name}`" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex flex-col gap-section p-page lg:p-page-lg">
+        <div class="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
             <PageHeader :title="`#${props.topic.name}`" :description="props.topic.description ?? 'Belum ada deskripsi topik.'">
                 <template #actions>
-                    <Badge :variant="props.topic.status === 'active' ? 'success' : 'neutral'">
-                        {{ props.topic.status === 'active' ? 'Aktif' : 'Diarsipkan' }}
-                    </Badge>
                     <Button variant="outline" as-child>
-                        <Link :href="route('topics.index')">Semua topik</Link>
+                        <Link :href="route('meetings.index', { topic: props.topic.id })">
+                            <FileText class="size-4" />
+                            Semua dokumen
+                        </Link>
                     </Button>
                 </template>
             </PageHeader>
 
-            <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-topic-surface px-2.5 py-1 text-xs font-semibold text-topic">
+                    <Hash class="size-3.5" aria-hidden="true" />
+                    Topik
+                </span>
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
+                    <FileText class="size-3.5" aria-hidden="true" />
+                    {{ props.meetings.length }} notulen
+                </span>
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
+                    <CheckCircle2 class="size-3.5" aria-hidden="true" />
+                    {{ props.decisions.length }} keputusan
+                </span>
+            </div>
+
+            <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
                 <div class="min-w-0 space-y-6">
                     <Card>
-                        <CardHeader class="flex-row items-center justify-between space-y-0">
-                            <div>
-                                <CardTitle>Notulen dengan topik ini</CardTitle>
-                                <CardDescription class="mt-1">Dokumen lintas divisi yang membahas topik ini.</CardDescription>
-                            </div>
-                            <Badge variant="neutral">{{ props.meetings.length }}</Badge>
+                        <CardHeader class="pb-3">
+                            <CardTitle as="h2" class="text-base">Notulen dengan topik ini</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <EmptyState v-if="props.meetings.length === 0" compact :icon="FileText" title="Belum ada notulen" />
+                            <EmptyState
+                                v-if="props.meetings.length === 0"
+                                title="Belum ada notulen"
+                                description="Topik ini belum dipakai pada notulen yang dapat Anda akses."
+                            />
+
                             <div v-else class="space-y-2">
                                 <Link
                                     v-for="meeting in props.meetings"
                                     :key="meeting.id"
                                     :href="route('meetings.show', meeting.id)"
-                                    class="group flex flex-col gap-2 rounded-md border border-border/70 p-3 transition-colors duration-fast ease-out-soft hover:border-primary/20 hover:bg-accent/40 sm:flex-row sm:items-center sm:justify-between"
+                                    class="group flex flex-col gap-2 rounded-lg border border-border p-3.5 transition-colors duration-fast ease-ui hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:flex-row sm:items-center sm:justify-between"
                                 >
-                                    <div class="min-w-0 space-y-1">
-                                        <p class="truncate font-medium leading-snug text-foreground transition-colors group-hover:text-primary">
+                                    <div class="min-w-0">
+                                        <p
+                                            class="truncate text-sm font-semibold text-foreground transition-colors duration-fast group-hover:text-primary"
+                                        >
                                             {{ meeting.title }}
                                         </p>
-                                        <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                                        <div class="mt-1.5 flex flex-wrap items-center gap-2">
                                             <DocumentTypeBadge :type="meeting.document_type" />
-                                            <span>{{ meetingTypeLabels[meeting.meeting_type] }}</span>
+                                            <span class="text-xs text-muted-foreground">{{
+                                                meetingTypeLabels[meeting.meeting_type] ?? meeting.meeting_type
+                                            }}</span>
                                             <span aria-hidden="true">·</span>
-                                            <span>{{ formatDateTime(meeting.scheduled_at) }}</span>
+                                            <span class="inline-flex items-center gap-1">
+                                                <CalendarDays class="size-3.5" aria-hidden="true" />
+                                                {{ formatDateTime(meeting.scheduled_at) }}
+                                            </span>
+                                            <span v-if="meeting.division" aria-hidden="true">·</span>
+                                            <span v-if="meeting.division">{{ meeting.division.name }}</span>
                                         </div>
                                     </div>
-                                    <StatusBadge kind="meeting" :value="meeting.status" />
+                                    <div class="flex shrink-0 flex-wrap items-center gap-2">
+                                        <StatusBadge kind="meeting" :value="meeting.status" />
+                                        <StatusBadge kind="confidentiality" :value="meeting.confidentiality" />
+                                    </div>
                                 </Link>
                             </div>
                         </CardContent>
                     </Card>
 
                     <Card>
-                        <CardHeader class="flex-row items-center justify-between space-y-0">
+                        <CardHeader class="flex-row items-start justify-between gap-3 pb-3">
                             <div>
-                                <CardTitle>Keputusan</CardTitle>
-                                <CardDescription class="mt-1">Keputusan yang tercatat dengan topik ini.</CardDescription>
+                                <CardTitle as="h2" class="text-base">Keputusan</CardTitle>
+                                <p class="text-sm text-muted-foreground">Keputusan lintas notulen yang membahas topik ini.</p>
                             </div>
-                            <Badge variant="neutral">{{ props.decisions.length }}</Badge>
+                            <span class="rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">{{
+                                props.decisions.length
+                            }}</span>
                         </CardHeader>
                         <CardContent>
-                            <EmptyState v-if="props.decisions.length === 0" compact :icon="CheckCircle2" title="Belum ada keputusan" />
-                            <ol v-else class="space-y-4">
-                                <li v-for="(decision, index) in props.decisions" :key="decision.id" class="flex gap-3">
+                            <EmptyState
+                                v-if="props.decisions.length === 0"
+                                title="Belum ada keputusan"
+                                description="Keputusan akan muncul di sini setelah dicatat pada notulen terkait."
+                            />
+
+                            <ol v-else class="relative space-y-4 border-l border-border pl-5">
+                                <li v-for="decision in props.decisions" :key="decision.id" class="relative">
                                     <span
-                                        class="flex size-6 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-semibold tabular-nums text-accent-foreground"
-                                    >
-                                        {{ index + 1 }}
-                                    </span>
-                                    <div class="min-w-0 space-y-1">
-                                        <p class="text-sm leading-relaxed text-foreground">{{ decision.content }}</p>
-                                        <p v-if="decision.decided_at" class="text-xs text-muted-foreground">{{ formatDate(decision.decided_at) }}</p>
+                                        class="absolute -left-[27px] top-1.5 size-3 rounded-full border-2 border-card bg-topic"
+                                        aria-hidden="true"
+                                    ></span>
+                                    <p class="text-sm leading-6">{{ decision.content }}</p>
+                                    <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                                        <span v-if="decision.decided_at">{{ formatDate(decision.decided_at) }}</span>
+                                        <span v-if="decision.meeting" aria-hidden="true">·</span>
                                         <Link
                                             v-if="decision.meeting"
                                             :href="route('meetings.show', decision.meeting.id)"
-                                            class="inline-flex text-xs font-medium text-primary hover:underline"
+                                            class="text-primary underline underline-offset-2"
                                         >
                                             {{ decision.meeting.title }}
                                         </Link>
@@ -126,71 +160,34 @@ const breadcrumbs: BreadcrumbItem[] = [
                     </Card>
                 </div>
 
-                <aside class="space-y-4 lg:sticky lg:top-20">
-                    <Card class="border-ai-border bg-ai-soft/40">
-                        <CardHeader class="flex-row items-start gap-3 space-y-0">
-                            <div
-                                class="flex size-9 shrink-0 items-center justify-center rounded-md bg-surface text-ai-foreground shadow-soft-xs ring-1 ring-ai-border"
-                            >
-                                <Sparkles class="size-4" aria-hidden="true" />
-                            </div>
+                <aside class="min-w-0 space-y-4">
+                    <section class="overflow-hidden rounded-lg border border-ai/25 bg-ai-surface/60 shadow-card" aria-labelledby="topic-ai-heading">
+                        <div class="flex gap-3 border-b border-ai/15 p-5">
+                            <span class="flex size-10 shrink-0 items-center justify-center rounded-md bg-ai/10 text-ai">
+                                <Sparkles class="size-5" aria-hidden="true" />
+                            </span>
                             <div>
-                                <CardTitle>Resume lintas notulen</CardTitle>
-                                <CardDescription class="mt-1">Ringkasan yang sudah disetujui.</CardDescription>
-                            </div>
-                        </CardHeader>
-                        <CardContent class="space-y-3">
-                            <EmptyState
-                                v-if="props.summaries.length === 0"
-                                compact
-                                :icon="Sparkles"
-                                title="Belum ada resume"
-                                description="Resume muncul setelah disetujui pada halaman notulen."
-                                class="border-ai-border/70 bg-surface/60"
-                            />
-                            <div
-                                v-for="summary in props.summaries"
-                                :key="summary.id"
-                                class="space-y-2 rounded-md border border-ai-border/70 bg-surface/80 p-3"
-                            >
                                 <div class="flex flex-wrap items-center gap-2">
-                                    <Badge variant="ai">v{{ summary.version }}</Badge>
-                                    <span class="text-xs text-muted-foreground">Disetujui {{ formatDate(summary.approved_at) }}</span>
+                                    <h2 id="topic-ai-heading" class="text-sm font-semibold">Resume lintas notulen</h2>
+                                    <span class="rounded-full bg-card/80 px-2 py-0.5 text-[10px] font-medium text-ai ring-1 ring-ai/20"
+                                        >Dibuat oleh AI</span
+                                    >
                                 </div>
-                                <p class="text-sm leading-relaxed text-foreground">{{ summary.content.ringkasan }}</p>
+                                <p class="mt-1 text-xs leading-5 text-muted-foreground">Ringkasan dari notulen yang telah disetujui.</p>
                             </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Tentang topik</CardTitle>
-                        </CardHeader>
-                        <CardContent class="space-y-3 text-sm">
-                            <div class="flex items-center gap-2 text-muted-foreground">
-                                <Hash class="size-4" aria-hidden="true" />
-                                <span class="font-medium text-foreground">#{{ props.topic.name }}</span>
-                            </div>
-                            <p class="leading-relaxed text-muted-foreground">{{ props.topic.description ?? 'Belum ada deskripsi topik.' }}</p>
-                            <div class="grid grid-cols-2 gap-2 border-t border-border/60 pt-3">
-                                <div class="rounded-md bg-muted/40 p-2.5">
-                                    <p class="text-xs text-muted-foreground">Notulen</p>
-                                    <p class="text-lg font-semibold tabular-nums">{{ props.meetings.length }}</p>
-                                </div>
-                                <div class="rounded-md bg-muted/40 p-2.5">
-                                    <p class="text-xs text-muted-foreground">Keputusan</p>
-                                    <p class="text-lg font-semibold tabular-nums">{{ props.decisions.length }}</p>
-                                </div>
-                            </div>
-                            <Link
-                                :href="route('topics.index')"
-                                class="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
-                            >
-                                <Hash class="size-4" aria-hidden="true" />
-                                Telusuri topik lain
-                            </Link>
-                        </CardContent>
-                    </Card>
+                        </div>
+                        <div class="space-y-3 p-5">
+                            <p v-if="props.summaries.length === 0" class="text-sm leading-6 text-muted-foreground">
+                                Belum ada resume lintas notulen yang disetujui.
+                            </p>
+                            <article v-for="summary in props.summaries" :key="summary.id" class="rounded-md border border-ai/15 bg-card/85 p-3.5">
+                                <p class="text-xs text-muted-foreground">
+                                    Versi {{ summary.version }} · disetujui {{ formatDate(summary.approved_at) }}
+                                </p>
+                                <p class="mt-1.5 text-sm leading-6">{{ summary.content.ringkasan }}</p>
+                            </article>
+                        </div>
+                    </section>
                 </aside>
             </div>
         </div>

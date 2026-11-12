@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { cn } from '@/lib/utils';
 import { Link } from '@inertiajs/vue3';
 
 interface PaginationLink {
@@ -23,27 +22,26 @@ function prettyLabel(label: string): string {
 </script>
 
 <template>
-    <nav v-if="links.length > 3" class="flex flex-wrap items-center gap-1" aria-label="Navigasi halaman">
+    <nav v-if="links.length > 3" class="flex flex-wrap items-center gap-1" aria-label="Paginasi">
         <template v-for="(link, index) in links" :key="index">
             <Link
                 v-if="link.url"
                 :href="link.url"
                 preserve-scroll
                 :aria-current="link.active ? 'page' : undefined"
+                class="inline-flex min-h-9 min-w-9 items-center justify-center rounded-md border px-3 py-1.5 text-sm transition-[background-color,border-color,color] duration-fast ease-ui focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 :class="
-                    cn(
-                        'inline-flex h-9 min-w-9 items-center justify-center rounded-md border px-3 text-sm transition-colors duration-fast ease-out-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40',
-                        link.active
-                            ? 'border-primary bg-primary text-primary-foreground shadow-soft-xs'
-                            : 'border-border bg-surface text-muted-foreground hover:border-primary/20 hover:bg-accent hover:text-accent-foreground',
-                    )
+                    link.active
+                        ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                        : 'border-border bg-card text-foreground hover:bg-muted'
                 "
             >
                 {{ prettyLabel(link.label) }}
             </Link>
             <span
                 v-else
-                class="inline-flex h-9 min-w-9 items-center justify-center rounded-md border border-border bg-muted/40 px-3 text-sm text-subtle-foreground"
+                aria-disabled="true"
+                class="inline-flex min-h-9 min-w-9 items-center justify-center rounded-md border border-border bg-card px-3 py-1.5 text-sm text-muted-foreground opacity-60"
             >
                 {{ prettyLabel(link.label) }}
             </span>

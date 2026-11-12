@@ -1,27 +1,19 @@
 <script setup lang="ts">
-import EditorSkeleton from '@/components/editor/EditorSkeleton.vue';
+import AvatarGroup from '@/components/AvatarGroup.vue';
+import MeetingEditor from '@/components/MeetingEditor.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import TagChip from '@/components/TagChip.vue';
-import { Badge, type BadgeVariants } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { confidentialityLabels } from '@/lib/labels';
+import { attendanceLabels, confidentialityLabels } from '@/lib/labels';
 import { type BreadcrumbItem, type Division, type Meeting, type Participant, type SharedData, type Tag } from '@/types';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import type { JSONContent } from '@tiptap/core';
-import { AlertCircle, CheckCircle2, Cloud, Loader2 } from 'lucide-vue-next';
-import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch, type Component } from 'vue';
-
-const MeetingEditor = defineAsyncComponent({
-    loader: () => import('@/components/MeetingEditor.vue'),
-    loadingComponent: EditorSkeleton,
-    delay: 120,
-});
+import { AlertCircle, CheckCircle2, CircleDashed, Loader2, Users, Wifi } from 'lucide-vue-next';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 interface EditableMeeting extends Meeting {
     participants: Participant[];
@@ -59,25 +51,56 @@ const lastSavedAt = ref<string | null>(null);
 let autosaveTimer: ReturnType<typeof setTimeout> | null = null;
 let autosaveReady = false;
 
-const autosaveBadge = computed<{ variant: BadgeVariants['variant']; label: string; icon: Component }>(() => {
+const autosaveLabel = computed(() => {
     if (autosaveState.value === 'saving') {
-        return { variant: 'info', label: 'Menyimpan…', icon: Loader2 };
+        return 'Menyimpan…';
     }
 
     if (autosaveState.value === 'saved') {
-        return { variant: 'success', label: `Tersimpan ${lastSavedAt.value ?? ''}`, icon: CheckCircle2 };
+        return `Tersimpan ${lastSavedAt.value ?? ''}`.trim();
     }
 
     if (autosaveState.value === 'error') {
-        return { variant: 'danger', label: 'Gagal menyimpan otomatis', icon: AlertCircle };
+        return 'Gagal menyimpan otomatis';
     }
 
-    return { variant: 'neutral', label: 'Autosave aktif', icon: Cloud };
+    return 'Autosave aktif';
 });
 
-function tagHref(tag: Tag): string | null {
+const autosaveTone = computed(() => {
+    if (autosaveState.value === 'error') {
+        return 'border-destructive/30 bg-destructive/10 text-destructive';
+    }
+
+    if (autosaveState.value === 'saved') {
+        return 'border-success/30 bg-success/10 text-success';
+    }
+
+    return 'border-border bg-muted/40 text-muted-foreground';
+});
+
+const collabActive = computed(() => Boolean(props.collab));
+const participants = computed(() =>
+    props.meeting.participants.map((participant) => ({
+        id: participant.id,
+        name: participant.user?.name ?? participant.name ?? participant.email ?? 'Tanpa nama',
+        attendance: participant.attendance,
+        email: participant.user?.email ?? participant.email ?? null,
+    })),
+);
+
+function initials(name: string): string {
+    return name
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase() ?? '')
+        .join('');
+}
+
+function tagHref(tag: Tag): string | undefined {
     if (!tag.target_id) {
-        return null;
+        return undefined;
     }
 
     if (tag.type === 'division') {
@@ -173,126 +196,153 @@ function submit() {
     <Head :title="`Sunting ${props.meeting.title}`" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <form class="flex flex-col gap-section p-page pb-28 sm:pb-0 lg:p-page-lg" @submit.prevent="submit">
+        <form class="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-4 py-6 md:px-8 md:py-8" @submit.prevent="submit">
             <PageHeader
                 :title="props.meeting.document_type === 'meeting' ? 'Sunting notulen' : 'Sunting dokumen'"
-                description="Perubahan akan tercatat di audit log. Dokumen final hanya dapat diubah oleh admin."
+                description="Perubahan tercatat di audit log. Dokumen final hanya dapat diubah oleh admin."
             >
                 <template #actions>
-                    <div class="hidden w-full flex-wrap items-center gap-2 sm:flex sm:w-auto">
-                        <Badge :variant="autosaveBadge.variant" role="status" aria-live="polite">
-                            <component
-                                :is="autosaveBadge.icon"
-                                class="size-3.5"
-                                :class="{ 'animate-spin': autosaveState === 'saving' }"
-                                aria-hidden="true"
-                            />
-                            {{ autosaveBadge.label }}
-                        </Badge>
-                        <Button variant="outline" as-child>
+                    <div class="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
+                        <span
+                            class="inline-flex basis-full items-center justify-center gap-2 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors duration-fast sm:basis-auto sm:justify-start"
+                            :class="autosaveTone"
+                            role="status"
+                            aria-live="polite"
+                        >
+                            <Loader2 v-if="autosaveState === 'saving'" class="size-3.5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                            <CheckCircle2 v-else-if="autosaveState === 'saved'" class="size-3.5" aria-hidden="true" />
+                            <AlertCircle v-else-if="autosaveState === 'error'" class="size-3.5" aria-hidden="true" />
+                            <CircleDashed v-else class="size-3.5" aria-hidden="true" />
+                            {{ autosaveLabel }}
+                        </span>
+                        <Button variant="outline" as-child class="flex-1 sm:flex-none">
                             <Link :href="route('meetings.show', props.meeting.id)">Batal</Link>
                         </Button>
-                        <Button type="submit" :loading="form.processing">Simpan perubahan</Button>
+                        <Button type="submit" :loading="form.processing" class="flex-1 sm:flex-none">Simpan perubahan</Button>
                     </div>
                 </template>
             </PageHeader>
 
-            <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+            <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
                 <div class="min-w-0 space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Informasi dokumen</CardTitle>
-                            <CardDescription>Judul dan agenda tampil di daftar serta halaman detail.</CardDescription>
-                        </CardHeader>
-                        <CardContent class="space-y-4">
-                            <div class="space-y-1.5">
-                                <Label for="title">Judul</Label>
-                                <Input id="title" v-model="form.title" :aria-invalid="Boolean(form.errors.title)" />
-                                <p v-if="form.errors.title" class="text-xs font-medium text-destructive-strong">{{ form.errors.title }}</p>
-                            </div>
-
-                            <div class="space-y-1.5">
-                                <Label for="agenda">Agenda</Label>
-                                <Textarea id="agenda" v-model="form.agenda" rows="3" placeholder="Agenda atau ringkasan rapat" />
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader class="flex-row items-start justify-between space-y-0">
-                            <div>
-                                <CardTitle>Isi dokumen</CardTitle>
-                                <CardDescription class="mt-1">Gunakan toolbar untuk format, tag, dan dikte suara.</CardDescription>
-                            </div>
-                            <Badge :variant="props.collab ? 'info' : 'neutral'">
-                                {{ props.collab ? 'Kolaborasi aktif' : 'Mode tunggal' }}
-                            </Badge>
-                        </CardHeader>
-                        <CardContent>
-                            <MeetingEditor
-                                v-model="form.content"
-                                :users="props.users"
-                                :divisions="props.divisions"
-                                :topics="props.topics"
-                                :collab-url="collabUrl"
-                                :collab-document="props.collab?.document ?? `meeting-${props.meeting.id}`"
-                                :collab-token="props.collab?.token ?? null"
-                                :collab-user="props.collab?.user ?? user.name"
+                    <section class="rounded-lg border border-border bg-card p-5 shadow-card md:p-6">
+                        <div class="space-y-1.5">
+                            <Label for="title">Judul</Label>
+                            <Input
+                                id="title"
+                                v-model="form.title"
+                                class="h-11 text-base font-semibold"
+                                :aria-invalid="Boolean(form.errors.title)"
+                                aria-describedby="edit-title-error"
                             />
-                        </CardContent>
-                    </Card>
+                            <p v-if="form.errors.title" id="edit-title-error" class="text-xs font-medium text-destructive">{{ form.errors.title }}</p>
+                        </div>
+
+                        <div class="mt-4 space-y-1.5">
+                            <Label for="agenda">Agenda</Label>
+                            <textarea
+                                id="agenda"
+                                v-model="form.agenda"
+                                rows="3"
+                                class="w-full rounded-md border border-input bg-card px-3 py-2.5 text-sm leading-6 text-foreground shadow-sm transition-[border-color,box-shadow] duration-fast ease-ui placeholder:text-muted-foreground hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                placeholder="Agenda rapat"
+                            />
+                        </div>
+                    </section>
+
+                    <section class="space-y-2">
+                        <div class="flex flex-wrap items-end justify-between gap-2">
+                            <Label>Isi dokumen</Label>
+                            <p class="text-xs text-muted-foreground">Autosave berjalan setiap 1,5 detik saat dokumen berstatus draf.</p>
+                        </div>
+                        <MeetingEditor
+                            v-model="form.content"
+                            :users="props.users"
+                            :divisions="props.divisions"
+                            :topics="props.topics"
+                            :collab-url="collabUrl"
+                            :collab-document="props.collab?.document ?? `meeting-${props.meeting.id}`"
+                            :collab-token="props.collab?.token ?? null"
+                            :collab-user="props.collab?.user ?? user.name"
+                        />
+                    </section>
                 </div>
 
-                <aside class="space-y-4 lg:sticky lg:top-20">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Kerahasiaan</CardTitle>
-                            <CardDescription>Menentukan siapa yang dapat membuka dokumen.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div class="space-y-1.5">
-                                <Label for="confidentiality">Tingkat akses</Label>
-                                <Select id="confidentiality" v-model="form.confidentiality">
-                                    <option v-for="(label, value) in confidentialityLabels" :key="value" :value="value">{{ label }}</option>
-                                </Select>
-                            </div>
-                        </CardContent>
-                    </Card>
+                <aside class="min-w-0 space-y-6">
+                    <section class="rounded-lg border border-border bg-card p-5 shadow-card">
+                        <h2 class="text-sm font-semibold">Pengaturan</h2>
+                        <div class="mt-4 space-y-1.5">
+                            <Label for="confidentiality">Kerahasiaan</Label>
+                            <Select id="confidentiality" v-model="form.confidentiality">
+                                <option v-for="(label, value) in confidentialityLabels" :key="value" :value="value">{{ label }}</option>
+                            </Select>
+                        </div>
+                    </section>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Tag aktif</CardTitle>
-                            <CardDescription>Disinkronkan otomatis dari mention di isi dokumen saat disimpan.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div v-if="props.meeting.tags.length" class="flex flex-wrap gap-1.5">
-                                <TagChip
-                                    v-for="tag in props.meeting.tags"
-                                    :key="tag.id"
-                                    :type="tag.type"
-                                    :label="tag.target_name ?? ''"
-                                    :href="tagHref(tag)"
-                                />
+                    <section class="rounded-lg border border-border bg-card p-5 shadow-card">
+                        <h2 class="flex items-center gap-2 text-sm font-semibold">
+                            <Wifi class="size-4 text-muted-foreground" />
+                            Kolaborasi
+                        </h2>
+                        <div class="mt-3 flex items-start gap-3">
+                            <span
+                                class="mt-1.5 size-2 shrink-0 rounded-full"
+                                :class="collabActive ? 'bg-success' : 'bg-muted-foreground/50'"
+                                aria-hidden="true"
+                            ></span>
+                            <div>
+                                <p class="text-sm font-medium">{{ collabActive ? 'Kolaborasi aktif' : 'Mode tunggal' }}</p>
+                                <p class="mt-1 text-xs leading-5 text-muted-foreground">
+                                    {{
+                                        collabActive
+                                            ? 'Perubahan dari rekan tim muncul langsung di editor.'
+                                            : 'Layanan kolaborasi tidak aktif. Perubahan hanya tersimpan dari perangkat ini.'
+                                    }}
+                                </p>
                             </div>
-                            <p v-else class="text-sm text-muted-foreground">Belum ada tag. Ketik @ atau # di editor untuk menambahkan.</p>
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </section>
+
+                    <section class="rounded-lg border border-border bg-card p-5 shadow-card">
+                        <h2 class="text-sm font-semibold">Tag aktif</h2>
+                        <p class="mt-1 text-xs text-muted-foreground">Tag disinkronkan otomatis dari mention di isi dokumen saat disimpan.</p>
+                        <div v-if="props.meeting.tags.length" class="mt-3 flex flex-wrap gap-1.5">
+                            <TagChip
+                                v-for="tag in props.meeting.tags"
+                                :key="tag.id"
+                                :kind="tag.type"
+                                :label="tag.target_name ?? 'Tanpa nama'"
+                                :href="tagHref(tag)"
+                            />
+                        </div>
+                        <p v-else class="mt-3 text-sm text-muted-foreground">Belum ada tag.</p>
+                    </section>
+
+                    <section class="rounded-lg border border-border bg-card p-5 shadow-card">
+                        <div class="flex items-center justify-between gap-3">
+                            <h2 class="flex items-center gap-2 text-sm font-semibold">
+                                <Users class="size-4 text-muted-foreground" />
+                                Peserta
+                            </h2>
+                            <span class="text-xs text-muted-foreground">{{ participants.length }}</span>
+                        </div>
+                        <div v-if="participants.length" class="mt-3 space-y-3">
+                            <AvatarGroup :people="participants" :max="6" />
+                            <ul class="space-y-2">
+                                <li v-for="participant in participants" :key="participant.id" class="flex items-center gap-2 text-sm">
+                                    <span
+                                        class="flex size-7 shrink-0 items-center justify-center rounded-full bg-secondary text-[10px] font-semibold text-secondary-foreground"
+                                    >
+                                        {{ initials(participant.name) }}
+                                    </span>
+                                    <span class="min-w-0 flex-1 truncate">{{ participant.name }}</span>
+                                    <span class="shrink-0 text-xs text-muted-foreground">{{ attendanceLabels[participant.attendance] }}</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <p v-else class="mt-3 text-sm text-muted-foreground">Belum ada peserta.</p>
+                    </section>
                 </aside>
-            </div>
-
-            <div
-                class="fixed inset-x-0 bottom-0 z-40 flex flex-wrap items-center justify-between gap-2 border-t border-border/70 bg-background p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:hidden"
-            >
-                <Badge :variant="autosaveBadge.variant" role="status" aria-live="polite" class="text-xs">
-                    <component :is="autosaveBadge.icon" class="size-3.5" :class="{ 'animate-spin': autosaveState === 'saving' }" aria-hidden="true" />
-                    {{ autosaveBadge.label }}
-                </Badge>
-                <div class="flex shrink-0 gap-2">
-                    <Button variant="outline" as-child>
-                        <Link :href="route('meetings.show', props.meeting.id)">Batal</Link>
-                    </Button>
-                    <Button type="submit" :loading="form.processing">Simpan</Button>
-                </div>
             </div>
         </form>
     </AppLayout>

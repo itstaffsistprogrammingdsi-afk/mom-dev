@@ -37,6 +37,19 @@ const props = defineProps<{
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Dokumen', href: '/notulen' }];
 
+function dateParts(value?: string | null): { day: string; month: string } {
+    if (!value) {
+        return { day: '--', month: '-' };
+    }
+
+    const date = new Date(value);
+
+    return {
+        day: new Intl.DateTimeFormat('id-ID', { day: '2-digit' }).format(date),
+        month: new Intl.DateTimeFormat('id-ID', { month: 'short' }).format(date),
+    };
+}
+
 const filters = reactive({
     search: props.filters.search ?? '',
     division: props.filters.division ?? '',
@@ -367,8 +380,9 @@ function resetFilters() {
                     :href="route('meetings.show', meeting.id)"
                     class="group flex flex-col gap-3 border-b border-border/60 p-4 transition-colors duration-fast ease-out-soft last:border-b-0 hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40 sm:flex-row sm:items-center sm:gap-4"
                 >
-                    <div class="flex size-10 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground">
-                        <FileText class="size-4" aria-hidden="true" />
+                    <div class="hidden w-12 shrink-0 flex-col items-center justify-center rounded-md border border-border bg-muted/40 py-2 sm:flex">
+                        <span class="text-[10px] font-medium text-muted-foreground">{{ dateParts(meeting.scheduled_at).month }}</span>
+                        <span class="text-lg font-semibold leading-6 text-foreground">{{ dateParts(meeting.scheduled_at).day }}</span>
                     </div>
 
                     <div class="min-w-0 flex-1 space-y-1.5">

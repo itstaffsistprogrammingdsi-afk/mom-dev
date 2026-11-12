@@ -16,25 +16,28 @@ function isActive(url: string): boolean {
 </script>
 
 <template>
-    <nav :aria-label="label ?? 'Navigasi utama'">
-        <SidebarGroup class="px-1.5 py-0.5">
-            <SidebarGroupLabel>{{ label ?? 'Platform' }}</SidebarGroupLabel>
-            <SidebarMenu class="gap-1">
-                <SidebarMenuItem v-for="item in items" :key="item.title">
-                    <SidebarMenuButton as-child :is-active="isActive(item.url)" :tooltip="item.title">
-                        <Link :href="item.url" :aria-current="isActive(item.url) ? 'page' : undefined">
-                            <component :is="item.icon" />
-                            <span>{{ item.title }}</span>
-                            <span
-                                v-if="item.badge"
-                                class="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-semibold tabular-nums text-primary-foreground"
-                            >
-                                {{ item.badge }}
-                            </span>
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-            </SidebarMenu>
-        </SidebarGroup>
-    </nav>
+    <SidebarGroup class="px-2 py-0">
+        <SidebarGroupLabel class="mb-1 px-3 text-[11px] font-semibold text-sidebar-foreground/65">{{ label ?? 'Platform' }}</SidebarGroupLabel>
+        <SidebarMenu>
+            <SidebarMenuItem v-for="item in items" :key="item.title">
+                <SidebarMenuButton
+                    as-child
+                    :tooltip="item.title"
+                    :is-active="isActive(item.url)"
+                    class="h-10 rounded-md px-3 font-medium transition-[background-color,color,box-shadow] duration-fast ease-ui data-[active=true]:shadow-sm"
+                >
+                    <Link :href="item.url" :aria-current="isActive(item.url) ? 'page' : undefined">
+                        <component :is="item.icon" />
+                        <span>{{ item.title }}</span>
+                        <span
+                            v-if="item.badge"
+                            class="ml-auto rounded-full bg-sidebar-primary px-2 py-0.5 text-[10px] font-semibold text-sidebar-primary-foreground"
+                        >
+                            {{ item.badge }}
+                        </span>
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+        </SidebarMenu>
+    </SidebarGroup>
 </template>
