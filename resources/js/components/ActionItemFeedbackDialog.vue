@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PhotoAttachmentField from '@/components/PhotoAttachmentField.vue';
 import { Badge, type BadgeVariants } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -8,13 +9,20 @@ import { Textarea } from '@/components/ui/textarea';
 import { formatDateTime } from '@/lib/labels';
 import type { ActionItem, ActionItemFeedback } from '@/types';
 import { useForm } from '@inertiajs/vue3';
-import { watch } from 'vue';
+import { Clock3, ImageIcon, Info } from 'lucide-vue-next';
+import { computed, watch } from 'vue';
 
-const props = defineProps<{
-    open: boolean;
-    task: ActionItem | null;
-    canRespond: boolean;
-}>();
+const props = withDefaults(
+    defineProps<{
+        open: boolean;
+        task: ActionItem | null;
+        canRespond: boolean;
+        pendingStatus?: string | null;
+    }>(),
+    {
+        pendingStatus: null,
+    },
+);
 
 const emit = defineEmits<{
     'update:open': [value: boolean];
@@ -29,6 +37,13 @@ const statusOptions: { value: ActionItemFeedback['response_status']; label: stri
     { value: 'need_help', label: 'Butuh bantuan', variant: 'warning' },
 ];
 
+const responseOptions = [
+    { value: 1, label: '1 jam' },
+    { value: 4, label: '4 jam' },
+    { value: 24, label: '24 jam' },
+    { value: 48, label: '48 jam' },
+];
+
 const quickReplies = [
     { label: 'Diterima', status: 'acknowledged' as const, body: 'Baik, tugas sudah saya terima.' },
     { label: 'Akan diagendakan', status: 'scheduled' as const, body: 'Baik, akan diagendakan segera.' },
@@ -38,12 +53,30 @@ const quickReplies = [
     { label: 'Butuh bantuan', status: 'need_help' as const, body: 'Saya butuh bantuan untuk menyelesaikan tugas ini.' },
 ];
 
-const form = useForm({
+const form = useForm<{
+    body: string;
+    response_status: ActionItemFeedback['response_status'];
+    status: string;
+    response_hours: number;
+    photo: File | null;
+}>({
     body: '',
-    response_status: 'acknowledged' as ActionItemFeedback['response_status'],
+    response_status: 'acknowledged',
+    status: '',
+    response_hours: 24,
+    photo: null,
 });
 
 const numberFormat = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 });
+
+const showResponseHours = computed(() => props.canRespond && props.task !== null && !props.task.response_due_at);
+const responseDueSoon = computed(() => {
+    if (!props.task?.response_due_at) {
+        return false;
+    }
+
+    return !props.task.is_response_overdue && new Date(props.task.response_due_at).getTime() - Date.now() < 4 * 60 * 60 * 1000;
+});
 
 function formatHours(value: number | null | undefined): string {
     return value === null || value === undefined ? '-' : `${numberFormat.format(value)} jam`;
@@ -59,8 +92,12 @@ function applyQuickReply(reply: (typeof quickReplies)[number]) {
 }
 
 function resetForm() {
-    form.reset('body');
-    form.response_status = 'acknowledged';
+    form.body = '';
+    form.response_status = props.pendingStatus === 'in_progress' ? 'in_progress' : 'acknowledged';
+    form.status = props.pendingStatus ?? '';
+    form.response_hours = props.task?.response_hours ?? 24;
+    form.photo = null;
+    form.clearErrors();
 }
 
 function submit() {
@@ -71,13 +108,30 @@ function submit() {
     form.post(route('action-items.feedback.store', props.task.id), {
         preserveScroll: true,
         preserveState: true,
-        onSuccess: resetForm,
+        forceFormData: true,
+        onSuccess: () => {
+            emit('update:open', false);
+            resetForm();
+        },
     });
 }
 
 watch(
+    () => props.open,
+    (open) => {
+        if (open) {
+            resetForm();
+        }
+    },
+);
+
+watch(
     () => props.task?.id,
-    () => resetForm(),
+    () => {
+        if (props.open) {
+            resetForm();
+        }
+    },
 );
 </script>
 
@@ -90,7 +144,7 @@ watch(
             </DialogHeader>
 
             <div v-if="props.task" class="space-y-4">
-                <div class="grid grid-cols-3 gap-2 text-xs">
+                <div class="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
                     <div class="rounded-md bg-muted/40 p-2.5">
                         <p class="text-muted-foreground">Owner</p>
                         <p class="font-medium">{{ props.task.is_owned ? 'Sudah ada' : 'Belum ada' }}</p>
@@ -100,10 +154,29 @@ watch(
                         <p class="font-medium">{{ formatHours(props.task.response_time_hours) }}</p>
                     </div>
                     <div class="rounded-md bg-muted/40 p-2.5">
+                        <p class="text-muted-foreground">Batas respons</p>
+                        <p
+                            class="font-medium"
+                            :class="props.task.is_response_overdue ? 'text-destructive-strong' : responseDueSoon ? 'text-warning-strong' : ''"
+                        >
+                            {{ props.task.response_due_at ? formatDateTime(props.task.response_due_at) : `${props.task.response_hours ?? 24} jam` }}
+                        </p>
+                    </div>
+                    <div class="rounded-md bg-muted/40 p-2.5">
                         <p class="text-muted-foreground">Terlambat</p>
-                        <p class="font-medium">{{ formatHours(props.task.overdue_hours) }}</p>
+                        <p class="font-medium" :class="props.task.is_response_overdue ? 'text-destructive-strong' : ''">
+                            {{ formatHours(props.task.response_overdue_hours) }}
+                        </p>
                     </div>
                 </div>
+
+                <p
+                    v-if="props.task.is_response_overdue"
+                    class="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-xs leading-5 text-destructive-strong"
+                >
+                    <Clock3 class="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+                    Batas respons sudah lewat {{ formatHours(props.task.response_overdue_hours) }}. Segera berikan respons.
+                </p>
 
                 <div class="space-y-2">
                     <p class="text-xs font-medium text-subtle-foreground">Riwayat respons</p>
@@ -125,16 +198,42 @@ watch(
                                 <span class="text-xs text-muted-foreground">{{ formatDateTime(feedback.created_at) }}</span>
                             </div>
                             <p class="text-sm leading-relaxed text-muted-foreground">{{ feedback.body }}</p>
+                            <a
+                                v-if="feedback.photo_url"
+                                :href="feedback.photo_url"
+                                target="_blank"
+                                rel="noopener"
+                                class="inline-flex items-center gap-2 rounded-md border border-border bg-muted/30 p-2 text-xs font-medium text-primary hover:underline"
+                            >
+                                <img :src="feedback.photo_url" alt="Foto respons" class="size-14 rounded object-cover" />
+                                <span class="inline-flex items-center gap-1">
+                                    <ImageIcon class="size-3.5" aria-hidden="true" />
+                                    {{ feedback.photo_original_name ?? 'Lihat foto' }}
+                                </span>
+                            </a>
                         </div>
                     </div>
                 </div>
 
                 <form v-if="props.canRespond" class="space-y-3 border-t border-border/60 pt-4" @submit.prevent="submit">
+                    <p class="flex items-start gap-2 rounded-md bg-muted/40 p-3 text-xs leading-5 text-muted-foreground">
+                        <Info class="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+                        Hasil respons akan dikirim ke pemilik dokumen, peserta, dan anggota yang di-tag pada dokumen.
+                    </p>
+
                     <div class="space-y-1.5">
                         <Label for="feedback-status">Keterangan respons</Label>
                         <Select id="feedback-status" v-model="form.response_status">
                             <option v-for="option in statusOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
                         </Select>
+                    </div>
+
+                    <div v-if="showResponseHours" class="space-y-1.5">
+                        <Label for="feedback-response-hours">Batas respons</Label>
+                        <Select id="feedback-response-hours" v-model.number="form.response_hours">
+                            <option v-for="option in responseOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+                        </Select>
+                        <p class="text-xs leading-5 text-muted-foreground">Batas mulai dihitung saat status tugas berubah menjadi berjalan.</p>
                     </div>
 
                     <div class="space-y-1.5">
@@ -165,6 +264,12 @@ watch(
                         <p v-if="form.errors.response_status" class="text-xs font-medium text-destructive-strong">
                             {{ form.errors.response_status }}
                         </p>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <Label>Foto pendukung</Label>
+                        <PhotoAttachmentField v-model="form.photo" hint="Lampirkan foto bukti atau kondisi terkini. Maksimal 5 MB." />
+                        <p v-if="form.errors.photo" class="text-xs font-medium text-destructive-strong">{{ form.errors.photo }}</p>
                     </div>
 
                     <DialogFooter>

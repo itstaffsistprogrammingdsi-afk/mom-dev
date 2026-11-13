@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { useToast } from '@/composables/useToast';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { actionStatusLabels, formatDate } from '@/lib/labels';
+import { actionStatusLabels, formatDate, formatDateTime } from '@/lib/labels';
 import { type ActionItem, type BreadcrumbItem, type Division, type SharedData } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { AlertTriangle, CheckCircle2, ListChecks, MessageSquare, RotateCcw, Search } from 'lucide-vue-next';
@@ -50,6 +50,7 @@ const filters = reactive({
 });
 
 const feedbackTaskId = ref<number | null>(null);
+const feedbackPendingStatus = ref<string | null>(null);
 const selectedFeedbackTask = computed(() => {
     const direct = props.items.data.find((task) => task.id === feedbackTaskId.value);
 
@@ -69,6 +70,7 @@ const selectedFeedbackTask = computed(() => {
 });
 
 function openFeedback(task: ActionItem) {
+    feedbackPendingStatus.value = null;
     feedbackTaskId.value = task.id;
 }
 
@@ -150,6 +152,12 @@ const boardColumns = [
 ];
 
 function updateStatus(task: ActionItem, status: string | number) {
+    if (task.status === 'new' && String(status) === 'in_progress') {
+        feedbackPendingStatus.value = 'in_progress';
+        feedbackTaskId.value = task.id;
+        return;
+    }
+
     router.patch(route('action-items.status', task.id), { status: String(status) }, { preserveScroll: true });
 }
 
@@ -360,13 +368,22 @@ function canEdit(task: ActionItem) {
                                         </div>
                                     </td>
                                     <td class="p-3">
-                                        <span
-                                            v-if="task.response_time_hours !== null && task.response_time_hours !== undefined"
-                                            class="text-xs font-medium"
-                                        >
-                                            {{ task.response_time_hours }} jam
-                                        </span>
-                                        <span v-else class="text-xs text-muted-foreground">Belum ada</span>
+                                        <div class="space-y-1">
+                                            <span
+                                                v-if="task.response_time_hours !== null && task.response_time_hours !== undefined"
+                                                class="text-xs font-medium"
+                                            >
+                                                {{ task.response_time_hours }} jam
+                                            </span>
+                                            <span v-else class="text-xs text-muted-foreground">Belum ada</span>
+                                            <p
+                                                class="text-[11px]"
+                                                :class="task.is_response_overdue ? 'font-medium text-destructive-strong' : 'text-muted-foreground'"
+                                            >
+                                                Batas:
+                                                {{ task.response_due_at ? formatDateTime(task.response_due_at) : `${task.response_hours ?? 24} jam` }}
+                                            </p>
+                                        </div>
                                     </td>
                                     <td class="p-3">
                                         <Select
@@ -427,6 +444,13 @@ function canEdit(task: ActionItem) {
                                                 ? `${task.response_time_hours} jam`
                                                 : 'Belum ada'
                                         }}
+                                    </p>
+                                    <p
+                                        class="mt-0.5"
+                                        :class="task.is_response_overdue ? 'font-medium text-destructive-strong' : 'text-muted-foreground'"
+                                    >
+                                        Batas:
+                                        {{ task.response_due_at ? formatDateTime(task.response_due_at) : `${task.response_hours ?? 24} jam` }}
                                     </p>
                                 </div>
                             </div>
@@ -502,6 +526,10 @@ function canEdit(task: ActionItem) {
                                             : 'Belum ada'
                                     }}
                                 </span>
+                                <span :class="task.is_response_overdue ? 'font-medium text-destructive-strong' : ''">
+                                    Batas:
+                                    {{ task.response_due_at ? formatDateTime(task.response_due_at) : `${task.response_hours ?? 24} jam` }}
+                                </span>
                                 <span v-if="task.is_overdue" class="font-medium text-destructive-strong"
                                     >Terlambat {{ task.overdue_hours ?? 0 }} jam</span
                                 >
@@ -538,9 +566,13 @@ function canEdit(task: ActionItem) {
             :open="feedbackTaskId !== null"
             :task="selectedFeedbackTask"
             :can-respond="selectedFeedbackTask ? canRespond(selectedFeedbackTask) : false"
+            :pending-status="feedbackPendingStatus"
             @update:open="
                 (open) => {
-                    if (!open) feedbackTaskId = null;
+                    if (!open) {
+                        feedbackTaskId = null;
+                        feedbackPendingStatus = null;
+                    }
                 }
             "
         />

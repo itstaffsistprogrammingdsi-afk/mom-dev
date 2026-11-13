@@ -12,17 +12,7 @@ class TemplateContentFactory
     public function default(DocumentType $type): array
     {
         $blocks = match ($type) {
-            DocumentType::Meeting => [
-                $this->note('Ganti teks panduan di bawah dengan hasil rapat yang sebenarnya.'),
-                $this->heading('Agenda'),
-                $this->paragraph('Tuliskan poin agenda rapat.'),
-                $this->heading('Pembahasan'),
-                $this->paragraph('Tuliskan pembahasan, data pendukung, dan kendala yang disampaikan peserta.'),
-                $this->heading('Keputusan'),
-                $this->bullets(['Keputusan pertama', 'Keputusan kedua']),
-                $this->heading('Action Item'),
-                $this->paragraph('Gunakan panel action item di halaman dokumen untuk menetapkan PIC dan tenggat.'),
-            ],
+            DocumentType::Meeting => $this->officialMeetingBlocks(),
             DocumentType::Proposal => [
                 $this->note('Susun proposal secara ringkas: masalah, solusi, ruang lingkup, dan kebutuhan sumber daya.'),
                 $this->heading('Ringkasan Proyek'),
@@ -80,6 +70,107 @@ class TemplateContentFactory
         return [
             'type' => 'doc',
             'content' => $blocks,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function officialMeeting(): array
+    {
+        return [
+            'type' => 'doc',
+            'content' => $this->officialMeetingBlocks(),
+        ];
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function officialMeetingBlocks(): array
+    {
+        return [
+            $this->officialResultTable(),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function officialResultTable(): array
+    {
+        $headers = [
+            ['Point Diskusi', ''],
+            ['Keterangan', ''],
+            ['Action Plan', ''],
+            ['Skala Prioritas', 'High Priority / Medium Priority / Low Priority. Diisi Pimpinan Rapat atau saat rapat.'],
+            ['Divisi', ''],
+            ['PIC', 'Wajib diisi nama penanggung jawab.'],
+            ['Deadline', 'Diisi Pimpinan Rapat atau berdasarkan kesepakatan rapat.'],
+            ['Output', 'Dapat berupa aturan, laporan, dan sebagainya.'],
+        ];
+
+        $headerRow = [
+            'type' => 'tableRow',
+            'content' => array_map(fn (array $header) => $this->tableCell($header[0], true, $header[1]), $headers),
+        ];
+
+        $emptyRow = [
+            'type' => 'tableRow',
+            'content' => array_map(fn () => $this->tableCell(''), $headers),
+        ];
+
+        return [
+            'type' => 'table',
+            'content' => [
+                $headerRow,
+                $emptyRow,
+                $emptyRow,
+                $emptyRow,
+                $emptyRow,
+                $emptyRow,
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function tableCell(string $text, bool $header = false, string $guidance = ''): array
+    {
+        $content = [$this->paragraph($text)];
+
+        if ($guidance !== '') {
+            $content[] = [
+                'type' => 'paragraph',
+                'content' => [[
+                    'type' => 'text',
+                    'marks' => [['type' => 'italic']],
+                    'text' => $guidance,
+                ]],
+            ];
+        }
+
+        return [
+            'type' => $header ? 'tableHeader' : 'tableCell',
+            'content' => $content,
+        ];
+    }
+
+    /**
+     * @param  array<int, string>  $items
+     * @return array<string, mixed>
+     */
+    private function orderedList(array $items): array
+    {
+        return [
+            'type' => 'orderedList',
+            'content' => array_map(fn (string $item) => [
+                'type' => 'listItem',
+                'content' => [
+                    $this->paragraph($item),
+                ],
+            ], $items),
         ];
     }
 

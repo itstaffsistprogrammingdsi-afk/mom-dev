@@ -31,6 +31,7 @@ import {
     CalendarClock,
     Check,
     CheckCircle2,
+    Clock3,
     Copy,
     Download,
     ExternalLink,
@@ -47,8 +48,9 @@ import {
     Paperclip,
     Pencil,
     Plus,
+    Printer,
+    ScanText,
     Share2,
-    Sparkles,
     Tags,
     Trash2,
     Unlock,
@@ -136,6 +138,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 const aiConsent = ref(false);
 const editingTaskId = ref<number | null>(null);
 const feedbackTaskId = ref<number | null>(null);
+const feedbackPendingStatus = ref<string | null>(null);
 const shareOpen = ref(false);
 const copiedSummaryId = ref<number | null>(null);
 let copyTimer: ReturnType<typeof setTimeout> | null = null;
@@ -153,6 +156,7 @@ const taskForm = reactive({
     pic_id: '',
     division_id: '',
     due_date: '',
+    response_hours: '24',
     status: 'new',
 });
 
@@ -162,6 +166,7 @@ const editTaskForm = reactive({
     pic_id: '',
     division_id: '',
     due_date: '',
+    response_hours: '24',
     status: 'new',
 });
 
@@ -194,6 +199,13 @@ const requiresShareConfirmation = computed(() => ['restricted', 'secret'].includ
 const taskUsers = computed(() => props.users ?? []);
 const taskDivisions = computed(() => props.divisions ?? []);
 const canGenerate = computed(() => Boolean(props.can.generateAi) && props.meeting.status !== 'locked');
+
+const responseHourOptions = [
+    { value: '1', label: '1 jam' },
+    { value: '4', label: '4 jam' },
+    { value: '24', label: '24 jam' },
+    { value: '48', label: '48 jam' },
+];
 
 const summaryStatusLabels: Record<string, string> = {
     draft: 'Draf',
@@ -229,6 +241,7 @@ const participants = computed(() =>
         attendance: participant.attendance,
     })),
 );
+const presentCount = computed(() => participants.value.filter((participant) => participant.attendance === 'present').length);
 
 watch(
     () => props.meeting.summaries,
@@ -463,6 +476,12 @@ function applySummaryActions(summary: Summary) {
 }
 
 function updateTaskStatus(task: ActionItem, status: string) {
+    if (task.status === 'new' && status === 'in_progress') {
+        feedbackPendingStatus.value = 'in_progress';
+        feedbackTaskId.value = task.id;
+        return;
+    }
+
     router.patch(route('action-items.status', task.id), { status }, { preserveScroll: true });
 }
 
@@ -471,6 +490,7 @@ function canEditTask(task: ActionItem) {
 }
 
 function openFeedback(task: ActionItem) {
+    feedbackPendingStatus.value = null;
     feedbackTaskId.value = task.id;
 }
 
@@ -481,7 +501,15 @@ function addTask() {
         {
             preserveScroll: true,
             onSuccess: () => {
-                Object.assign(taskForm, { title: '', description: '', pic_id: '', division_id: '', due_date: '', status: 'new' });
+                Object.assign(taskForm, {
+                    title: '',
+                    description: '',
+                    pic_id: '',
+                    division_id: '',
+                    due_date: '',
+                    response_hours: '24',
+                    status: 'new',
+                });
             },
         },
     );
@@ -495,6 +523,7 @@ function startEditTask(task: ActionItem) {
         pic_id: task.pic?.id ? String(task.pic.id) : '',
         division_id: task.division?.id ? String(task.division.id) : '',
         due_date: task.due_date ? String(task.due_date).slice(0, 10) : '',
+        response_hours: String(task.response_hours ?? 24),
         status: task.status,
     });
 }
@@ -602,6 +631,17 @@ function restoreVersion(version: Version) {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" class="w-52">
                             <DropdownMenuItem as-child>
+                                <a
+                                    :href="route('meetings.export.pdf', { meeting: props.meeting.id, inline: 1 })"
+                                    target="_blank"
+                                    rel="noopener"
+                                    class="flex w-full items-center gap-2"
+                                >
+                                    <Printer class="size-4" />
+                                    Cetak
+                                </a>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem as-child>
                                 <a :href="route('meetings.export.pdf', props.meeting.id)" class="flex w-full items-center gap-2">
                                     <Download class="size-4" />
                                     PDF
@@ -658,9 +698,35 @@ function restoreVersion(version: Version) {
                 <span class="rounded-full bg-muted px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
                     {{ meetingTypeLabels[props.meeting.meeting_type] }}
                 </span>
+                <span v-if="props.meeting.nomor_notulensi" class="text-xs text-muted-foreground">
+                    Nomor: <span class="font-medium text-foreground">{{ props.meeting.nomor_notulensi }}</span>
+                </span>
                 <span v-if="props.meeting.approved_by" class="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <CheckCircle2 class="size-3.5 text-success" />
                     Difinalkan oleh {{ props.meeting.approved_by.name }} · {{ formatDateTime(props.meeting.finalized_at) }}
+                </span>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+                <span class="inline-flex items-center gap-1.5">
+                    <CalendarClock class="size-4" aria-hidden="true" />
+                    {{ formatDateTime(props.meeting.scheduled_at) }}
+                </span>
+                <span v-if="props.meeting.division" class="inline-flex items-center gap-1.5">
+                    <Users class="size-4" aria-hidden="true" />
+                    {{ props.meeting.division.name }}
+                </span>
+                <span v-if="props.meeting.location" class="inline-flex items-center gap-1.5">
+                    <MapPin class="size-4" aria-hidden="true" />
+                    {{ props.meeting.location }}
+                </span>
+                <span class="inline-flex items-center gap-2">
+                    <AvatarGroup :people="participants" :max="5" size="xs" />
+                    <span>{{ participants.length }} peserta</span>
+                </span>
+                <span class="inline-flex items-center gap-1.5">
+                    <UserRound class="size-4" aria-hidden="true" />
+                    {{ props.meeting.document_type === 'meeting' ? 'Notulis' : 'Pembuat' }} {{ props.meeting.creator?.name ?? '-' }}
                 </span>
             </div>
 
@@ -681,7 +747,7 @@ function restoreVersion(version: Version) {
                         <div class="flex flex-col gap-4 border-b border-ai/15 p-5 md:flex-row md:items-start md:justify-between md:p-6">
                             <div class="flex gap-3">
                                 <span class="flex size-10 shrink-0 items-center justify-center rounded-md bg-ai/10 text-ai">
-                                    <Sparkles class="size-5" aria-hidden="true" />
+                                    <ScanText class="size-5" aria-hidden="true" />
                                 </span>
                                 <div>
                                     <div class="flex flex-wrap items-center gap-2">
@@ -703,7 +769,7 @@ function restoreVersion(version: Version) {
                                 <DropdownMenu v-else-if="canGenerate">
                                     <DropdownMenuTrigger as-child>
                                         <Button variant="outline" size="sm">
-                                            <Sparkles class="size-4" />
+                                            <ScanText class="size-4" />
                                             {{ aiSummaries.length ? 'Buat ulang' : 'Buat resume' }}
                                         </Button>
                                     </DropdownMenuTrigger>
@@ -733,7 +799,7 @@ function restoreVersion(version: Version) {
                                 </p>
                             </div>
 
-                            <article v-for="summary in aiSummaries" :key="summary.id" class="rounded-lg border border-ai/15 bg-card/85 p-4 shadow-sm">
+                            <article v-for="summary in aiSummaries" :key="summary.id" class="rounded-lg border border-ai/15 bg-card/85 p-4">
                                 <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
                                     <span class="font-medium text-ai">Versi {{ summary.version }}</span>
                                     <span aria-hidden="true">·</span>
@@ -869,8 +935,8 @@ function restoreVersion(version: Version) {
                                     aria-label="Progres action item"
                                 >
                                     <div
-                                        class="h-full rounded-full bg-success transition-[width] duration-popover ease-ui motion-reduce:transition-none"
-                                        :style="{ width: `${taskProgress}%` }"
+                                        class="h-full origin-left rounded-full bg-success transition-transform duration-popover ease-ui motion-reduce:transition-none"
+                                        :style="{ transform: `scaleX(${taskProgress / 100})` }"
                                     ></div>
                                 </div>
                                 <span class="text-xs text-muted-foreground">{{ taskProgress }}%</span>
@@ -909,6 +975,14 @@ function restoreVersion(version: Version) {
                                 <div>
                                     <label for="task-due-date" class="sr-only">Tenggat</label>
                                     <Input id="task-due-date" v-model="taskForm.due_date" type="date" aria-label="Tenggat" />
+                                </div>
+                                <div>
+                                    <label for="task-response-hours" class="sr-only">Batas respons</label>
+                                    <Select id="task-response-hours" v-model="taskForm.response_hours" aria-label="Batas respons">
+                                        <option v-for="option in responseHourOptions" :key="option.value" :value="option.value">
+                                            Batas respons {{ option.label }}
+                                        </option>
+                                    </Select>
                                 </div>
                                 <Button type="submit">
                                     <Plus class="size-4" />
@@ -956,6 +1030,18 @@ function restoreVersion(version: Version) {
                                                 <Input id="edit-task-due-date" v-model="editTaskForm.due_date" type="date" />
                                             </div>
                                             <div>
+                                                <label for="edit-task-response-hours" class="sr-only">Batas respons</label>
+                                                <Select
+                                                    id="edit-task-response-hours"
+                                                    v-model="editTaskForm.response_hours"
+                                                    aria-label="Batas respons"
+                                                >
+                                                    <option v-for="option in responseHourOptions" :key="option.value" :value="option.value">
+                                                        Batas respons {{ option.label }}
+                                                    </option>
+                                                </Select>
+                                            </div>
+                                            <div>
                                                 <label for="edit-task-status" class="sr-only">Status</label>
                                                 <Select id="edit-task-status" v-model="editTaskForm.status">
                                                     <option value="new">Baru</option>
@@ -987,7 +1073,7 @@ function restoreVersion(version: Version) {
                                                 <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                                                     <span class="inline-flex items-center gap-1.5">
                                                         <span
-                                                            class="flex size-5 shrink-0 items-center justify-center rounded-full bg-secondary text-[9px] font-semibold text-secondary-foreground"
+                                                            class="flex size-5 shrink-0 items-center justify-center rounded-full bg-secondary text-[11px] font-semibold text-secondary-foreground"
                                                         >
                                                             {{ initials(task.pic?.name ?? task.pic_name ?? task.division?.name) }}
                                                         </span>
@@ -1002,6 +1088,17 @@ function restoreVersion(version: Version) {
                                                     >
                                                         <AlertCircle v-if="task.is_overdue" class="size-3.5" aria-hidden="true" />
                                                         {{ task.is_overdue ? 'Lewat tenggat' : 'Tenggat' }} {{ formatDate(task.due_date) }}
+                                                    </span>
+                                                    <span
+                                                        class="inline-flex items-center gap-1"
+                                                        :class="task.is_response_overdue ? 'font-medium text-destructive' : ''"
+                                                    >
+                                                        <Clock3 class="size-3.5" aria-hidden="true" />
+                                                        <template v-if="task.response_due_at">
+                                                            {{ task.is_response_overdue ? 'Lewat batas respons' : 'Batas respons' }}
+                                                            {{ formatDateTime(task.response_due_at) }}
+                                                        </template>
+                                                        <template v-else> Batas respons {{ task.response_hours ?? 24 }} jam </template>
                                                     </span>
                                                 </div>
                                             </div>
@@ -1135,7 +1232,7 @@ function restoreVersion(version: Version) {
                                         <span class="truncate">{{ attachment.original_name }}</span>
                                     </a>
                                     <div class="flex shrink-0 items-center gap-1.5">
-                                        <span class="rounded-full bg-muted px-2 py-1 text-[10px] font-medium text-muted-foreground">{{
+                                        <span class="rounded-full bg-muted px-2 py-1 text-[11px] font-medium text-muted-foreground">{{
                                             attachment.kind
                                         }}</span>
                                         <Button
@@ -1228,7 +1325,7 @@ function restoreVersion(version: Version) {
                                 <Users class="size-4 text-muted-foreground" />
                                 Peserta
                             </CardTitle>
-                            <span class="text-xs text-muted-foreground">{{ participants.length }}</span>
+                            <span class="text-xs text-muted-foreground">{{ presentCount }}/{{ participants.length }} hadir</span>
                         </CardHeader>
                         <CardContent>
                             <div v-if="participants.length" class="space-y-3">
@@ -1236,7 +1333,7 @@ function restoreVersion(version: Version) {
                                 <ul class="space-y-2">
                                     <li v-for="participant in participants" :key="participant.id" class="flex items-center gap-2 text-sm">
                                         <span
-                                            class="flex size-7 shrink-0 items-center justify-center rounded-full bg-secondary text-[10px] font-semibold text-secondary-foreground"
+                                            class="flex size-7 shrink-0 items-center justify-center rounded-full bg-secondary text-[11px] font-semibold text-secondary-foreground"
                                         >
                                             {{ initials(participant.name) }}
                                         </span>
@@ -1345,7 +1442,7 @@ function restoreVersion(version: Version) {
 
                     <div
                         v-if="requiresShareConfirmation"
-                        class="space-y-2 rounded-md border border-warning/30 bg-warning/10 p-3 text-xs text-warning"
+                        class="space-y-2 rounded-md border border-warning/30 bg-warning/10 p-3 text-xs text-warning-strong"
                     >
                         <p>
                             Dokumen ini berlabel <strong>{{ confidentialityLabels[props.meeting.confidentiality] }}</strong
@@ -1373,9 +1470,13 @@ function restoreVersion(version: Version) {
             :open="feedbackTaskId !== null"
             :task="selectedFeedbackTask"
             :can-respond="selectedFeedbackTask ? canEditTask(selectedFeedbackTask) : false"
+            :pending-status="feedbackPendingStatus"
             @update:open="
                 (open) => {
-                    if (!open) feedbackTaskId = null;
+                    if (!open) {
+                        feedbackTaskId = null;
+                        feedbackPendingStatus = null;
+                    }
                 }
             "
         />

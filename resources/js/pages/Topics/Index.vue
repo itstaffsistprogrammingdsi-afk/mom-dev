@@ -54,17 +54,17 @@ function resetSearch() {
             <PageHeader title="Topik" description="Telusuri keputusan dan notulen lintas divisi berdasarkan topik." />
 
             <section class="grid gap-3 sm:grid-cols-3" aria-label="Ringkasan topik">
-                <div class="rounded-lg border border-border bg-card p-4 shadow-card">
+                <div class="rounded-lg border border-border bg-card p-4">
                     <p class="text-xs text-muted-foreground">Topik aktif</p>
-                    <p class="mt-1 text-2xl font-semibold tabular-nums">{{ props.topics.length }}</p>
+                    <p class="mt-1 text-2xl font-medium tabular-nums">{{ props.topics.length }}</p>
                 </div>
-                <div class="rounded-lg border border-border bg-card p-4 shadow-card">
+                <div class="rounded-lg border border-border bg-card p-4">
                     <p class="text-xs text-muted-foreground">Kaitan notulen</p>
-                    <p class="mt-1 text-2xl font-semibold tabular-nums">{{ totalMeetings }}</p>
+                    <p class="mt-1 text-2xl font-medium tabular-nums">{{ totalMeetings }}</p>
                 </div>
-                <div class="rounded-lg border border-border bg-card p-4 shadow-card">
+                <div class="rounded-lg border border-border bg-card p-4">
                     <p class="text-xs text-muted-foreground">Keputusan tercatat</p>
-                    <p class="mt-1 text-2xl font-semibold tabular-nums">{{ totalDecisions }}</p>
+                    <p class="mt-1 text-2xl font-medium tabular-nums">{{ totalDecisions }}</p>
                 </div>
             </section>
 
@@ -109,7 +109,7 @@ function resetSearch() {
                     :href="route('topics.show', topic.slug)"
                     class="group block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
-                    <Card class="h-full transition-colors duration-fast ease-ui group-hover:border-primary/30 group-hover:shadow-popover">
+                    <Card class="h-full transition-colors duration-fast ease-ui group-hover:border-primary/40">
                         <CardContent class="flex h-full flex-col gap-3 p-5">
                             <div class="flex items-start gap-3">
                                 <span class="flex size-10 shrink-0 items-center justify-center rounded-md bg-topic-surface text-topic">

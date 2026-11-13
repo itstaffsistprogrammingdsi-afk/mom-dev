@@ -31,7 +31,7 @@ const kindClass = computed(
         :href="href"
         :class="
             cn(
-                'inline-flex max-w-full items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold leading-5 transition-colors duration-fast ease-ui',
+                'inline-flex max-w-full items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium leading-5 transition-colors duration-fast ease-ui',
                 href && 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                 kindClass,
                 props.class,

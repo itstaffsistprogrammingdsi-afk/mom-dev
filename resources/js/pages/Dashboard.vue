@@ -9,7 +9,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { documentTypeLabels, formatDate, formatDateTime, meetingTypeLabels } from '@/lib/labels';
 import { type ActionItem, type BreadcrumbItem, type Meeting, type SharedData } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/vue3';
-import { AlertTriangle, CalendarDays, Hash, ListChecks, Plus } from 'lucide-vue-next';
+import { AlertTriangle, CalendarDays, Hash, ListChecks, Plus, StickyNote } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 const props = defineProps<{
@@ -44,6 +44,12 @@ const today = new Intl.DateTimeFormat('id-ID', {
         <div class="flex flex-col gap-6 p-4">
             <PageHeader title="Ringkasan hari ini" :description="`${today} · ${user.division?.name ?? 'Belum ada divisi'}`">
                 <template #actions>
+                    <Button variant="outline" as-child>
+                        <Link :href="route('quick-notes.create')">
+                            <StickyNote class="size-4" />
+                            Quick Note
+                        </Link>
+                    </Button>
                     <Button v-if="user.role === 'admin' || user.role === 'notulis'" as-child>
                         <Link :href="route('meetings.create')">
                             <Plus class="size-4" />

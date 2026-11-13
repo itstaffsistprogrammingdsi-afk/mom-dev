@@ -64,6 +64,27 @@ const filters = reactive({
 const isLoading = ref(false);
 const toast = useToast();
 
+function toDateInputValue(date: Date): string {
+    const copy = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+
+    return copy.toISOString().slice(0, 10);
+}
+
+function setDateRange(days: number) {
+    const to = new Date();
+    const from = new Date();
+    from.setDate(to.getDate() - days);
+    filters.from = toDateInputValue(from);
+    filters.to = toDateInputValue(to);
+    applyFilters();
+}
+
+function clearDateRange() {
+    filters.from = '';
+    filters.to = '';
+    applyFilters();
+}
+
 interface FilterPreset {
     id: string;
     name: string;
@@ -224,7 +245,7 @@ function resetFilters() {
     <Head title="Dokumen" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex flex-col gap-section p-page lg:p-page-lg">
+        <div class="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
             <PageHeader title="Notulen & Dokumen" description="Seluruh notulen, proposal, laporan, dan brosur yang dapat Anda akses.">
                 <template #actions>
                     <Button v-if="props.canCreate" as-child>
@@ -236,7 +257,7 @@ function resetFilters() {
                 </template>
             </PageHeader>
 
-            <form class="rounded-lg border border-border/80 bg-card p-card shadow-soft-sm" @submit.prevent="applyFilters">
+            <form class="rounded-lg border border-border bg-card p-4 md:p-5" @submit.prevent="applyFilters">
                 <div class="mb-4 flex items-start gap-3">
                     <div class="flex size-9 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground">
                         <SlidersHorizontal class="size-4" aria-hidden="true" />
@@ -256,10 +277,25 @@ function resetFilters() {
                         <Label for="meeting-search">Cari</Label>
                         <div class="relative">
                             <Search
-                                class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-subtle-foreground"
+                                class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
                                 aria-hidden="true"
                             />
-                            <Input id="meeting-search" v-model="filters.search" placeholder="Judul atau isi dokumen" class="pl-9" />
+                            <Input
+                                id="meeting-search"
+                                v-model="filters.search"
+                                type="search"
+                                placeholder="Judul atau isi dokumen"
+                                class="pl-9 pr-9 [&::-webkit-search-cancel-button]:hidden"
+                            />
+                            <button
+                                v-if="filters.search"
+                                type="button"
+                                class="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm p-1 text-muted-foreground transition-colors duration-fast hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                aria-label="Hapus kata kunci"
+                                @click="filters.search = ''"
+                            >
+                                <X class="size-4" aria-hidden="true" />
+                            </button>
                         </div>
                     </div>
 
@@ -309,6 +345,30 @@ function resetFilters() {
                             <Input v-model="filters.from" type="date" aria-label="Dari tanggal" />
                             <Input v-model="filters.to" type="date" aria-label="Sampai tanggal" />
                         </div>
+                        <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                            <button
+                                type="button"
+                                class="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors duration-fast hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-sm:min-h-11"
+                                @click="setDateRange(6)"
+                            >
+                                7 hari terakhir
+                            </button>
+                            <button
+                                type="button"
+                                class="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors duration-fast hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-sm:min-h-11"
+                                @click="setDateRange(29)"
+                            >
+                                30 hari terakhir
+                            </button>
+                            <button
+                                v-if="filters.from || filters.to"
+                                type="button"
+                                class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium text-primary transition-colors duration-fast hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-sm:min-h-11"
+                                @click="clearDateRange"
+                            >
+                                Hapus tanggal
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -337,12 +397,16 @@ function resetFilters() {
                 <Button variant="ghost" size="sm" @click="resetFilters">Hapus semua</Button>
             </div>
 
-            <div
-                v-if="isLoading"
-                class="overflow-hidden rounded-lg border border-border/80 bg-card shadow-soft-sm"
-                aria-busy="true"
-                aria-label="Memuat dokumen"
-            >
+            <div class="flex flex-wrap items-end justify-between gap-2">
+                <div>
+                    <h2 class="text-sm font-semibold text-foreground">Daftar dokumen</h2>
+                    <p class="text-xs text-muted-foreground">
+                        {{ props.meetings.total }} dokumen{{ activeFilterChips.length ? ' sesuai filter' : '' }}
+                    </p>
+                </div>
+            </div>
+
+            <div v-if="isLoading" class="overflow-hidden rounded-lg border border-border bg-card" aria-busy="true" aria-label="Memuat dokumen">
                 <div v-for="index in 3" :key="index" class="flex items-center gap-4 border-b border-border/60 p-4 last:border-b-0">
                     <Skeleton class="size-10 shrink-0 rounded-md" />
                     <div class="min-w-0 flex-1 space-y-2">
@@ -373,15 +437,15 @@ function resetFilters() {
                 </div>
             </EmptyState>
 
-            <div v-else class="overflow-hidden rounded-lg border border-border/80 bg-card shadow-soft-sm">
+            <div v-else class="overflow-hidden rounded-lg border border-border bg-card" :aria-busy="isLoading">
                 <Link
                     v-for="meeting in props.meetings.data"
                     :key="meeting.id"
                     :href="route('meetings.show', meeting.id)"
-                    class="group flex flex-col gap-3 border-b border-border/60 p-4 transition-colors duration-fast ease-out-soft last:border-b-0 hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40 sm:flex-row sm:items-center sm:gap-4"
+                    class="group flex flex-col gap-3 border-b border-border p-4 transition-colors duration-fast ease-ui last:border-b-0 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:flex-row sm:items-center sm:gap-4 md:p-5"
                 >
                     <div class="hidden w-12 shrink-0 flex-col items-center justify-center rounded-md border border-border bg-muted/40 py-2 sm:flex">
-                        <span class="text-[10px] font-medium text-muted-foreground">{{ dateParts(meeting.scheduled_at).month }}</span>
+                        <span class="text-[11px] font-medium text-muted-foreground">{{ dateParts(meeting.scheduled_at).month }}</span>
                         <span class="text-lg font-semibold leading-6 text-foreground">{{ dateParts(meeting.scheduled_at).day }}</span>
                     </div>
 

@@ -21,5 +21,5 @@ const label = computed(() => {
 </script>
 
 <template>
-    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold leading-5" :class="classes">{{ label }}</span>
+    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium leading-5" :class="classes">{{ label }}</span>
 </template>

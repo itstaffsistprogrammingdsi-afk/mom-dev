@@ -27,7 +27,7 @@ const shortcutsOpen = ref(false);
         class="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 border-b border-border/70 bg-background/95 px-4 backdrop-blur-md md:h-16 md:px-6"
     >
         <div class="flex min-w-0 items-center gap-3">
-            <SidebarTrigger class="-ml-1 size-9 rounded-md" />
+            <SidebarTrigger class="-ml-1 size-9 rounded-md max-sm:size-11" />
 
             <span v-if="breadcrumbs.length === 0" class="truncate text-sm font-semibold md:hidden">MoM</span>
             <span v-else class="min-w-0 flex-1 truncate text-sm font-medium md:hidden">{{ breadcrumbs[breadcrumbs.length - 1].title }}</span>
@@ -54,7 +54,7 @@ const shortcutsOpen = ref(false);
         <div class="ml-auto flex items-center gap-1">
             <button
                 type="button"
-                class="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors duration-fast ease-ui hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                class="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors duration-fast ease-ui hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 max-sm:size-11"
                 aria-label="Pintasan keyboard"
                 @click="shortcutsOpen = true"
             >
@@ -63,7 +63,7 @@ const shortcutsOpen = ref(false);
 
             <Link
                 :href="route('notifications.index')"
-                class="relative inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors duration-fast ease-ui hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                class="relative inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors duration-fast ease-ui hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 max-sm:size-11"
                 :aria-label="unread > 0 ? `Notifikasi, ${unread} belum dibaca` : 'Notifikasi'"
             >
                 <Bell class="size-4" aria-hidden="true" />

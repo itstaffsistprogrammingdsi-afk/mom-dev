@@ -57,6 +57,8 @@ export interface User {
 export interface Meeting {
     id: number;
     title: string;
+    nomor_notulensi: string | null;
+    editor_mode: 'docs' | 'sheet';
     document_type: string;
     meeting_type: string;
     status: 'draft' | 'final' | 'locked';
@@ -68,6 +70,7 @@ export interface Meeting {
     content: Record<string, unknown> | null;
     division?: Division | null;
     creator?: { id: number; name: string } | null;
+    approved_by?: { id: number; name: string } | null;
     created_by: number;
     finalized_at: string | null;
 }
@@ -100,6 +103,8 @@ export interface ActionItemFeedback {
     action_item_id: number;
     user_id: number | null;
     body: string;
+    photo_url?: string | null;
+    photo_original_name?: string | null;
     response_status: 'acknowledged' | 'scheduled' | 'in_progress' | 'blocked' | 'done' | 'need_help';
     response_status_label: string;
     created_at: string;
@@ -116,6 +121,10 @@ export interface ActionItem {
     is_owned?: boolean;
     response_time_hours?: number | null;
     overdue_hours?: number | null;
+    response_hours?: number | null;
+    response_due_at?: string | null;
+    is_response_overdue?: boolean;
+    response_overdue_hours?: number | null;
     first_responded_at?: string | null;
     source: string;
     completed_at: string | null;
@@ -124,6 +133,41 @@ export interface ActionItem {
     pic_name: string | null;
     division?: Division | null;
     feedback?: ActionItemFeedback[];
+}
+
+export type QuickNoteResponseStatus = 'acknowledged' | 'scheduled' | 'in_progress' | 'blocked' | 'done' | 'need_help';
+
+export interface QuickNoteMention {
+    id: number;
+    quick_note_id: number;
+    user_id: number | null;
+    response_hours: number;
+    due_at: string | null;
+    response_status: QuickNoteResponseStatus | null;
+    response_status_label: string | null;
+    response_body: string | null;
+    responded_at: string | null;
+    is_overdue: boolean;
+    is_late: boolean;
+    response_time_hours: number | null;
+    overdue_hours: number | null;
+    user?: { id: number; name: string; email?: string } | null;
+}
+
+export interface QuickNote {
+    id: number;
+    user_id: number;
+    division_id: number | null;
+    division?: Division | null;
+    title: string;
+    content: Record<string, unknown> | null;
+    content_text: string | null;
+    photo_url: string | null;
+    photo_original_name: string | null;
+    created_at: string;
+    updated_at: string;
+    creator?: { id: number; name: string } | null;
+    mentions?: QuickNoteMention[];
 }
 
 export type BreadcrumbItemType = BreadcrumbItem;

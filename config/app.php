@@ -15,6 +15,8 @@ return [
 
     'name' => env('APP_NAME', 'Laravel'),
 
+    'default_approver_name' => env('DEFAULT_APPROVER_NAME', 'dr. Ayuningtyas Utami, M.Biomed'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Environment
