@@ -13,12 +13,15 @@ class ActionItemFeedback extends Model
 
     protected $appends = [
         'response_status_label',
+        'photo_url',
     ];
 
     protected $fillable = [
         'action_item_id',
         'user_id',
         'body',
+        'photo_path',
+        'photo_original_name',
         'response_status',
     ];
 
@@ -42,5 +45,12 @@ class ActionItemFeedback extends Model
     protected function responseStatusLabel(): Attribute
     {
         return Attribute::get(fn () => $this->response_status?->label() ?? $this->response_status);
+    }
+
+    protected function photoUrl(): Attribute
+    {
+        return Attribute::get(fn () => $this->photo_path
+            ? route('action-items.feedback.photo', [$this->action_item_id, $this->id])
+            : null);
     }
 }

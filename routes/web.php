@@ -17,6 +17,7 @@ use App\Http\Controllers\MeetingExportController;
 use App\Http\Controllers\MeetingShareController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PeopleController;
+use App\Http\Controllers\QuickNoteController;
 use App\Http\Controllers\RelatedController;
 use App\Http\Controllers\TopicController;
 use Illuminate\Support\Facades\Route;
@@ -57,6 +58,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('ai-summaries/{aiSummary}', [MeetingAiController::class, 'update'])->name('ai-summaries.update');
     Route::post('ai-summaries/{aiSummary}/terapkan', [MeetingAiController::class, 'applyActionItems'])->name('ai-summaries.apply');
 
+
+    Route::get('quick-notes', [QuickNoteController::class, 'index'])->name('quick-notes.index');
+    Route::get('quick-notes/buat', [QuickNoteController::class, 'create'])->name('quick-notes.create');
+    Route::post('quick-notes', [QuickNoteController::class, 'store'])->name('quick-notes.store');
+    Route::get('quick-notes/{quickNote}/foto/{photo}', [QuickNoteController::class, 'photoItem'])->name('quick-notes.photo-item');
+    Route::get('quick-notes/{quickNote}/foto', [QuickNoteController::class, 'photo'])->name('quick-notes.photo');
+    Route::get('quick-notes/{quickNote}', [QuickNoteController::class, 'show'])->name('quick-notes.show');
+    Route::get('quick-notes/{quickNote}/sunting', [QuickNoteController::class, 'edit'])->name('quick-notes.edit');
+    Route::patch('quick-notes/{quickNote}', [QuickNoteController::class, 'update'])->name('quick-notes.update');
+    Route::delete('quick-notes/{quickNote}', [QuickNoteController::class, 'destroy'])->name('quick-notes.destroy');
+    Route::post('quick-notes/{quickNote}/respons', [QuickNoteController::class, 'respond'])->name('quick-notes.respond');
+
     Route::get('terkait-saya', RelatedController::class)->name('related.index');
 
     Route::get('topik', [TopicController::class, 'index'])->name('topics.index');
@@ -73,6 +86,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('tugas/{actionItem}', [ActionItemController::class, 'destroy'])->name('action-items.destroy');
     Route::patch('tugas/{actionItem}/status', [ActionItemController::class, 'updateStatus'])->name('action-items.status');
     Route::post('tugas/{actionItem}/feedback', [ActionItemController::class, 'storeFeedback'])->name('action-items.feedback.store');
+    Route::get('tugas/{actionItem}/respons/{feedback}/foto', [ActionItemController::class, 'feedbackPhoto'])->name('action-items.feedback.photo');
 
     Route::get('notifikasi', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('notifikasi/baca-semua', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');

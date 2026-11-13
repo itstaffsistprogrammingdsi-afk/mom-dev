@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AvatarGroup from '@/components/AvatarGroup.vue';
 import MeetingEditor from '@/components/MeetingEditor.vue';
+import MinutesCanvas from '@/components/minutes/MinutesCanvas.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import TagChip from '@/components/TagChip.vue';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,8 @@ const props = defineProps<{
     divisions: Division[];
     topics: { id: number; name: string }[];
     collab?: { url: string; document: string; token: string; user: string } | null;
+    creatorName: string;
+    approverName: string;
 }>();
 
 const page = usePage<SharedData>();
@@ -39,8 +42,19 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Sunting', href: `/notulen/${props.meeting.id}/sunting` },
 ];
 
-const form = useForm({
+interface EditForm {
+    title: string;
+    nomor_notulensi: string;
+    editor_mode: 'docs' | 'sheet';
+    agenda: string;
+    confidentiality: string;
+    content: JSONContent;
+}
+
+const form = useForm<EditForm>({
     title: props.meeting.title,
+    nomor_notulensi: props.meeting.nomor_notulensi ?? '',
+    editor_mode: (props.meeting.editor_mode ?? 'docs') as 'docs' | 'sheet',
     agenda: props.meeting.agenda ?? '',
     confidentiality: props.meeting.confidentiality,
     content: (props.meeting.content ?? { type: 'doc', content: [{ type: 'paragraph' }] }) as JSONContent,
@@ -121,7 +135,7 @@ onMounted(() => {
 });
 
 watch(
-    () => [form.title, form.agenda, form.confidentiality, form.content],
+    () => [form.title, form.nomor_notulensi, form.editor_mode, form.agenda, form.confidentiality, form.content],
     () => {
         if (!autosaveReady) {
             return;
@@ -156,6 +170,8 @@ async function runAutosave() {
             },
             body: JSON.stringify({
                 title: form.title,
+                nomor_notulensi: form.nomor_notulensi,
+                editor_mode: form.editor_mode,
                 agenda: form.agenda,
                 confidentiality: form.confidentiality,
                 content: form.content,
@@ -225,7 +241,7 @@ function submit() {
 
             <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
                 <div class="min-w-0 space-y-6">
-                    <section class="rounded-lg border border-border bg-card p-5 shadow-card md:p-6">
+                    <section class="rounded-lg border border-border bg-card p-5 md:p-6">
                         <div class="space-y-1.5">
                             <Label for="title">Judul</Label>
                             <Input
@@ -255,7 +271,27 @@ function submit() {
                             <Label>Isi dokumen</Label>
                             <p class="text-xs text-muted-foreground">Autosave berjalan setiap 1,5 detik saat dokumen berstatus draf.</p>
                         </div>
+                        <MinutesCanvas
+                            v-if="props.meeting.document_type === 'meeting'"
+                            v-model:content="form.content"
+                            v-model:mode="form.editor_mode"
+                            v-model:nomor="form.nomor_notulensi"
+                            :title="form.title"
+                            :agenda="form.agenda"
+                            :scheduled-at="props.meeting.scheduled_at"
+                            :participants="participants"
+                            :creator-name="props.creatorName"
+                            :approver-name="props.approverName"
+                            :users="props.users"
+                            :divisions="props.divisions"
+                            :topics="props.topics"
+                            :collab-url="collabUrl"
+                            :collab-document="props.collab?.document ?? `meeting-${props.meeting.id}`"
+                            :collab-token="props.collab?.token ?? null"
+                            :collab-user="props.collab?.user ?? user.name"
+                        />
                         <MeetingEditor
+                            v-else
                             v-model="form.content"
                             :users="props.users"
                             :divisions="props.divisions"
@@ -269,7 +305,7 @@ function submit() {
                 </div>
 
                 <aside class="min-w-0 space-y-6">
-                    <section class="rounded-lg border border-border bg-card p-5 shadow-card">
+                    <section class="rounded-lg border border-border bg-card p-5">
                         <h2 class="text-sm font-semibold">Pengaturan</h2>
                         <div class="mt-4 space-y-1.5">
                             <Label for="confidentiality">Kerahasiaan</Label>
@@ -279,7 +315,7 @@ function submit() {
                         </div>
                     </section>
 
-                    <section class="rounded-lg border border-border bg-card p-5 shadow-card">
+                    <section class="rounded-lg border border-border bg-card p-5">
                         <h2 class="flex items-center gap-2 text-sm font-semibold">
                             <Wifi class="size-4 text-muted-foreground" />
                             Kolaborasi
@@ -303,7 +339,7 @@ function submit() {
                         </div>
                     </section>
 
-                    <section class="rounded-lg border border-border bg-card p-5 shadow-card">
+                    <section class="rounded-lg border border-border bg-card p-5">
                         <h2 class="text-sm font-semibold">Tag aktif</h2>
                         <p class="mt-1 text-xs text-muted-foreground">Tag disinkronkan otomatis dari mention di isi dokumen saat disimpan.</p>
                         <div v-if="props.meeting.tags.length" class="mt-3 flex flex-wrap gap-1.5">
@@ -318,7 +354,7 @@ function submit() {
                         <p v-else class="mt-3 text-sm text-muted-foreground">Belum ada tag.</p>
                     </section>
 
-                    <section class="rounded-lg border border-border bg-card p-5 shadow-card">
+                    <section class="rounded-lg border border-border bg-card p-5">
                         <div class="flex items-center justify-between gap-3">
                             <h2 class="flex items-center gap-2 text-sm font-semibold">
                                 <Users class="size-4 text-muted-foreground" />
@@ -331,7 +367,7 @@ function submit() {
                             <ul class="space-y-2">
                                 <li v-for="participant in participants" :key="participant.id" class="flex items-center gap-2 text-sm">
                                     <span
-                                        class="flex size-7 shrink-0 items-center justify-center rounded-full bg-secondary text-[10px] font-semibold text-secondary-foreground"
+                                        class="flex size-7 shrink-0 items-center justify-center rounded-full bg-secondary text-[11px] font-semibold text-secondary-foreground"
                                     >
                                         {{ initials(participant.name) }}
                                     </span>

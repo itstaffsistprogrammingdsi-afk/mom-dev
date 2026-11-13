@@ -2,15 +2,25 @@
 import { SlashCommand } from '@/components/editor/slashCommand';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { getInitials } from '@/composables/useInitials';
+import { sanitizeTipTapContent } from '@/lib/tiptap';
 import type { Division, User } from '@/types';
 import { HocuspocusProvider } from '@hocuspocus/provider';
 import type { JSONContent } from '@tiptap/core';
 import Collaboration from '@tiptap/extension-collaboration';
 import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
+import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
 import Mention from '@tiptap/extension-mention';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -26,6 +36,7 @@ import {
     AlignCenterVertical,
     AtSign,
     Bold,
+    Columns3,
     Heading2,
     Italic,
     Link2,
@@ -37,7 +48,9 @@ import {
     MicOff,
     Minimize2,
     Redo2,
+    Rows3,
     Table2,
+    Trash2,
     Undo2,
 } from 'lucide-vue-next';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
@@ -54,6 +67,8 @@ interface Props {
     collabToken?: string | null;
     collabUser?: string;
     showTagPicker?: boolean;
+    placeholder?: string;
+    flat?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -63,6 +78,8 @@ const props = withDefaults(defineProps<Props>(), {
     topics: () => [],
     collabUrl: null,
     showTagPicker: true,
+    placeholder: 'Tulis pembahasan rapat di sini…',
+    flat: false,
 });
 
 const emit = defineEmits<{
@@ -90,7 +107,14 @@ const MentionNode = Mention.extend({
                 parseHTML: (element: HTMLElement) => element.getAttribute('data-mention-type') ?? 'person',
                 renderHTML: (attributes: Record<string, unknown>) => ({
                     'data-mention-type': attributes.type,
+                    style: 'white-space: nowrap',
                 }),
+            },
+            responseHours: {
+                default: null,
+                parseHTML: (element: HTMLElement) => element.getAttribute('data-response-hours'),
+                renderHTML: (attributes: Record<string, unknown>) =>
+                    attributes.responseHours ? { 'data-response-hours': String(attributes.responseHours) } : {},
             },
         };
     },
@@ -313,24 +337,42 @@ function createSuggestion(getItems: (query: string) => MentionItem[], char: '@' 
 
 const TopicMentionNode = MentionNode.extend({ name: 'topicMention' });
 
+const ImageNode = Image.extend({
+    addAttributes() {
+        return {
+            ...this.parent?.(),
+            photoId: {
+                default: null,
+                parseHTML: (element: HTMLElement) => element.getAttribute('data-photo-id'),
+                renderHTML: (attributes: Record<string, unknown>) => (attributes.photoId ? { 'data-photo-id': String(attributes.photoId) } : {}),
+            },
+        };
+    },
+});
+
 const focusMode = ref(false);
 const typewriterMode = ref(false);
 const editorScroll = ref<HTMLElement | null>(null);
 
 const editor = useEditor({
-    content: props.modelValue ?? { type: 'doc', content: [{ type: 'paragraph' }] },
+    content: sanitizeTipTapContent(props.modelValue),
     editable: props.editable,
     extensions: [
         StarterKit.configure({
             history: props.collabUrl ? false : undefined,
         }),
         Placeholder.configure({
-            placeholder: 'Tulis pembahasan rapat di sini…',
+            placeholder: props.placeholder,
         }),
         SlashCommand,
         Link.configure({
             openOnClick: false,
             autolink: true,
+        }),
+        ImageNode.configure({
+            inline: false,
+            allowBase64: false,
+            HTMLAttributes: { class: 'meeting-image' },
         }),
         TaskList,
         TaskItem.configure({ nested: true }),
@@ -339,11 +381,11 @@ const editor = useEditor({
         TableCell,
         TableHeader,
         MentionNode.configure({
-            HTMLAttributes: { class: 'mention' },
+            HTMLAttributes: { class: 'mention whitespace-nowrap' },
             suggestion: createSuggestion(personAndDivisionItems, '@') as any,
         }),
         TopicMentionNode.configure({
-            HTMLAttributes: { class: 'mention' },
+            HTMLAttributes: { class: 'mention whitespace-nowrap' },
             suggestion: createSuggestion(topicItems, '#') as any,
         }),
         ...(ydoc && provider
@@ -379,7 +421,7 @@ function seedCollaborativeContent() {
         return;
     }
 
-    editor.value.commands.setContent(props.modelValue as JSONContent, false);
+    editor.value.commands.setContent(sanitizeTipTapContent(props.modelValue), false);
     contentSeeded = true;
 }
 
@@ -487,6 +529,16 @@ const tagOptions = computed(() => [
     })),
 ]);
 
+function applyPriority(value?: string | number) {
+    const priority = String(value ?? '');
+
+    if (!priority || !editor.value) {
+        return;
+    }
+
+    editor.value.chain().focus().insertContent(priority).run();
+}
+
 function insertTag(value?: string | number) {
     const key = String(value ?? tagSelection.value);
     const selected = tagOptions.value.find((option) => option.key === key);
@@ -498,10 +550,7 @@ function insertTag(value?: string | number) {
     editor.value
         .chain()
         .focus()
-        .insertContent([
-            { type: 'mention', attrs: { id: selected.id, label: selected.label, type: selected.type } },
-            { type: 'text', text: ' ' },
-        ])
+        .insertContent({ type: 'mention', attrs: { id: selected.id, label: selected.label, type: selected.type } })
         .run();
 
     tagSelection.value = '';
@@ -596,7 +645,7 @@ watch(
         }
 
         if (JSON.stringify(value) !== JSON.stringify(editor.value.getJSON())) {
-            editor.value.commands.setContent(value as JSONContent, false);
+            editor.value.commands.setContent(sanitizeTipTapContent(value), false);
         }
     },
     { deep: true },
@@ -625,8 +674,61 @@ onBeforeUnmount(() => {
     editor.value?.destroy();
 });
 
+function removeImages() {
+    if (!editor.value) {
+        return;
+    }
+
+    const positions: number[] = [];
+
+    editor.value.state.doc.descendants((node, pos) => {
+        if (node.type.name === 'image') {
+            positions.push(pos);
+        }
+    });
+
+    if (positions.length === 0) {
+        return;
+    }
+
+    editor.value
+        .chain()
+        .focus()
+        .command(({ tr }) => {
+            positions.reverse().forEach((pos) => {
+                const node = tr.doc.nodeAt(pos);
+
+                if (node) {
+                    tr.delete(pos, pos + node.nodeSize);
+                }
+            });
+
+            return true;
+        })
+        .run();
+}
+
+function insertPhoto(src: string) {
+    if (!editor.value) {
+        return;
+    }
+
+    editor.value
+        .chain()
+        .focus()
+        .insertContent([{ type: 'image', attrs: { src } }, { type: 'paragraph' }])
+        .run();
+}
+
+function focusEditor() {
+    editor.value?.commands.focus();
+}
+
 defineExpose({
     getJSON: () => editor.value?.getJSON(),
+    insertPhoto,
+    removeImages,
+    focusEditor,
 });
 </script>
 
@@ -636,7 +738,9 @@ defineExpose({
         :class="
             focusMode
                 ? 'fixed inset-0 z-[70] flex flex-col bg-background'
-                : 'group rounded-lg border border-border/80 bg-card shadow-soft-sm transition-[border-color,box-shadow] duration-base ease-out-soft focus-within:border-primary/40 focus-within:shadow-soft-md'
+                : props.flat
+                  ? 'group'
+                  : 'group rounded-lg border border-border/80 bg-card shadow-soft-sm transition-[border-color,box-shadow] duration-base ease-out-soft focus-within:border-primary/40 focus-within:shadow-soft-md'
         "
     >
         <div
@@ -726,16 +830,57 @@ defineExpose({
             <span class="mx-1 h-5 w-px bg-border" aria-hidden="true" />
 
             <div class="flex items-center gap-0.5">
-                <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    class="size-8"
-                    aria-label="Sisipkan tabel"
-                    @click="editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()"
+                <DropdownMenu>
+                    <DropdownMenuTrigger as-child>
+                        <Button
+                            type="button"
+                            :variant="editor.isActive('table') ? 'secondary' : 'ghost'"
+                            size="icon"
+                            class="size-8"
+                            aria-label="Menu tabel"
+                        >
+                            <Table2 />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" class="w-60">
+                        <DropdownMenuLabel>Tabel</DropdownMenuLabel>
+                        <DropdownMenuItem @click="editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()">
+                            <Table2 class="size-4" />
+                            Sisipkan tabel 3 x 3
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem :disabled="!editor.isActive('table')" @click="editor.chain().focus().addRowAfter().run()">
+                            <Rows3 class="size-4" />
+                            Tambah baris di bawah
+                        </DropdownMenuItem>
+                        <DropdownMenuItem :disabled="!editor.isActive('table')" @click="editor.chain().focus().addColumnAfter().run()">
+                            <Columns3 class="size-4" />
+                            Tambah kolom di kanan
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem :disabled="!editor.isActive('table')" @click="editor.chain().focus().deleteRow().run()">
+                            <Trash2 class="size-4" />
+                            Hapus baris
+                        </DropdownMenuItem>
+                        <DropdownMenuItem :disabled="!editor.isActive('table')" @click="editor.chain().focus().deleteColumn().run()">
+                            <Trash2 class="size-4" />
+                            Hapus kolom
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+                <Select
+                    v-if="editor.isActive('table')"
+                    :model-value="''"
+                    wrapper-class="w-36 shrink-0"
+                    class="h-8 text-xs"
+                    aria-label="Skala prioritas sel"
+                    @update:model-value="applyPriority"
                 >
-                    <Table2 />
-                </Button>
+                    <option value="">Prioritas…</option>
+                    <option value="High Priority">High Priority</option>
+                    <option value="Medium Priority">Medium Priority</option>
+                    <option value="Low Priority">Low Priority</option>
+                </Select>
                 <Button type="button" variant="ghost" size="icon" class="size-8" aria-label="Sisipkan tautan" @click="openLinkDialog">
                     <Link2 />
                 </Button>

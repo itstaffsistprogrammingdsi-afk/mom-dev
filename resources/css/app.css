@@ -180,6 +180,24 @@
         border-top: 1px solid hsl(var(--border));
     }
 
+    .meeting-editor .ProseMirror img {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        margin: 1rem auto;
+        border: 1px solid hsl(var(--border));
+        border-radius: var(--radius-md);
+    }
+
+    .meeting-editor[data-readonly='false'] .ProseMirror img.ProseMirror-selectednode {
+        outline: 2px solid hsl(var(--ring));
+        outline-offset: 2px;
+    }
+
+    .meeting-editor[data-readonly='true'] .ProseMirror img.ProseMirror-selectednode {
+        outline: none;
+    }
+
     .meeting-editor .ProseMirror a {
         color: hsl(var(--primary));
         text-decoration: underline;
@@ -190,8 +208,41 @@
         color: hsl(var(--accent-foreground));
     }
 
-    .meeting-editor .ProseMirror .tableWrapper {
+    .meeting-editor {
+        min-width: 0;
+        overflow: hidden;
+    }
+
+    .meeting-editor .ProseMirror {
+        position: relative;
+        max-width: 100%;
         overflow-x: auto;
+    }
+
+    .meeting-editor .ProseMirror .tableWrapper {
+        position: relative;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+    }
+
+    .meeting-editor .ProseMirror .column-resize-handle {
+        position: absolute;
+        right: -2px;
+        top: 0;
+        bottom: -2px;
+        z-index: 20;
+        width: 4px;
+        background-color: hsl(var(--primary) / 0.4);
+        pointer-events: none;
+    }
+
+    .meeting-editor .ProseMirror.resize-cursor {
+        cursor: col-resize;
+    }
+
+    .meeting-editor .ProseMirror table:has(th:nth-child(8)) {
+        min-width: 920px !important;
     }
 
     .meeting-editor .ProseMirror table {
@@ -250,6 +301,13 @@
         border-color: hsl(var(--tag-topic-border));
         background: hsl(var(--tag-topic-soft));
         color: hsl(var(--tag-topic));
+    }
+
+    .meeting-editor .mention[data-response-hours]::after {
+        content: ' · maks ' attr(data-response-hours) ' jam';
+        font-size: 0.85em;
+        font-weight: 500;
+        opacity: 0.75;
     }
 
     .meeting-editor .collaboration-cursor__caret {

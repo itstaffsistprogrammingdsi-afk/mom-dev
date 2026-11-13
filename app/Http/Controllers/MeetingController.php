@@ -18,7 +18,9 @@ use App\Services\CollabAvailability;
 use App\Services\CollabTokenService;
 use App\Services\MeetingContentParser;
 use App\Services\MeetingTagSynchronizer;
+use App\Services\MeetingNumberGenerator;
 use App\Services\MeetingVersionService;
+use App\Services\TipTapContentSanitizer;
 use App\Services\Notifications\MeetingRecipientResolver;
 use App\Services\TemplateContentFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -101,6 +103,8 @@ class MeetingController extends Controller
                 'label' => $type->label(),
                 'description' => $type->description(),
             ]),
+            'creatorName' => $request->user()->name,
+            'approverName' => config('app.default_approver_name'),
         ]);
     }
 
@@ -109,11 +113,14 @@ class MeetingController extends Controller
         MeetingContentParser $parser,
         MeetingTagSynchronizer $tagger,
         AuditLogger $audit,
+        TipTapContentSanitizer $sanitizer,
     ): RedirectResponse {
         $this->authorize('create', Meeting::class);
 
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
+            'nomor_notulensi' => ['nullable', 'string', 'max:255'],
+            'editor_mode' => ['nullable', Rule::in(['docs', 'sheet'])],
             'meeting_type' => ['required', Rule::enum(MeetingType::class)],
             'meeting_template_id' => ['nullable', 'exists:meeting_templates,id'],
             'division_id' => ['nullable', 'exists:divisions,id'],
@@ -133,12 +140,20 @@ class MeetingController extends Controller
 
         $documentType = $template?->document_type ?? DocumentType::Meeting;
 
-        $content = $validated['content']
+        $content = $sanitizer->sanitize(
+            $validated['content']
             ?? $template?->content
-            ?? app(TemplateContentFactory::class)->default($documentType);
+            ?? app(TemplateContentFactory::class)->default($documentType)
+        );
+
+        $division = Division::query()->find($validated['division_id'] ?? null);
+        $nomor = trim((string) ($validated['nomor_notulensi'] ?? ''))
+            ?: app(MeetingNumberGenerator::class)->generate($division, $validated['scheduled_at'] ?? null);
 
         $meeting = Meeting::create([
             ...collect($validated)->except(['participant_ids', 'content'])->all(),
+            'nomor_notulensi' => $nomor,
+            'editor_mode' => $validated['editor_mode'] ?? 'sheet',
             'document_type' => $documentType->value,
             'created_by' => $request->user()->id,
             'content' => $content,
@@ -202,7 +217,7 @@ class MeetingController extends Controller
     {
         $this->authorize('update', $meeting);
 
-        $meeting->load(['division:id,name', 'participants.user:id,name', 'tags']);
+        $meeting->load(['division:id,name,head_id', 'division.head:id,name', 'approvedBy:id,name', 'participants.user:id,name', 'tags']);
 
         $tokens = app(CollabTokenService::class);
         $collabAvailable = app(CollabAvailability::class)->isAvailable();
@@ -218,6 +233,8 @@ class MeetingController extends Controller
                 'token' => $tokens->issue($meeting, $request->user(), true),
                 'user' => $request->user()->name,
             ] : null,
+            'creatorName' => $meeting->creator?->name ?? $request->user()->name,
+            'approverName' => $meeting->approvedBy?->name ?? config('app.default_approver_name'),
         ]);
     }
 
@@ -226,20 +243,31 @@ class MeetingController extends Controller
         Meeting $meeting,
         MeetingContentParser $parser,
         MeetingTagSynchronizer $tagger,
+        TipTapContentSanitizer $sanitizer,
     ): JsonResponse {
         $this->authorize('update', $meeting);
 
         $validated = $request->validate([
             'title' => ['sometimes', 'string', 'max:255'],
+            'nomor_notulensi' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'editor_mode' => ['sometimes', Rule::in(['docs', 'sheet'])],
             'agenda' => ['nullable', 'string'],
             'confidentiality' => ['sometimes', Rule::enum(Confidentiality::class)],
             'content' => ['nullable', 'array'],
         ]);
 
-        $content = $validated['content'] ?? $meeting->content;
+        $content = $sanitizer->sanitize($validated['content'] ?? $meeting->content);
+
+        $nomor = trim((string) ($validated['nomor_notulensi'] ?? $meeting->nomor_notulensi));
+
+        if ($nomor === '') {
+            $nomor = app(MeetingNumberGenerator::class)->generate($meeting->division, $meeting->scheduled_at);
+        }
 
         $meeting->update([
             'title' => $validated['title'] ?? $meeting->title,
+            'nomor_notulensi' => $nomor,
+            'editor_mode' => $validated['editor_mode'] ?? $meeting->editor_mode ?? 'docs',
             'agenda' => $validated['agenda'] ?? $meeting->agenda,
             'confidentiality' => $validated['confidentiality'] ?? $meeting->confidentiality,
             'content' => $content,
@@ -260,20 +288,29 @@ class MeetingController extends Controller
         MeetingContentParser $parser,
         MeetingTagSynchronizer $tagger,
         AuditLogger $audit,
+        TipTapContentSanitizer $sanitizer,
     ): RedirectResponse {
         $this->authorize('update', $meeting);
 
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
+            'nomor_notulensi' => ['nullable', 'string', 'max:255'],
+            'editor_mode' => ['nullable', Rule::in(['docs', 'sheet'])],
             'agenda' => ['nullable', 'string'],
             'confidentiality' => ['required', Rule::enum(Confidentiality::class)],
             'content' => ['nullable', 'array'],
         ]);
 
-        $content = $validated['content'] ?? $meeting->content;
+        $content = $sanitizer->sanitize($validated['content'] ?? $meeting->content);
+
+        $nomor = trim((string) ($validated['nomor_notulensi'] ?? ''))
+            ?: $meeting->nomor_notulensi
+            ?: app(MeetingNumberGenerator::class)->generate($meeting->division, $meeting->scheduled_at);
 
         $meeting->update([
             ...$validated,
+            'nomor_notulensi' => $nomor,
+            'editor_mode' => $validated['editor_mode'] ?? $meeting->editor_mode ?? 'docs',
             'content' => $content,
             'content_text' => $parser->parse($content)['text'],
             'content_updated_at' => now(),

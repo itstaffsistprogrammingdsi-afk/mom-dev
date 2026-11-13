@@ -65,6 +65,7 @@ class DatabaseSeeder extends Seeder
         $templateFactory = app(TemplateContentFactory::class);
 
         $templateDefinitions = [
+            ['name' => 'Notulen Resmi', 'document_type' => 'meeting', 'meeting_type' => 'weekly', 'description' => 'Format resmi notulensi dengan agenda, tabel hasil rapat, action plan, PIC, deadline, dan output.', 'content' => $templateFactory->officialMeeting()],
             ['name' => 'Rapat Mingguan Standar', 'document_type' => 'meeting', 'meeting_type' => 'weekly', 'description' => 'Agenda, pembahasan, keputusan, dan action item mingguan.'],
             ['name' => 'Rapat Divisi', 'document_type' => 'meeting', 'meeting_type' => 'division', 'description' => 'Laporan progres dan kendala divisi.'],
             ['name' => 'Rapat Manajemen', 'document_type' => 'meeting', 'meeting_type' => 'management', 'description' => 'Keputusan strategis dan lintas divisi.'],
@@ -76,7 +77,7 @@ class DatabaseSeeder extends Seeder
 
         $templates = collect($templateDefinitions)->map(function (array $data) use ($templateFactory) {
             $type = DocumentType::from($data['document_type']);
-            $content = $templateFactory->default($type);
+            $content = $data['content'] ?? $templateFactory->default($type);
 
             return MeetingTemplate::updateOrCreate(['name' => $data['name']], [
                 ...$data,

@@ -114,4 +114,21 @@ class TemplateAndMentionTest extends TestCase
                 ->has('roles', 4)
             );
     }
+
+    public function test_official_meeting_template_matches_company_format(): void
+    {
+        $content = app(TemplateContentFactory::class)->officialMeeting();
+        $json = json_encode($content);
+
+        $this->assertSame('doc', $content['type']);
+        $this->assertStringContainsString('Point Diskusi', $json);
+        $this->assertStringContainsString('Keterangan', $json);
+        $this->assertStringContainsString('Action Plan', $json);
+        $this->assertStringContainsString('Skala Prioritas', $json);
+        $this->assertStringContainsString('Divisi', $json);
+        $this->assertStringContainsString('PIC', $json);
+        $this->assertStringContainsString('Deadline', $json);
+        $this->assertStringContainsString('Output', $json);
+        $this->assertStringContainsString('"type":"table"', $json);
+    }
 }

@@ -5,16 +5,21 @@ namespace App\Http\Controllers;
 use App\Enums\ActionItemFeedbackStatus;
 use App\Enums\ActionItemStatus;
 use App\Models\ActionItem;
+use App\Models\ActionItemFeedback;
 use App\Models\Division;
 use App\Models\Meeting;
 use App\Models\User;
 use App\Notifications\ActionItemAssignedNotification;
+use App\Notifications\ActionItemResponseNotification;
 use App\Services\AuditLogger;
+use App\Services\Notifications\MeetingRecipientResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ActionItemController extends Controller
 {
@@ -75,9 +80,12 @@ class ActionItemController extends Controller
 
         $validated = $this->validatePayload($request);
         $status = ActionItemStatus::from($validated['status'] ?? ActionItemStatus::New->value);
+        $responseHours = (int) ($validated['response_hours'] ?? 24);
         $item = $meeting->actionItems()->create([
             ...$validated,
             'status' => $status,
+            'response_hours' => $responseHours,
+            'response_due_at' => $status === ActionItemStatus::InProgress ? now()->addHours($responseHours) : null,
             'completed_at' => $status === ActionItemStatus::Done ? now() : null,
             'source' => 'manual',
             'ai_confirmed' => true,
@@ -98,11 +106,19 @@ class ActionItemController extends Controller
         $status = isset($validated['status'])
             ? ActionItemStatus::from($validated['status'])
             : $actionItem->status;
+        $responseHours = (int) ($validated['response_hours'] ?? $actionItem->response_hours ?? 24);
 
-        $actionItem->update([
+        $attributes = [
             ...$validated,
+            'response_hours' => $responseHours,
             'completed_at' => $status === ActionItemStatus::Done ? ($actionItem->completed_at ?? now()) : null,
-        ]);
+        ];
+
+        if ($status === ActionItemStatus::InProgress && $actionItem->response_due_at === null) {
+            $attributes['response_due_at'] = now()->addHours($responseHours);
+        }
+
+        $actionItem->update($attributes);
 
         $audit->log('action_item.updated', $actionItem, 'Memperbarui action item', meetingId: $actionItem->meeting_id);
 
@@ -137,6 +153,7 @@ class ActionItemController extends Controller
             'pic_name' => ['nullable', 'string', 'max:255'],
             'division_id' => ['nullable', 'exists:divisions,id'],
             'due_date' => ['nullable', 'date'],
+            'response_hours' => ['nullable', 'integer', 'in:1,4,24,48'],
             'status' => ['nullable', Rule::enum(ActionItemStatus::class)],
             'notes' => ['nullable', 'string'],
         ]);
@@ -162,6 +179,7 @@ class ActionItemController extends Controller
 
         $validated = $request->validate([
             'status' => ['required', Rule::enum(ActionItemStatus::class)],
+            'response_hours' => ['nullable', 'integer', 'in:1,4,24,48'],
         ]);
 
         $status = ActionItemStatus::from($validated['status']);
@@ -169,10 +187,17 @@ class ActionItemController extends Controller
 
         abort_unless($request->user()->canWriteMinutes() || $isMine, 403);
 
+        $responseHours = (int) ($validated['response_hours'] ?? $actionItem->response_hours ?? 24);
+
         $attributes = [
             'status' => $status,
+            'response_hours' => $responseHours,
             'completed_at' => $status === ActionItemStatus::Done ? now() : null,
         ];
+
+        if ($status === ActionItemStatus::InProgress && $actionItem->response_due_at === null) {
+            $attributes['response_due_at'] = now()->addHours($responseHours);
+        }
 
         if ($isMine && ! $actionItem->first_responded_at) {
             $attributes['first_responded_at'] = now();
@@ -195,6 +220,7 @@ class ActionItemController extends Controller
         Request $request,
         ActionItem $actionItem,
         AuditLogger $audit,
+        MeetingRecipientResolver $recipients,
     ): RedirectResponse {
         $this->authorize('view', $actionItem->meeting);
 
@@ -205,17 +231,56 @@ class ActionItemController extends Controller
         $validated = $request->validate([
             'body' => ['required', 'string', 'max:2000'],
             'response_status' => ['required', Rule::enum(ActionItemFeedbackStatus::class)],
+            'status' => ['nullable', Rule::enum(ActionItemStatus::class)],
+            'response_hours' => ['nullable', 'integer', 'in:1,4,24,48'],
+            'photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp,gif', 'max:5120'],
         ]);
 
-        $actionItem->feedback()->create([
+        $photoPath = $request->hasFile('photo')
+            ? $request->file('photo')->store("action-item-feedback/{$actionItem->id}", 'public')
+            : null;
+
+        $feedback = $actionItem->feedback()->create([
             'user_id' => $request->user()->id,
             'body' => $validated['body'],
             'response_status' => ActionItemFeedbackStatus::from($validated['response_status']),
+            'photo_path' => $photoPath,
+            'photo_original_name' => $request->hasFile('photo') ? $request->file('photo')->getClientOriginalName() : null,
         ]);
+
+        $status = isset($validated['status'])
+            ? ActionItemStatus::from($validated['status'])
+            : $actionItem->status;
+        $responseHours = (int) ($validated['response_hours'] ?? $actionItem->response_hours ?? 24);
+
+        $attributes = ['response_hours' => $responseHours];
+
+        if (isset($validated['status'])) {
+            $attributes['status'] = $status;
+            $attributes['completed_at'] = $status === ActionItemStatus::Done ? ($actionItem->completed_at ?? now()) : null;
+        }
+
+        if ($status === ActionItemStatus::InProgress && $actionItem->response_due_at === null) {
+            $attributes['response_due_at'] = now()->addHours($responseHours);
+        }
+
+        $actionItem->update($attributes);
 
         if ($isMine && ! $actionItem->first_responded_at) {
             $actionItem->update(['first_responded_at' => now()]);
         }
+
+        $actionItem->loadMissing(['meeting', 'pic']);
+
+        $recipientUsers = $recipients->resolve($actionItem->meeting, $request->user());
+
+        if ($actionItem->pic && $actionItem->pic->id !== $request->user()->id) {
+            $recipientUsers = $recipientUsers->push($actionItem->pic);
+        }
+
+        $recipientUsers
+            ->unique('id')
+            ->each(fn (User $user) => $user->notify(new ActionItemResponseNotification($actionItem, $feedback, $request->user())));
 
         $audit->log(
             'action_item.feedback_created',
@@ -225,5 +290,15 @@ class ActionItemController extends Controller
         );
 
         return back()->with('success', 'Respons berhasil ditambahkan.');
+    }
+
+    public function feedbackPhoto(ActionItem $actionItem, ActionItemFeedback $feedback): StreamedResponse
+    {
+        $this->authorize('view', $actionItem->meeting);
+
+        abort_unless($feedback->action_item_id === $actionItem->id, 404);
+        abort_unless($feedback->photo_path && Storage::disk('public')->exists($feedback->photo_path), 404);
+
+        return Storage::disk('public')->response($feedback->photo_path);
     }
 }

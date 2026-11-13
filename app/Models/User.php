@@ -65,6 +65,16 @@ class User extends Authenticatable
         return $this->hasMany(ActionItem::class, 'pic_id');
     }
 
+    public function quickNotes(): HasMany
+    {
+        return $this->hasMany(QuickNote::class, 'user_id');
+    }
+
+    public function quickNoteMentions(): HasMany
+    {
+        return $this->hasMany(QuickNoteMention::class);
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === UserRole::Admin;

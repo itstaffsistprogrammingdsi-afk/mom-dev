@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Division;
 use App\Models\Meeting;
 use App\Models\MeetingTemplate;
+use App\Models\QuickNote;
 use App\Models\Topic;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -28,6 +29,8 @@ class PageSmokeTest extends TestCase
             '/dashboard',
             '/notulen',
             '/notulen/buat',
+            '/quick-notes',
+            '/quick-notes/buat',
             '/terkait-saya',
             '/topik',
             '/tugas',
@@ -65,6 +68,16 @@ class PageSmokeTest extends TestCase
 
         $template = MeetingTemplate::query()->firstOrFail();
         $this->get(route('admin.templates.edit', $template))->assertOk();
+
+        $quickNote = QuickNote::query()->create([
+            'user_id' => User::query()->firstOrFail()->id,
+            'title' => 'Catatan uji',
+            'content' => ['type' => 'doc', 'content' => [['type' => 'paragraph']]],
+            'content_text' => 'Catatan uji',
+        ]);
+
+        $this->get(route('quick-notes.show', $quickNote))->assertOk();
+        $this->get(route('quick-notes.edit', $quickNote))->assertOk();
     }
 
     public function test_creating_meeting_extracts_tags_from_editor_content(): void

@@ -12,7 +12,7 @@ const props = defineProps<{
     <div
         :class="
             cn(
-                'rounded-lg border border-border/80 bg-card text-card-foreground shadow-soft-sm',
+                'rounded-lg border border-border bg-card text-card-foreground',
                 props.interactive &&
                     'transition-[border-color,box-shadow] duration-base ease-out-soft hover:border-primary/20 hover:shadow-soft-md',
                 props.class,

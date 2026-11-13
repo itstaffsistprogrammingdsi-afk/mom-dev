@@ -9,7 +9,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate, formatDateTime, meetingTypeLabels } from '@/lib/labels';
 import { type BreadcrumbItem, type Decision, type Meeting } from '@/types';
 import { Head, Link } from '@inertiajs/vue3';
-import { CalendarDays, CheckCircle2, FileText, Hash, Sparkles } from 'lucide-vue-next';
+import { CalendarDays, CheckCircle2, FileText, Hash, ScanText } from 'lucide-vue-next';
 
 interface Topic {
     id: number;
@@ -164,12 +164,12 @@ const breadcrumbs: BreadcrumbItem[] = [
                     <section class="overflow-hidden rounded-lg border border-ai/25 bg-ai-surface/60 shadow-card" aria-labelledby="topic-ai-heading">
                         <div class="flex gap-3 border-b border-ai/15 p-5">
                             <span class="flex size-10 shrink-0 items-center justify-center rounded-md bg-ai/10 text-ai">
-                                <Sparkles class="size-5" aria-hidden="true" />
+                                <ScanText class="size-5" aria-hidden="true" />
                             </span>
                             <div>
                                 <div class="flex flex-wrap items-center gap-2">
                                     <h2 id="topic-ai-heading" class="text-sm font-semibold">Resume lintas notulen</h2>
-                                    <span class="rounded-full bg-card/80 px-2 py-0.5 text-[10px] font-medium text-ai ring-1 ring-ai/20"
+                                    <span class="rounded-full bg-card/80 px-2 py-0.5 text-[11px] font-medium text-ai ring-1 ring-ai/20"
                                         >Dibuat oleh AI</span
                                     >
                                 </div>

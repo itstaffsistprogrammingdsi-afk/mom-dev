@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AvatarGroup from '@/components/AvatarGroup.vue';
 import MeetingEditor from '@/components/MeetingEditor.vue';
+import MinutesCanvas from '@/components/minutes/MinutesCanvas.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,6 +32,8 @@ const props = defineProps<{
     topics: { id: number; name: string }[];
     defaultContent: JSONContent;
     documentTypes: { value: string; label: string; description: string }[];
+    creatorName: string;
+    approverName: string;
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -41,8 +44,26 @@ const breadcrumbs: BreadcrumbItem[] = [
 const now = new Date();
 const localNow = new Date(now.getTime() - now.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
 
-const form = useForm({
+interface CreateForm {
+    title: string;
+    nomor_notulensi: string;
+    editor_mode: 'docs' | 'sheet';
+    meeting_type: string;
+    meeting_template_id: string;
+    division_id: string;
+    scheduled_at: string;
+    location: string;
+    meeting_link: string;
+    agenda: string;
+    confidentiality: string;
+    participant_ids: number[];
+    content: JSONContent;
+}
+
+const form = useForm<CreateForm>({
     title: '',
+    nomor_notulensi: '',
+    editor_mode: 'sheet',
     meeting_type: 'division',
     meeting_template_id: '',
     division_id: '',
@@ -51,7 +72,7 @@ const form = useForm({
     meeting_link: '',
     agenda: '',
     confidentiality: 'division',
-    participant_ids: [] as number[],
+    participant_ids: [],
     content: props.defaultContent as JSONContent,
 });
 
@@ -166,7 +187,7 @@ watch(
 
             <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
                 <div class="min-w-0 space-y-6">
-                    <section class="rounded-lg border border-border bg-card p-5 shadow-card md:p-6">
+                    <section class="rounded-lg border border-border bg-card p-5 md:p-6">
                         <div class="space-y-1.5">
                             <Label for="title">Judul dokumen</Label>
                             <Input
@@ -198,7 +219,7 @@ watch(
                             <div class="space-y-1.5">
                                 <Label for="template">Template</Label>
                                 <Select id="template" v-model="form.meeting_template_id">
-                                    <option value="">Tanpa template</option>
+                                    <option value="">Tanpa template (default)</option>
                                     <optgroup v-for="group in groupedTemplates" :key="group.value" :label="group.label">
                                         <option v-for="template in group.templates" :key="template.id" :value="String(template.id)">
                                             {{ template.name }}
@@ -240,7 +261,7 @@ watch(
                         </div>
                     </section>
 
-                    <section class="rounded-lg border border-border bg-card p-5 shadow-card md:p-6">
+                    <section class="rounded-lg border border-border bg-card p-5 md:p-6">
                         <div class="space-y-1.5">
                             <Label for="agenda">Agenda atau ringkasan</Label>
                             <textarea
@@ -262,12 +283,27 @@ watch(
                                 <span class="font-semibold text-foreground">#</span> untuk topik.
                             </p>
                         </div>
-                        <MeetingEditor v-model="form.content" :users="props.users" :divisions="props.divisions" :topics="props.topics" />
+                        <MinutesCanvas
+                            v-if="isMeetingDocument"
+                            v-model:content="form.content"
+                            v-model:mode="form.editor_mode"
+                            v-model:nomor="form.nomor_notulensi"
+                            :title="form.title"
+                            :agenda="form.agenda"
+                            :scheduled-at="form.scheduled_at"
+                            :participants="selectedParticipants"
+                            :creator-name="props.creatorName"
+                            :approver-name="props.approverName"
+                            :users="props.users"
+                            :divisions="props.divisions"
+                            :topics="props.topics"
+                        />
+                        <MeetingEditor v-else v-model="form.content" :users="props.users" :divisions="props.divisions" :topics="props.topics" />
                     </section>
                 </div>
 
                 <aside class="min-w-0 space-y-6">
-                    <section class="rounded-lg border border-border bg-card p-5 shadow-card">
+                    <section class="rounded-lg border border-border bg-card p-5">
                         <h2 class="text-sm font-semibold">Detail dokumen</h2>
                         <p class="mt-1 text-xs text-muted-foreground">Jadwal, lokasi, dan tingkat kerahasiaan.</p>
 
@@ -282,8 +318,11 @@ watch(
                                     v-model="form.scheduled_at"
                                     type="datetime-local"
                                     :aria-invalid="Boolean(form.errors.scheduled_at)"
+                                    :aria-describedby="form.errors.scheduled_at ? 'scheduled-at-error' : undefined"
                                 />
-                                <p v-if="form.errors.scheduled_at" class="text-xs font-medium text-destructive">{{ form.errors.scheduled_at }}</p>
+                                <p v-if="form.errors.scheduled_at" id="scheduled-at-error" role="alert" class="text-xs font-medium text-destructive">
+                                    {{ form.errors.scheduled_at }}
+                                </p>
                             </div>
 
                             <div class="space-y-1.5">
@@ -315,8 +354,16 @@ watch(
                                         v-model="form.meeting_link"
                                         placeholder="https://"
                                         :aria-invalid="Boolean(form.errors.meeting_link)"
+                                        :aria-describedby="form.errors.meeting_link ? 'meeting-link-error' : undefined"
                                     />
-                                    <p v-if="form.errors.meeting_link" class="text-xs font-medium text-destructive">{{ form.errors.meeting_link }}</p>
+                                    <p
+                                        v-if="form.errors.meeting_link"
+                                        id="meeting-link-error"
+                                        role="alert"
+                                        class="text-xs font-medium text-destructive"
+                                    >
+                                        {{ form.errors.meeting_link }}
+                                    </p>
                                 </div>
                             </template>
 
@@ -332,10 +379,10 @@ watch(
                         </div>
                     </section>
 
-                    <section class="rounded-lg border border-border bg-card p-5 shadow-card">
+                    <section class="rounded-lg border border-border bg-card p-5">
                         <div class="flex items-start justify-between gap-3">
                             <div>
-                                <h2 class="flex items-center gap-2 text-sm font-semibold">
+                                <h2 id="participants-heading" class="flex items-center gap-2 text-sm font-semibold">
                                     <Users class="size-4 text-muted-foreground" />
                                     Peserta
                                 </h2>
@@ -372,7 +419,12 @@ watch(
                             </div>
                         </div>
 
-                        <div class="mt-3 max-h-72 space-y-1 overflow-y-auto pr-1">
+                        <div
+                            role="group"
+                            aria-labelledby="participants-heading"
+                            :aria-describedby="form.errors.participant_ids ? 'participant-ids-error' : undefined"
+                            class="mt-3 max-h-72 space-y-1 overflow-y-auto pr-1"
+                        >
                             <label
                                 v-for="user in filteredUsers"
                                 :key="user.id"
@@ -385,7 +437,7 @@ watch(
                                     class="size-4 shrink-0 rounded border-input accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                                 />
                                 <span
-                                    class="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-[10px] font-semibold text-secondary-foreground"
+                                    class="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-[11px] font-semibold text-secondary-foreground"
                                 >
                                     {{ initials(user.name) }}
                                 </span>
@@ -398,7 +450,14 @@ watch(
                                 {{ participantQuery ? 'Tidak ada peserta yang cocok.' : 'Belum ada pengguna pada divisi ini.' }}
                             </p>
                         </div>
-                        <p v-if="form.errors.participant_ids" class="mt-2 text-xs font-medium text-destructive">{{ form.errors.participant_ids }}</p>
+                        <p
+                            v-if="form.errors.participant_ids"
+                            id="participant-ids-error"
+                            role="alert"
+                            class="mt-2 text-xs font-medium text-destructive"
+                        >
+                            {{ form.errors.participant_ids }}
+                        </p>
                     </section>
                 </aside>
             </div>

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 class ActionItem extends Model
 {
@@ -19,6 +20,8 @@ class ActionItem extends Model
         'is_owned',
         'response_time_hours',
         'overdue_hours',
+        'is_response_overdue',
+        'response_overdue_hours',
     ];
 
     protected $fillable = [
@@ -29,6 +32,8 @@ class ActionItem extends Model
         'pic_name',
         'division_id',
         'due_date',
+        'response_hours',
+        'response_due_at',
         'status',
         'notes',
         'source',
@@ -46,6 +51,8 @@ class ActionItem extends Model
         return [
             'status' => ActionItemStatus::class,
             'due_date' => 'date',
+            'response_hours' => 'integer',
+            'response_due_at' => 'datetime',
             'ai_confirmed' => 'boolean',
             'completed_at' => 'datetime',
             'first_responded_at' => 'datetime',
@@ -112,6 +119,39 @@ class ActionItem extends Model
             }
 
             return round($due->diffInMinutes(now()) / 60, 1);
+        });
+    }
+
+    protected function isResponseOverdue(): Attribute
+    {
+        return Attribute::get(fn () => $this->response_due_at !== null
+            && $this->first_responded_at === null
+            && ! in_array($this->status, [ActionItemStatus::Done, ActionItemStatus::Cancelled], true)
+            && $this->response_due_at->isPast());
+    }
+
+    protected function responseOverdueHours(): Attribute
+    {
+        return Attribute::get(function () {
+            if (! $this->is_response_overdue || ! $this->response_due_at) {
+                return null;
+            }
+
+            return round($this->response_due_at->diffInMinutes(now()) / 60, 1);
+        });
+    }
+
+    protected static function booted(): void
+    {
+        static::deleting(function (ActionItem $actionItem) {
+            $paths = $actionItem->feedback()
+                ->whereNotNull('photo_path')
+                ->pluck('photo_path')
+                ->all();
+
+            if ($paths !== []) {
+                Storage::disk('public')->delete($paths);
+            }
         });
     }
 

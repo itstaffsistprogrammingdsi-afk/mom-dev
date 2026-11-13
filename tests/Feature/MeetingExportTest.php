@@ -49,4 +49,74 @@ class MeetingExportTest extends TestCase
             ->get(route('meetings.export.word', $meeting))
             ->assertForbidden();
     }
+
+    public function test_official_meeting_pdf_view_contains_company_format_sections(): void
+    {
+        $notulis = User::factory()->create(['role' => 'notulis']);
+        $meeting = Meeting::factory()->create([
+            'created_by' => $notulis->id,
+            'confidentiality' => Confidentiality::Open->value,
+        ]);
+        $meeting->load(['creator:id,name', 'approvedBy:id,name', 'participants.user:id,name,job_title', 'actionItems']);
+
+        $html = view('exports.meeting-minutes-pdf', [
+            'meeting' => $meeting,
+            'contentHtml' => '<h2>Agenda Pembahasan</h2><ol><li>Agenda</li></ol><h2>Hasil Rapat</h2><table><tr><td>Contoh</td></tr></table>',
+            'nomor' => '01/I/TI/2026',
+            'logoPath' => public_path('company-logo.png'),
+            'hasTable' => true,
+            'hasResultHeading' => true,
+            'hasAgendaHeading' => true,
+        ])->render();
+
+        $this->assertStringContainsString('NOTULENSI RAPAT', $html);
+        $this->assertStringContainsString('Nomor Notulensi: 01/I/TI/2026', $html);
+        $this->assertStringContainsString('Agenda Pembahasan', $html);
+        $this->assertStringContainsString('Dibuat Oleh:', $html);
+        $this->assertStringContainsString('Disetujui Oleh:', $html);
+        $this->assertStringContainsString('Dilarang mengubah format notulensi', $html);
+    }
+
+    public function test_pdf_can_be_opened_inline_for_printing(): void
+    {
+        $notulis = User::factory()->create(['role' => 'notulis']);
+        $meeting = Meeting::factory()->create([
+            'created_by' => $notulis->id,
+            'confidentiality' => Confidentiality::Open->value,
+        ]);
+
+        $response = $this->actingAs($notulis)->get(route('meetings.export.pdf', [
+            'meeting' => $meeting->id,
+            'inline' => 1,
+        ]));
+
+        $response->assertOk();
+        $this->assertStringContainsString('inline', (string) $response->headers->get('content-disposition'));
+    }
+
+    public function test_official_pdf_view_renders_agenda_from_meeting_field(): void
+    {
+        $notulis = User::factory()->create(['role' => 'notulis']);
+        $meeting = Meeting::factory()->create([
+            'created_by' => $notulis->id,
+            'confidentiality' => Confidentiality::Open->value,
+            'agenda' => "Agenda pertama\nAgenda kedua",
+        ]);
+        $meeting->load(['creator:id,name', 'approvedBy:id,name', 'participants.user:id,name,job_title', 'actionItems', 'division.head:id,name']);
+
+        $html = view('exports.meeting-minutes-pdf', [
+            'meeting' => $meeting,
+            'contentHtml' => '<table><tr><td>Contoh</td></tr></table>',
+            'nomor' => '01/I/TI/2026',
+            'logoPath' => public_path('company-logo.png'),
+            'hasTable' => true,
+            'hasResultHeading' => false,
+            'hasAgendaHeading' => false,
+        ])->render();
+
+        $this->assertStringContainsString('AGENDA PEMBAHASAN', $html);
+        $this->assertStringContainsString('Agenda pertama', $html);
+        $this->assertStringContainsString('Agenda kedua', $html);
+        $this->assertStringContainsString('HASIL RAPAT', $html);
+    }
 }

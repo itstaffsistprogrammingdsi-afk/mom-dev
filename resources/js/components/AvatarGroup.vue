@@ -25,7 +25,7 @@ const visiblePeople = computed(() => people.value.slice(0, Math.max(0, props.max
 const extraCount = computed(() => Math.max(0, people.value.length - visiblePeople.value.length));
 
 const sizeClasses: Record<AvatarSize, string> = {
-    xs: 'size-6 text-[10px]',
+    xs: 'size-6 text-[11px]',
     sm: 'size-8 text-xs',
     md: 'size-10 text-sm',
 };

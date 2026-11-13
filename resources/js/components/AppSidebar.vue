@@ -4,7 +4,20 @@ import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { Bell, Building2, FileStack, FileText, Hash, Inbox, LayoutGrid, ListChecks, ScrollText, ShieldCheck, Users } from 'lucide-vue-next';
+import {
+    Bell,
+    Building2,
+    FileStack,
+    FileText,
+    Hash,
+    Inbox,
+    LayoutGrid,
+    ListChecks,
+    ScrollText,
+    ShieldCheck,
+    StickyNote,
+    Users,
+} from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 
@@ -13,6 +26,7 @@ const page = usePage<SharedData>();
 const mainNavItems = computed<NavItem[]>(() => [
     { title: 'Dashboard', url: '/dashboard', icon: LayoutGrid },
     { title: 'Dokumen', url: '/notulen', icon: FileText },
+    { title: 'Quick Note', url: '/quick-notes', icon: StickyNote },
     { title: 'Terkait Saya', url: '/terkait-saya', icon: Inbox },
     { title: 'Action Item', url: '/tugas', icon: ListChecks },
     { title: 'Topik', url: '/topik', icon: Hash },

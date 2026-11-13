@@ -20,7 +20,9 @@ class Meeting extends Model
 
     protected $fillable = [
         'title',
+        'nomor_notulensi',
         'document_type',
+        'editor_mode',
         'meeting_type',
         'meeting_template_id',
         'division_id',
