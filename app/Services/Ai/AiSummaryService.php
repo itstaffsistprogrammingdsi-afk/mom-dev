@@ -99,6 +99,8 @@ class AiSummaryService
      */
     private function normalize(array $raw): array
     {
+        $this->assertValid($raw);
+
         $points = Arr::get($raw, 'poin') ?? Arr::get($raw, 'poin_penting') ?? [];
         $decisions = Arr::get($raw, 'keputusan') ?? [];
         $actions = Arr::get($raw, 'action_items') ?? Arr::get($raw, 'usulan_action_item') ?? [];
@@ -120,5 +122,53 @@ class AiSummaryService
                 ->all(),
             'saran_tag' => (array) (Arr::get($raw, 'saran_tag') ?? []),
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $raw
+     */
+    private function assertValid(array $raw): void
+    {
+        if (isset($raw['ringkasan']) && ! is_string($raw['ringkasan'])) {
+            throw new AiException('Respons AI tidak valid: ringkasan bukan teks.');
+        }
+
+        foreach (['poin', 'poin_penting', 'keputusan'] as $key) {
+            if (! isset($raw[$key])) {
+                continue;
+            }
+
+            if (! is_array($raw[$key])) {
+                throw new AiException('Respons AI tidak valid: '.$key.' bukan array.');
+            }
+
+            foreach ($raw[$key] as $item) {
+                if (! is_string($item)) {
+                    throw new AiException('Respons AI tidak valid: '.$key.' berisi item bukan teks.');
+                }
+            }
+        }
+
+        if (isset($raw['action_items']) && ! is_array($raw['action_items'])) {
+            throw new AiException('Respons AI tidak valid: action_items bukan array.');
+        }
+
+        foreach ((array) ($raw['action_items'] ?? []) as $item) {
+            if (! is_array($item)) {
+                throw new AiException('Respons AI tidak valid: action item bukan objek.');
+            }
+
+            if (isset($item['title']) && ! is_string($item['title'])) {
+                throw new AiException('Respons AI tidak valid: judul action item bukan teks.');
+            }
+        }
+
+        if (blank($raw['ringkasan'] ?? null)
+            && empty($raw['poin'])
+            && empty($raw['poin_penting'])
+            && empty($raw['keputusan'])
+            && empty($raw['action_items'])) {
+            throw new AiException('Respons AI tidak memuat ringkasan, poin, keputusan, atau action item.');
+        }
     }
 }

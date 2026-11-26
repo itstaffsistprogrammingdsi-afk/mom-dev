@@ -22,7 +22,7 @@ use Illuminate\Validation\ValidationException;
 
 class MeetingAiController extends Controller
 {
-    public function generate(Request $request, Meeting $meeting): RedirectResponse
+    public function generate(Request $request, Meeting $meeting, AuditLogger $audit): RedirectResponse
     {
         $this->authorize('update', $meeting);
 
@@ -69,6 +69,11 @@ class MeetingAiController extends Controller
             'language' => 'id',
             'generated_by' => $request->user()->id,
         ]);
+
+        $audit->log('ai_summary.requested', $summary, 'Meminta resume AI', [
+            'tier' => $tier,
+            'ai_consent' => $request->boolean('ai_consent'),
+        ], $meeting->id);
 
         GenerateMeetingSummary::dispatch($summary, $tier);
 
@@ -147,7 +152,12 @@ class MeetingAiController extends Controller
         $content['poin'] = $validated['content']['poin'] ?? ($content['poin'] ?? []);
         $content['keputusan'] = $validated['content']['keputusan'] ?? ($content['keputusan'] ?? []);
 
-        $aiSummary->update(['content' => $content]);
+        $aiSummary->update([
+            'content' => $content,
+            'status' => AiSummaryStatus::Draft,
+            'approved_by' => null,
+            'approved_at' => null,
+        ]);
 
         $audit->log('ai_summary.updated', $aiSummary, 'Menyunting resume AI', meetingId: $aiSummary->meeting_id);
 
@@ -157,6 +167,10 @@ class MeetingAiController extends Controller
     public function applyActionItems(Request $request, AiSummary $aiSummary, AuditLogger $audit): RedirectResponse
     {
         $this->authorize('update', $aiSummary->meeting);
+
+        if ($aiSummary->status !== AiSummaryStatus::Approved) {
+            return back()->with('error', 'Setujui resume AI terlebih dahulu sebelum menerapkan action item.');
+        }
 
         $suggestions = collect($aiSummary->content['action_items'] ?? [])
             ->filter(fn ($item) => is_array($item) && filled($item['title'] ?? null));

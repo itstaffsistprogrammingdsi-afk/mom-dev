@@ -8,4 +8,8 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote')->hourly();
 
-Schedule::command('mom:remind-action-items')->dailyAt('09:00')->withoutOverlapping();
+Schedule::command('mom:remind-action-items')
+    ->dailyAt('09:00')
+    ->timezone('Asia/Jakarta')
+    ->onOneServer()
+    ->withoutOverlapping();

@@ -186,6 +186,44 @@ class AiSummaryTest extends TestCase
         ]);
     }
 
+    public function test_action_items_cannot_be_applied_before_approval(): void
+    {
+        $user = User::factory()->create(['role' => 'notulis']);
+        $meeting = Meeting::factory()->create([
+            'created_by' => $user->id,
+            'confidentiality' => Confidentiality::Open->value,
+            'status' => MeetingStatus::Draft->value,
+        ]);
+
+        $summary = $meeting->summaries()->create([
+            'scope' => 'meeting',
+            'content' => [
+                'ringkasan' => 'Ringkasan uji.',
+                'action_items' => [[
+                    'title' => 'Belum disetujui',
+                    'description' => null,
+                    'pic_name' => null,
+                    'division_name' => null,
+                    'due_date' => null,
+                ]],
+            ],
+            'version' => 1,
+            'status' => AiSummaryStatus::Draft,
+            'generation_status' => 'completed',
+            'language' => 'id',
+            'generated_by' => $user->id,
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('ai-summaries.apply', $summary))
+            ->assertSessionHas('error');
+
+        $this->assertDatabaseMissing('action_items', [
+            'meeting_id' => $meeting->id,
+            'title' => 'Belum disetujui',
+        ]);
+    }
+
     public function test_unrelated_member_cannot_generate_summary(): void
     {
         $creator = User::factory()->create(['role' => 'notulis']);
