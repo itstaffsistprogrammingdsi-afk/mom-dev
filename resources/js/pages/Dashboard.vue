@@ -9,7 +9,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { documentTypeLabels, formatDate, formatDateTime, meetingTypeLabels } from '@/lib/labels';
 import { type ActionItem, type BreadcrumbItem, type Meeting, type SharedData } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/vue3';
-import { AlertTriangle, CalendarDays, Hash, ListChecks, Plus, StickyNote } from 'lucide-vue-next';
+import { AlertTriangle, CalendarDays, CheckCircle2, FileText, Hash, ListChecks, Plus, StickyNote } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 const props = defineProps<{
@@ -22,6 +22,9 @@ const props = defineProps<{
     upcoming: Meeting[];
     recent: Meeting[];
     myTasks: ActionItem[];
+    drafts: Meeting[];
+    divisionTasks: ActionItem[];
+    approvals: Meeting[];
 }>();
 
 const page = usePage<SharedData>();
@@ -74,6 +77,70 @@ const today = new Intl.DateTimeFormat('id-ID', {
                     :tone="props.stats.overdue_tasks > 0 ? 'danger' : 'success'"
                 />
                 <StatCard label="Topik aktif" :value="props.stats.active_topics" :icon="Hash" />
+            </div>
+
+            <div v-if="props.drafts.length || props.approvals.length || props.divisionTasks.length" class="grid gap-4 lg:grid-cols-3">
+                <Card v-if="props.drafts.length">
+                    <CardHeader>
+                        <CardTitle class="flex items-center gap-2 text-base">
+                            <FileText class="size-4 text-muted-foreground" />
+                            Draf perlu difinalisasi
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent class="space-y-2">
+                        <Link
+                            v-for="draft in props.drafts"
+                            :key="draft.id"
+                            :href="route('meetings.show', draft.id)"
+                            class="block rounded-md border border-border/70 p-3 transition hover:bg-muted/40"
+                        >
+                            <p class="font-medium leading-snug">{{ draft.title }}</p>
+                            <p class="mt-1 text-xs text-muted-foreground">{{ draft.division?.name ?? 'Tanpa divisi' }}</p>
+                        </Link>
+                    </CardContent>
+                </Card>
+
+                <Card v-if="props.approvals.length">
+                    <CardHeader>
+                        <CardTitle class="flex items-center gap-2 text-base">
+                            <CheckCircle2 class="size-4 text-muted-foreground" />
+                            Menunggu persetujuan Anda
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent class="space-y-2">
+                        <Link
+                            v-for="approval in props.approvals"
+                            :key="approval.id"
+                            :href="route('meetings.show', approval.id)"
+                            class="block rounded-md border border-border/70 p-3 transition hover:bg-muted/40"
+                        >
+                            <p class="font-medium leading-snug">{{ approval.title }}</p>
+                            <p class="mt-1 text-xs text-muted-foreground">{{ approval.division?.name ?? 'Tanpa divisi' }}</p>
+                        </Link>
+                    </CardContent>
+                </Card>
+
+                <Card v-if="props.divisionTasks.length">
+                    <CardHeader>
+                        <CardTitle class="flex items-center gap-2 text-base">
+                            <ListChecks class="size-4 text-muted-foreground" />
+                            Tindak lanjut divisi
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent class="space-y-2">
+                        <Link
+                            v-for="task in props.divisionTasks"
+                            :key="task.id"
+                            :href="route('meetings.show', task.meeting?.id ?? 0)"
+                            class="block rounded-md border border-border/70 p-3 transition hover:bg-muted/40"
+                        >
+                            <p class="font-medium leading-snug">{{ task.title }}</p>
+                            <p class="mt-1 text-xs text-muted-foreground">
+                                {{ task.pic?.name ?? 'Belum ada PIC' }} · tenggat {{ formatDate(task.due_date) }}
+                            </p>
+                        </Link>
+                    </CardContent>
+                </Card>
             </div>
 
             <div class="grid gap-4 lg:grid-cols-2">
