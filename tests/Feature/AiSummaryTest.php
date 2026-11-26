@@ -122,8 +122,29 @@ class AiSummaryTest extends TestCase
         $this->assertDatabaseCount('ai_summaries', 1);
     }
 
+    public function test_secret_meeting_ai_is_disabled_by_default(): void
+    {
+        config(['ai.allow_secret' => false]);
+
+        $user = User::factory()->create(['role' => 'notulis']);
+        $meeting = Meeting::factory()->create([
+            'created_by' => $user->id,
+            'confidentiality' => Confidentiality::Secret->value,
+            'status' => MeetingStatus::Draft->value,
+            'content_text' => 'Isi rahasia.',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('meetings.ai.generate', $meeting))
+            ->assertSessionHasErrors('meeting');
+
+        $this->assertDatabaseCount('ai_summaries', 0);
+    }
+
     public function test_secret_meeting_requires_explicit_ai_consent(): void
     {
+        config(['ai.allow_secret' => true]);
+
         $user = User::factory()->create(['role' => 'notulis']);
         $meeting = Meeting::factory()->create([
             'created_by' => $user->id,

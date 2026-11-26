@@ -144,22 +144,23 @@ class Meeting extends Model
         return $query->where(function (Builder $query) use ($user) {
             $query->where($query->qualifyColumn('confidentiality'), Confidentiality::Open->value)
                 ->orWhere($query->qualifyColumn('created_by'), $user->id)
-                ->orWhereHas('participants', fn (Builder $q) => $q->where('user_id', $user->id))
-                ->orWhere(function (Builder $q) use ($user) {
-                    $q->where($q->qualifyColumn('confidentiality'), '!=', Confidentiality::Secret->value)
-                        ->whereHas('tags', function (Builder $tag) use ($user) {
-                            $tag->where(function (Builder $inner) use ($user) {
-                                $inner->where('type', 'person')->where('target_id', $user->id);
+                ->orWhereHas('participants', fn (Builder $q) => $q->where('user_id', $user->id));
 
-                                if ($user->division_id) {
-                                    $inner->orWhere(function (Builder $division) use ($user) {
-                                        $division->where('type', 'division')
-                                            ->where('target_id', $user->division_id);
-                                    });
-                                }
-                            });
-                        });
+            if ($user->division_id) {
+                $query->orWhere(function (Builder $q) use ($user) {
+                    $q->where($q->qualifyColumn('confidentiality'), Confidentiality::Division->value)
+                        ->whereHas('tags', fn (Builder $tag) => $tag
+                            ->where('type', 'division')
+                            ->where('target_id', $user->division_id));
                 });
+            }
+
+            $query->orWhere(function (Builder $q) use ($user) {
+                $q->where($q->qualifyColumn('confidentiality'), Confidentiality::Restricted->value)
+                    ->whereHas('tags', fn (Builder $tag) => $tag
+                        ->where('type', 'person')
+                        ->where('target_id', $user->id));
+            });
         });
     }
 

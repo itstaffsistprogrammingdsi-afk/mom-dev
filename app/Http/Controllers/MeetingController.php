@@ -229,7 +229,8 @@ class MeetingController extends Controller
                 'update' => $canManage,
                 'finalize' => ! $meeting->isLocked()
                     && ($user->isAdmin() || $meeting->created_by === $user->id || $user->canWriteMinutes()),
-                'generateAi' => $canManage,
+                'generateAi' => $canManage
+                    && ($meeting->confidentiality !== Confidentiality::Secret || config('ai.allow_secret')),
                 'manage' => $canManage,
                 'share' => $canShare,
                 'signCreator' => $user->isAdmin() || $meeting->created_by === $user->id,

@@ -17,20 +17,30 @@ class MeetingRecipientResolver
     {
         $meeting->loadMissing(['participants', 'tags']);
 
-        $userIds = collect();
+        $participantIds = $meeting->participants->pluck('user_id')->filter();
+        $personTagIds = $meeting->tags->where('type', TagType::Person)->pluck('target_id')->filter();
+        $divisionTagIds = $meeting->tags->where('type', TagType::Division)->pluck('target_id')->filter();
 
-        $userIds = $userIds
-            ->merge($meeting->participants->pluck('user_id'))
-            ->merge($meeting->tags->where('type', TagType::Person)->pluck('target_id'))
+        $userIds = $participantIds
             ->push($meeting->created_by)
             ->push($meeting->approved_by);
 
-        $divisionIds = $meeting->tags->where('type', TagType::Division)->pluck('target_id')->filter()->values();
+        if ($meeting->confidentiality === Confidentiality::Open) {
+            $userIds = $userIds->merge($personTagIds);
 
-        if ($divisionIds->isNotEmpty()) {
-            $userIds = $userIds->merge(
-                User::query()->whereIn('division_id', $divisionIds)->pluck('id')
-            );
+            if ($divisionTagIds->isNotEmpty()) {
+                $userIds = $userIds->merge(
+                    User::query()->whereIn('division_id', $divisionTagIds)->pluck('id')
+                );
+            }
+        } elseif ($meeting->confidentiality === Confidentiality::Division) {
+            if ($divisionTagIds->isNotEmpty()) {
+                $userIds = $userIds->merge(
+                    User::query()->whereIn('division_id', $divisionTagIds)->pluck('id')
+                );
+            }
+        } elseif ($meeting->confidentiality === Confidentiality::Restricted) {
+            $userIds = $userIds->merge($personTagIds);
         }
 
         $candidates = User::query()
@@ -43,17 +53,15 @@ class MeetingRecipientResolver
             return $candidates->values();
         }
 
-        $participantIds = $meeting->participants->pluck('user_id')->filter();
-        $personTagIds = $meeting->tags->where('type', TagType::Person)->pluck('target_id')->filter();
-        $divisionTagIds = $meeting->tags->where('type', TagType::Division)->pluck('target_id')->filter();
-
         return $candidates
             ->filter(fn (User $user) => $user->isAdmin()
                 || $user->id === $meeting->created_by
                 || $participantIds->contains($user->id)
-                || ($meeting->confidentiality !== Confidentiality::Secret
-                    && ($personTagIds->contains($user->id)
-                        || ($user->division_id && $divisionTagIds->contains($user->division_id)))))
+                || ($meeting->confidentiality === Confidentiality::Division
+                    && $user->division_id
+                    && $divisionTagIds->contains($user->division_id))
+                || ($meeting->confidentiality === Confidentiality::Restricted
+                    && $personTagIds->contains($user->id)))
             ->values();
     }
 }

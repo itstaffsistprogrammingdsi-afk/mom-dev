@@ -32,10 +32,18 @@ class MeetingAiController extends Controller
 
         $tier = $validated['model_tier'] ?? 'auto';
 
-        if ($meeting->confidentiality === Confidentiality::Secret && ! $request->boolean('ai_consent')) {
-            throw ValidationException::withMessages([
-                'ai_consent' => 'Notulen rahasia memerlukan persetujuan eksplisit sebelum diproses AI.',
-            ]);
+        if ($meeting->confidentiality === Confidentiality::Secret) {
+            if (! config('ai.allow_secret')) {
+                throw ValidationException::withMessages([
+                    'meeting' => 'AI dinonaktifkan untuk notulen rahasia. Tulis ringkasan secara manual.',
+                ]);
+            }
+
+            if (! $request->boolean('ai_consent')) {
+                throw ValidationException::withMessages([
+                    'ai_consent' => 'Notulen rahasia memerlukan persetujuan eksplisit sebelum diproses AI.',
+                ]);
+            }
         }
 
         if (blank($meeting->content_text) && filled($meeting->content)) {

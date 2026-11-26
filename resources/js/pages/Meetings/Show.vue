@@ -814,9 +814,11 @@ function restoreVersion(version: Version) {
                                 <p class="text-sm font-medium">Belum ada resume</p>
                                 <p class="mt-1 text-sm leading-6 text-muted-foreground">
                                     {{
-                                        canGenerate
-                                            ? 'Buat resume untuk merangkum poin penting, keputusan, dan action item.'
-                                            : 'Resume belum tersedia untuk dokumen ini.'
+                                        props.meeting.confidentiality === 'secret' && !canGenerate
+                                            ? 'AI dinonaktifkan untuk notulen rahasia. Tulis ringkasan secara manual.'
+                                            : canGenerate
+                                              ? 'Buat resume untuk merangkum poin penting, keputusan, dan action item.'
+                                              : 'Resume belum tersedia untuk dokumen ini.'
                                     }}
                                 </p>
                             </div>

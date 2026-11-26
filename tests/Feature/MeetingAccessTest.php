@@ -74,6 +74,74 @@ class MeetingAccessTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_division_meeting_requires_a_division_tag_not_a_person_tag(): void
+    {
+        $division = Division::factory()->create();
+        $member = $this->userWithRole('member', $division);
+
+        $divisionTagged = $this->meeting([
+            'confidentiality' => Confidentiality::Division->value,
+            'division_id' => $division->id,
+        ]);
+        $divisionTagged->tags()->create([
+            'type' => 'division',
+            'target_id' => $division->id,
+            'target_name' => $division->name,
+        ]);
+
+        $this->actingAs($member)
+            ->get(route('meetings.show', $divisionTagged))
+            ->assertOk();
+
+        $personTagged = $this->meeting([
+            'confidentiality' => Confidentiality::Division->value,
+            'division_id' => $division->id,
+        ]);
+        $personTagged->tags()->create([
+            'type' => 'person',
+            'target_id' => $member->id,
+            'target_name' => $member->name,
+        ]);
+
+        $this->actingAs($member)
+            ->get(route('meetings.show', $personTagged))
+            ->assertForbidden();
+    }
+
+    public function test_restricted_meeting_requires_a_person_tag_not_a_division_tag(): void
+    {
+        $division = Division::factory()->create();
+        $member = $this->userWithRole('member', $division);
+
+        $personTagged = $this->meeting([
+            'confidentiality' => Confidentiality::Restricted->value,
+            'division_id' => $division->id,
+        ]);
+        $personTagged->tags()->create([
+            'type' => 'person',
+            'target_id' => $member->id,
+            'target_name' => $member->name,
+        ]);
+
+        $this->actingAs($member)
+            ->get(route('meetings.show', $personTagged))
+            ->assertOk();
+
+        $divisionTagged = $this->meeting([
+            'confidentiality' => Confidentiality::Restricted->value,
+            'division_id' => $division->id,
+        ]);
+        $divisionTagged->tags()->create([
+            'type' => 'division',
+            'target_id' => $division->id,
+            'target_name' => $division->name,
+        ]);
+
+        $this->actingAs($member)
+            ->get(route('meetings.show', $divisionTagged))
+            ->assertForbidden();
+    }
+
     public function test_open_meeting_is_visible_to_every_authenticated_user(): void
     {
         $user = $this->userWithRole('reader');

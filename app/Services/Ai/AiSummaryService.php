@@ -3,6 +3,7 @@
 namespace App\Services\Ai;
 
 use App\Enums\AiSummaryStatus;
+use App\Enums\Confidentiality;
 use App\Models\AiSummary;
 use App\Models\Meeting;
 use Illuminate\Support\Arr;
@@ -17,6 +18,10 @@ class AiSummaryService
 
         if (! $meeting || ! $user || ! Meeting::query()->visibleTo($user)->whereKey($meeting->id)->exists()) {
             throw new AiException('Pengguna tidak berhak memproses notulen ini.');
+        }
+
+        if ($meeting->confidentiality === Confidentiality::Secret && ! config('ai.allow_secret')) {
+            throw new AiException('AI dinonaktifkan untuk notulen rahasia.');
         }
 
         $summary->update([
