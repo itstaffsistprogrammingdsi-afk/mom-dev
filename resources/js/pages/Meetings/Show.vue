@@ -2,7 +2,6 @@
 import ActionItemFeedbackDialog from '@/components/ActionItemFeedbackDialog.vue';
 import AttendanceBadge from '@/components/AttendanceBadge.vue';
 import AvatarGroup from '@/components/AvatarGroup.vue';
-import MeetingEditor from '@/components/MeetingEditor.vue';
 import MeetingSignaturePanel from '@/components/MeetingSignaturePanel.vue';
 import SignatureBlock from '@/components/minutes/SignatureBlock.vue';
 import PageHeader from '@/components/PageHeader.vue';
@@ -125,6 +124,7 @@ interface FullMeeting extends Meeting {
 
 const props = defineProps<{
     meeting: FullMeeting;
+    contentHtml: string;
     signatures: MeetingSignatures;
     can: {
         update: boolean;
@@ -754,7 +754,9 @@ function restoreVersion(version: Version) {
                             </h2>
                             <span class="text-xs text-muted-foreground">Mode baca</span>
                         </div>
-                        <MeetingEditor :model-value="props.meeting.content" :editable="false" />
+                        <div class="meeting-editor" data-readonly="true">
+                            <div class="ProseMirror" v-html="props.contentHtml" />
+                        </div>
                         <div v-if="props.meeting.document_type === 'meeting'" class="mt-4">
                             <SignatureBlock
                                 :creator-name="props.meeting.creator?.name ?? '-'"

@@ -154,7 +154,7 @@ class TiptapHtmlRenderer
 
         $prefix ??= $type === 'topic' ? '#' : '@';
 
-        return '<span class="mention mention-'.$type.'">'.e($prefix.$label).'</span>';
+        return '<span class="mention mention-'.$type.'" data-mention-type="'.$type.'">'.e($prefix.$label).'</span>';
     }
 
     /**

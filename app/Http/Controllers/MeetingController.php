@@ -184,7 +184,7 @@ class MeetingController extends Controller
             ->with('success', 'Notulen berhasil dibuat.');
     }
 
-    public function show(Request $request, Meeting $meeting, AuditLogger $audit): Response
+    public function show(Request $request, Meeting $meeting, AuditLogger $audit, \App\Services\Exports\TiptapHtmlRenderer $renderer): Response
     {
         $this->authorize('view', $meeting);
 
@@ -224,6 +224,7 @@ class MeetingController extends Controller
 
         return Inertia::render('Meetings/Show', [
             'meeting' => $meeting,
+            'contentHtml' => $renderer->render($meeting->content),
             'signatures' => $signatures,
             'can' => [
                 'update' => $canManage,
