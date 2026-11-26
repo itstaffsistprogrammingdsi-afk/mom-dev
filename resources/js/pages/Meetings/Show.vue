@@ -118,6 +118,7 @@ interface FullMeeting extends Meeting {
     attachments: Attachment[];
     versions: Version[];
     approved_by?: { id: number; name: string } | null;
+    approver?: { id: number; name: string } | null;
     template?: { id: number; name: string } | null;
     finalized_at: string | null;
 }
@@ -197,6 +198,7 @@ const confirmState = reactive<{
     description: string;
     label: string;
     tone: ConfirmTone;
+    kind: 'default' | 'finalize';
     action: (() => void) | null;
 }>({
     open: false,
@@ -204,14 +206,17 @@ const confirmState = reactive<{
     description: '',
     label: 'Lanjutkan',
     tone: 'default',
+    kind: 'default',
     action: null,
 });
+const finalizeApproverId = ref('');
 
 const canManage = computed(() => props.can.manage ?? props.can.update);
 const selectedFeedbackTask = computed(() => props.meeting.action_items.find((task) => task.id === feedbackTaskId.value) ?? null);
 const requiresShareConfirmation = computed(() => ['restricted', 'secret'].includes(props.meeting.confidentiality));
 const taskUsers = computed(() => props.users ?? []);
 const taskDivisions = computed(() => props.divisions ?? []);
+const finalizeApproverOptions = computed(() => (props.users ?? []).filter((candidate) => candidate.id !== user.value?.id));
 const canGenerate = computed(() => Boolean(props.can.generateAi) && props.meeting.status !== 'locked');
 
 const responseHourOptions = [
@@ -358,13 +363,17 @@ function tagHref(tag: Tag): string | undefined {
 
 const attachmentUrl = (attachment: Attachment) => route('attachments.download', attachment.id);
 
-function askConfirm(options: { title: string; description: string; label: string; tone?: ConfirmTone }, action: () => void) {
+function askConfirm(
+    options: { title: string; description: string; label: string; tone?: ConfirmTone; kind?: 'default' | 'finalize' },
+    action: () => void,
+) {
     Object.assign(confirmState, {
         open: true,
         title: options.title,
         description: options.description,
         label: options.label,
         tone: options.tone ?? 'default',
+        kind: options.kind ?? 'default',
         action,
     });
 }
@@ -378,14 +387,21 @@ function runConfirm() {
 
 function finalize() {
     const isMeeting = props.meeting.document_type === 'meeting';
+    finalizeApproverId.value = props.meeting.approver?.id ? String(props.meeting.approver.id) : '';
 
     askConfirm(
         {
             title: isMeeting ? 'Finalkan notulen?' : 'Finalkan dokumen?',
             description: 'Setelah difinalkan, isi dokumen dikunci untuk perubahan. Pastikan keputusan dan action item sudah lengkap.',
             label: isMeeting ? 'Finalkan notulen' : 'Finalkan dokumen',
+            kind: 'finalize',
         },
-        () => router.post(route('meetings.finalize', props.meeting.id), {}, { preserveScroll: true }),
+        () =>
+            router.post(
+                route('meetings.finalize', props.meeting.id),
+                { approver_id: finalizeApproverId.value || null },
+                { preserveScroll: true },
+            ),
     );
 }
 
@@ -760,7 +776,7 @@ function restoreVersion(version: Version) {
                         <div v-if="props.meeting.document_type === 'meeting'" class="mt-4">
                             <SignatureBlock
                                 :creator-name="props.meeting.creator?.name ?? '-'"
-                                :approver-name="props.meeting.approved_by?.name ?? (props.signatures.approver?.name ?? 'Pimpinan Rapat')"
+                                :approver-name="props.meeting.approver?.name ?? (props.signatures.approver?.name ?? 'Pimpinan Rapat')"
                                 :creator-signature="props.signatures.creator ?? null"
                                 :approver-signature="props.signatures.approver ?? null"
                             />
@@ -1358,7 +1374,7 @@ function restoreVersion(version: Version) {
                                 :meeting-id="props.meeting.id"
                                 :signatures="props.signatures"
                                 :creator-name="props.meeting.creator?.name ?? '-'"
-                                :approver-name="props.meeting.approved_by?.name ?? 'Pimpinan Rapat'"
+                                :approver-name="props.meeting.approver?.name ?? 'Pimpinan Rapat'"
                                 :can-sign-creator="props.can.signCreator ?? false"
                                 :can-sign-approver="props.can.signApprover ?? false"
                             />
@@ -1533,6 +1549,20 @@ function restoreVersion(version: Version) {
                     <DialogTitle>{{ confirmState.title }}</DialogTitle>
                     <DialogDescription>{{ confirmState.description }}</DialogDescription>
                 </DialogHeader>
+
+                <div v-if="confirmState.kind === 'finalize'" class="space-y-1.5">
+                    <label for="finalize-approver" class="text-sm font-medium">Approver (opsional)</label>
+                    <Select id="finalize-approver" v-model="finalizeApproverId">
+                        <option value="">Tanpa approver</option>
+                        <option v-for="candidate in finalizeApproverOptions" :key="candidate.id" :value="String(candidate.id)">
+                            {{ candidate.name }}
+                        </option>
+                    </Select>
+                    <p class="text-xs text-muted-foreground">
+                        Approver harus berbeda dari user yang memfinalkan. Jika kosong, slot tanda tangan approver hanya dapat diisi admin.
+                    </p>
+                </div>
+
                 <DialogFooter>
                     <Button variant="outline" @click="confirmState.open = false">Batal</Button>
                     <Button :variant="confirmState.tone === 'danger' ? 'destructive' : 'default'" @click="runConfirm">{{

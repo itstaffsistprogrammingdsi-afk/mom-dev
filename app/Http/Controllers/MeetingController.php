@@ -196,6 +196,7 @@ class MeetingController extends Controller
             'division:id,name',
             'creator:id,name',
             'approvedBy:id,name',
+            'approver:id,name',
             'template:id,name,document_type',
             'participants.user:id,name,email',
             'tags',
@@ -235,7 +236,7 @@ class MeetingController extends Controller
                 'manage' => $canManage,
                 'share' => $canShare,
                 'signCreator' => $user->isAdmin() || $meeting->created_by === $user->id,
-                'signApprover' => $user->isAdmin() || $meeting->approved_by === $user->id,
+                'signApprover' => $user->isAdmin() || $meeting->approver_id === $user->id,
                 'changeConfidentiality' => $user->isAdmin() || $meeting->created_by === $user->id,
             ],
             'users' => User::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']),
@@ -419,6 +420,32 @@ class MeetingController extends Controller
             ]);
         }
 
+        $validated = $request->validate([
+            'approver_id' => ['nullable', 'integer', 'exists:users,id'],
+        ]);
+
+        $approverId = $validated['approver_id'] ?? null;
+
+        if ($approverId) {
+            $approver = User::query()->find($approverId);
+
+            if (
+                ! $approver
+                || ! $approver->is_active
+                || ! Meeting::query()->visibleTo($approver)->whereKey($meeting->id)->exists()
+            ) {
+                throw ValidationException::withMessages([
+                    'approver_id' => 'Approver yang dipilih tidak memiliki akses ke notulen ini.',
+                ]);
+            }
+
+            if ($approverId === $request->user()->id) {
+                throw ValidationException::withMessages([
+                    'approver_id' => 'Approver harus berbeda dari user yang memfinalkan notulen.',
+                ]);
+            }
+        }
+
         $meeting->loadMissing('actionItems');
 
         $incomplete = $meeting->actionItems->filter(
@@ -431,11 +458,12 @@ class MeetingController extends Controller
             ]);
         }
 
-        DB::transaction(function () use ($request, $meeting, $audit, $versions) {
+        DB::transaction(function () use ($request, $meeting, $audit, $versions, $approverId) {
             $meeting->update([
                 'status' => 'final',
                 'finalized_at' => now(),
                 'approved_by' => $request->user()->id,
+                'approver_id' => $approverId,
             ]);
 
             $versions->snapshot($meeting, 'finalized', $request->user()->id);

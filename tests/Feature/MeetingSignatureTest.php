@@ -70,7 +70,8 @@ class MeetingSignatureTest extends TestCase
         $approver = User::factory()->create(['role' => 'member']);
         $meeting = Meeting::factory()->create([
             'created_by' => $creator->id,
-            'approved_by' => $approver->id,
+            'approved_by' => $creator->id,
+            'approver_id' => $approver->id,
             'confidentiality' => Confidentiality::Open->value,
         ]);
 

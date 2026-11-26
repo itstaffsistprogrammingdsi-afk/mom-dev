@@ -73,7 +73,7 @@ class MeetingPolicy
     public function signApprover(User $user, Meeting $meeting): bool
     {
         return $this->view($user, $meeting)
-            && ($user->isAdmin() || $meeting->approved_by === $user->id);
+            && ($user->isAdmin() || $meeting->approver_id === $user->id);
     }
 
     public function lock(User $user, Meeting $meeting): bool

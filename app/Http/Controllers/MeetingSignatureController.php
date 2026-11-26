@@ -104,6 +104,6 @@ class MeetingSignatureController extends Controller
             return $meeting->creator?->name ?? 'Notulis';
         }
 
-        return $meeting->approvedBy?->name ?? (string) config('app.default_approver_name');
+        return $meeting->approver?->name ?? (string) config('app.default_approver_name');
     }
 }

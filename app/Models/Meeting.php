@@ -42,6 +42,7 @@ class Meeting extends Model
         'confidentiality',
         'finalized_at',
         'approved_by',
+        'approver_id',
     ];
 
     protected function casts(): array
@@ -78,6 +79,11 @@ class Meeting extends Model
     public function approvedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function approver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approver_id');
     }
 
     public function participants(): HasMany
