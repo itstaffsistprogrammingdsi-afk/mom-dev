@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -40,7 +41,9 @@ class HandleInertiaRequests extends Middleware
                 ] : null,
             ],
             'notifications' => [
-                'unread' => $user?->unreadNotifications()->count() ?? 0,
+                'unread' => fn () => $user
+                    ? Cache::remember("notifications:unread:{$user->id}", now()->addSeconds(15), fn () => $user->unreadNotifications()->count())
+                    : 0,
             ],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),

@@ -19,6 +19,10 @@ const sidebarNavItems: NavItem[] = [
         url: '/settings/two-factor',
     },
     {
+        title: 'Notifikasi',
+        url: '/settings/notifikasi',
+    },
+    {
         title: 'Tampilan',
         url: '/settings/appearance',
     },

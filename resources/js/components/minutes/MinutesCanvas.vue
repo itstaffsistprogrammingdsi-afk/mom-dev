@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import MeetingEditor from '@/components/MeetingEditor.vue';
 import MinutesSheet from '@/components/minutes/MinutesSheet.vue';
 import SignatureBlock from '@/components/minutes/SignatureBlock.vue';
 import { formatDateTime } from '@/lib/labels';
 import type { Division, MeetingSignatures } from '@/types';
 import type { JSONContent } from '@tiptap/core';
 import { FileSpreadsheet, FileText } from 'lucide-vue-next';
-import { computed } from 'vue';
+import { computed, defineAsyncComponent } from 'vue';
+
+const MeetingEditor = defineAsyncComponent(() => import('@/components/MeetingEditor.vue'));
 
 type EditorMode = 'docs' | 'sheet';
 

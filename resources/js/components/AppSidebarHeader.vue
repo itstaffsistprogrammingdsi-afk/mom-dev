@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import CommandPalette from '@/components/CommandPalette.vue';
 import KeyboardShortcutsDialog from '@/components/KeyboardShortcutsDialog.vue';
 import ThemeToggle from '@/components/ThemeToggle.vue';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import type { BreadcrumbItemType, SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { Bell, Keyboard } from 'lucide-vue-next';
+import { Bell, Keyboard, Search } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 
 withDefaults(
@@ -20,6 +21,7 @@ withDefaults(
 const page = usePage<SharedData>();
 const unread = computed(() => page.props.notifications?.unread ?? 0);
 const shortcutsOpen = ref(false);
+const paletteOpen = ref(false);
 </script>
 
 <template>
@@ -54,6 +56,26 @@ const shortcutsOpen = ref(false);
         <div class="ml-auto flex items-center gap-1">
             <button
                 type="button"
+                class="hidden h-9 items-center gap-2 rounded-md border border-border/70 bg-card/60 px-3 text-xs text-muted-foreground transition-colors duration-fast ease-ui hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 md:inline-flex"
+                aria-label="Buka pencarian global"
+                @click="paletteOpen = true"
+            >
+                <Search class="size-3.5" aria-hidden="true" />
+                <span>Cari</span>
+                <kbd class="rounded border border-border bg-muted px-1 font-mono text-[10px]">Ctrl K</kbd>
+            </button>
+
+            <button
+                type="button"
+                class="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors duration-fast ease-ui hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 md:hidden max-sm:size-11"
+                aria-label="Buka pencarian global"
+                @click="paletteOpen = true"
+            >
+                <Search class="size-4" aria-hidden="true" />
+            </button>
+
+            <button
+                type="button"
                 class="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors duration-fast ease-ui hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 max-sm:size-11"
                 aria-label="Pintasan keyboard"
                 @click="shortcutsOpen = true"
@@ -74,5 +96,6 @@ const shortcutsOpen = ref(false);
         </div>
 
         <KeyboardShortcutsDialog v-model:open="shortcutsOpen" />
+        <CommandPalette v-model:open="paletteOpen" />
     </header>
 </template>

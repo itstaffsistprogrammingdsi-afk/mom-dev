@@ -12,7 +12,9 @@ use App\Http\Controllers\CollabTokenController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DecisionController;
 use App\Http\Controllers\DivisionController;
+use App\Http\Controllers\GlobalSearchController;
 use App\Http\Controllers\HealthController;
+use App\Http\Controllers\MeetingAdminController;
 use App\Http\Controllers\MeetingAiController;
 use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\MeetingExportController;
@@ -34,6 +36,10 @@ Route::get('/', function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
 
+    Route::get('pencarian-global', GlobalSearchController::class)
+        ->middleware('throttle:60,1')
+        ->name('global-search');
+
     Route::get('notulen', [MeetingController::class, 'index'])->name('meetings.index');
     Route::get('notulen/buat', [MeetingController::class, 'create'])->name('meetings.create');
     Route::post('notulen', [MeetingController::class, 'store'])->name('meetings.store');
@@ -52,6 +58,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('notulen/{meeting}/tanda-tangan/{role}', [MeetingSignatureController::class, 'destroy'])
         ->whereIn('role', ['creator', 'approver'])
         ->name('meeting-signatures.destroy');
+
+    Route::patch('notulen/{meeting}/admin-dokumen', [MeetingAdminController::class, 'update'])
+        ->name('meeting-admins.update');
     Route::get('tanda-tangan/{signature}', [MeetingSignatureController::class, 'show'])->name('meeting-signatures.show');
 
     Route::post('notulen/{meeting}/lampiran', [AttachmentController::class, 'store'])

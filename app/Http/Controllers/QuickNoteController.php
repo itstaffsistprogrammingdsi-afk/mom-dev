@@ -10,6 +10,7 @@ use App\Models\Topic;
 use App\Models\User;
 use App\Notifications\QuickNoteMentionNotification;
 use App\Notifications\QuickNoteResponseNotification;
+use App\Services\AuditLogger;
 use App\Services\MeetingContentParser;
 use App\Services\QuickNoteMentionSynchronizer;
 use App\Services\TipTapContentSanitizer;
@@ -133,11 +134,13 @@ class QuickNoteController extends Controller
             ->with('success', 'Quick Note berhasil dibuat.');
     }
 
-    public function show(Request $request, QuickNote $quickNote, \App\Services\Exports\TiptapHtmlRenderer $renderer): Response
+    public function show(Request $request, QuickNote $quickNote, \App\Services\Exports\TiptapHtmlRenderer $renderer, AuditLogger $audit): Response
     {
         $this->authorize('view', $quickNote);
 
         $quickNote->load(['creator:id,name', 'mentions.user:id,name']);
+
+        $audit->log('quick_note.viewed', $quickNote, 'Membuka Quick Note');
 
         return Inertia::render('QuickNotes/Show', [
             'note' => $quickNote,

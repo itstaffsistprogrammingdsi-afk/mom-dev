@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import AvatarGroup from '@/components/AvatarGroup.vue';
-import MeetingEditor from '@/components/MeetingEditor.vue';
 import MinutesCanvas from '@/components/minutes/MinutesCanvas.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import TagChip from '@/components/TagChip.vue';
@@ -14,7 +13,9 @@ import { type BreadcrumbItem, type Division, type Meeting, type MeetingSignature
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import type { JSONContent } from '@tiptap/core';
 import { AlertCircle, CheckCircle2, CircleDashed, Loader2, Users, Wifi } from 'lucide-vue-next';
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+
+const MeetingEditor = defineAsyncComponent(() => import('@/components/MeetingEditor.vue'));
 
 interface EditableMeeting extends Meeting {
     participants: Participant[];

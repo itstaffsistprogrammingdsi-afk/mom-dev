@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -24,6 +25,7 @@ class NotificationController extends Controller
     public function markAllRead(Request $request): RedirectResponse
     {
         $request->user()->unreadNotifications()->update(['read_at' => now()]);
+        Cache::forget("notifications:unread:{$request->user()->id}");
 
         return back()->with('success', 'Semua notifikasi ditandai terbaca.');
     }
@@ -32,6 +34,7 @@ class NotificationController extends Controller
     {
         $row = $request->user()->notifications()->findOrFail($notification);
         $row->markAsRead();
+        Cache::forget("notifications:unread:{$request->user()->id}");
 
         $url = $row->data['url'] ?? null;
 

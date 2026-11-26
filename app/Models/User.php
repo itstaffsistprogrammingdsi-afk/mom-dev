@@ -94,9 +94,27 @@ class User extends Authenticatable
         return in_array($this->role, [UserRole::Admin, UserRole::Notulis], true);
     }
 
-    public function wantsEmailNotifications(): bool
+    public function wantsEmailNotifications(?string $category = null): bool
     {
-        return $this->notification_preferences['email'] ?? true;
+        if (($this->notification_preferences['email'] ?? true) === false) {
+            return false;
+        }
+
+        return $category === null || $this->wantsNotificationCategory($category);
+    }
+
+    public function wantsInAppNotifications(?string $category = null): bool
+    {
+        if (($this->notification_preferences['in_app'] ?? true) === false) {
+            return false;
+        }
+
+        return $category === null || $this->wantsNotificationCategory($category);
+    }
+
+    public function wantsNotificationCategory(string $category): bool
+    {
+        return (bool) ($this->notification_preferences['categories'][$category] ?? true);
     }
 
     public function hasTwoFactorEnabled(): bool

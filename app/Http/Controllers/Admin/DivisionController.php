@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Division;
 use App\Models\User;
+use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -24,7 +25,7 @@ class DivisionController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, AuditLogger $audit): RedirectResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255', 'unique:divisions,name'],
@@ -32,7 +33,9 @@ class DivisionController extends Controller
             'head_id' => ['nullable', 'exists:users,id'],
         ]);
 
-        Division::create($validated);
+        $division = Division::create($validated);
+
+        $audit->log('division.created', $division, 'Menambahkan divisi', $validated);
 
         return back()->with('success', 'Divisi ditambahkan.');
     }

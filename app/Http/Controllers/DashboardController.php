@@ -7,6 +7,7 @@ use App\Models\ActionItem;
 use App\Models\Meeting;
 use App\Models\Topic;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -17,16 +18,18 @@ class DashboardController extends Controller
         $user = $request->user();
         $meetings = Meeting::query()->visibleTo($user);
 
-        $stats = [
-            'meetings_this_month' => (clone $meetings)
-                ->whereBetween('scheduled_at', [now()->startOfMonth(), now()->endOfMonth()])
-                ->count(),
-            'open_tasks' => ActionItem::query()->visibleTo($user)->open()->count(),
-            'overdue_tasks' => ActionItem::query()->visibleTo($user)->open()
-                ->whereDate('due_date', '<', today())
-                ->count(),
-            'active_topics' => Topic::query()->where('status', 'active')->count(),
-        ];
+        $stats = Cache::remember("dashboard:stats:{$user->id}", now()->addSeconds(30), function () use ($meetings, $user) {
+            return [
+                'meetings_this_month' => (clone $meetings)
+                    ->whereBetween('scheduled_at', [now()->startOfMonth(), now()->endOfMonth()])
+                    ->count(),
+                'open_tasks' => ActionItem::query()->visibleTo($user)->open()->count(),
+                'overdue_tasks' => ActionItem::query()->visibleTo($user)->open()
+                    ->whereDate('due_date', '<', today())
+                    ->count(),
+                'active_topics' => Topic::query()->where('status', 'active')->count(),
+            ];
+        });
 
         $upcoming = (clone $meetings)
             ->select(['id', 'title', 'document_type', 'meeting_type', 'scheduled_at', 'status', 'confidentiality', 'division_id'])

@@ -19,6 +19,10 @@ class AiSummaryReadyNotification extends Notification implements ShouldQueueAfte
 
     public function via(object $notifiable): array
     {
+        if (method_exists($notifiable, 'wantsInAppNotifications') && ! $notifiable->wantsInAppNotifications('meeting')) {
+            return [];
+        }
+
         return ['database'];
     }
 

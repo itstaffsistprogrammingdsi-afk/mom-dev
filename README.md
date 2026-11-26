@@ -87,6 +87,14 @@ AI_MODEL=gpt-4o-mini
 
 Provider yang kompatibel dengan Chat Completions (OpenAI, OpenRouter, DeepSeek, Ollama, dan lainnya) dapat digunakan dengan mengubah `AI_BASE_URL` dan `AI_MODEL`.
 
+Batas dan efisiensi:
+
+- `AI_DAILY_GENERATIONS=20` — kuota permintaan resume AI per pengguna per hari. Set `0` untuk tanpa batas.
+- `AI_MAX_INPUT_CHARS=12000` — isi notulen dipotong sebelum dikirim ke provider agar prompt tidak membengkak.
+- Respons dengan isi notulen identik dan tier/model sama memakai cache 6 jam, sehingga permintaan ulang tidak menagih provider lagi.
+- Setiap resume menyimpan `sources` (judul + URL notulen) dan `usage` (hash isi, jumlah karakter, estimasi token) untuk audit dan sitasi.
+- Versi resume unik per `(meeting_id, scope, version)` di database; permintaan bersamaan diserialisasi dengan row lock.
+
 ## Kolaborasi Real-time
 
 Jalankan service Hocuspocus:
@@ -125,9 +133,36 @@ Scheduler menjalankan `mom:prune-data --force` setiap pukul 03.00 Asia/Jakarta.
 
 Buka **Pengaturan > Autentikasi Dua Faktor** untuk mengaktifkan TOTP (Google Authenticator/Microsoft Authenticator). Setelah aktif, login memerlukan kode 6 digit; recovery code dapat dipakai satu kali.
 
+## Proyeksi Akses Meeting
+
+Tabel `meeting_access` menyimpan grant hasil tag divisi/orang untuk notulen `division` dan `restricted`. Grant diperbarui otomatis oleh observer saat tag, divisi pengguna, status aktif, atau tingkat kerahasiaan berubah. Notulen `open` memakai aturan langsung, `secret` hanya peserta/pembuat/admin yang ditunjuk, dan akses langsung lewat peserta/admin tetap dicek tanpa proyeksi.
+
+Setelah deploy atau jika proyeksi dicurigai tidak sinkron:
+
+```bash
+php artisan mom:rebuild-meeting-access
+```
+
+Perintah ini membangun ulang seluruh proyeksi dan aman dijalankan berulang. Cache statistik dashboard disimpan 30 detik per pengguna; cache jumlah notifikasi belum dibaca disimpan 15 detik dan dibersihkan saat pengguna menandai notifikasi terbaca.
+
 ## Pencarian Notulen
 
 Pencarian daftar notulen memakai generated `tsvector` PostgreSQL (`title` A, `agenda` B, `content_text` C), GIN index, prefix query, dan ranking `ts_rank`. Trigram GIN tetap tersedia untuk fallback pencarian substring di modul lain.
+
+Benchmark lokal 100.000 notulen (`scripts/benchmark-search.php 100000`, hasil di `docs/benchmarks/search-100000.json`):
+
+| Jalur | Median | Catatan |
+|---|---|---|
+| FTS + ranking | 19,7 ms | `Bitmap Index Scan on meetings_search_vector_gin`, 10.001 hasil |
+| LIKE substring | 3,7 ms | Memakai trigram GIN, tanpa ranking |
+
+FTS lebih mahal karena menghitung `ts_rank` untuk seluruh hasil, tetapi tetap jauh di bawah target 3 detik dan skalanya lebih stabil untuk kata kunci jarang. LIKE tetap dipertahankan untuk pencarian substring cepat pada modul lain.
+
+## Pencarian Global dan Notifikasi
+
+- Tekan `Ctrl+K` (atau `Cmd+K`) untuk membuka command palette: cari notulen, topik, orang, dan navigasi dari satu tempat.
+- Preferensi notifikasi ada di **Pengaturan > Notifikasi**: aktif/nonaktifkan kanal in-app, salinan email, serta kategori notulen, action item, dan Quick Note. Peringatan sistem untuk admin tetap tampil di aplikasi.
+- `MeetingEditor` dimuat secara async di halaman buat/sunting dan mode dokumen; mode sheet tidak memuat editor Tiptap.
 
 ## Health Check & Runbook Singkat
 
@@ -152,7 +187,7 @@ Untuk membersihkan duplikat peserta setelah laporan ditinjau:
 php artisan mom:check-integrity --fix-participants
 ```
 
-Di production, jalankan dry-run ini **sebelum** migrasi integritas (`2026_11_26_000006` sampai `000008`). Migrasi unique peserta dan konversi `notifications.data` ke `jsonb` akan gagal bila masih ada duplikat/JSON tidak valid; perbaiki datanya lebih dulu.
+Di production, jalankan dry-run ini **sebelum** migrasi integritas (`2026_11_26_000006` sampai `000008`). Migrasi unique peserta dan konversi `notifications.data` ke `jsonb` akan gagal bila masih ada duplikat/JSON tidak valid; perbaiki datanya lebih dulu. Pemeriksaan yang sama melaporkan duplikat resume AI (`meeting_id` + `version`) sebelum migrasi index unik `000012`. Setelah migrasi `000013`, jalankan `php artisan mom:rebuild-meeting-access` sekali untuk mengisi proyeksi akses.
 
 ## Queue dan Scheduler
 
@@ -169,6 +204,8 @@ Pengingat action item dijadwalkan setiap pukul 09.00:
 ```bash
 php artisan mom:remind-action-items
 ```
+
+Perintah ini memakai catch-up window: pengingat H-3 dikirim selama tenggat masih 2–3 hari lagi, H-1 dikirim saat tenggat tinggal 0–1 hari, dan keterlambatan dicek ulang setiap hari. Jika scheduler sempat mati, pengingat yang terlewat tetap dikirim saat scheduler hidup lagi, tanpa duplikasi.
 
 Jalankan scheduler produksi:
 
@@ -200,6 +237,8 @@ Penjelasan peran dan matriks hak akses tersedia di `/admin/peran`.
 | Pembaca | Membaca sesuai akses tanpa menyunting. |
 
 Kepala divisi tidak memakai peran terpisah; ia memakai peran Notulis atau Anggota dan ditetapkan sebagai kepala divisi pada data divisi.
+
+Audit log mencatat login/logout, pembukaan Quick Note, perubahan divisi/topik, perubahan pengguna/template, permintaan AI, dan aksi dokumen penting.
 
 Dikte suara memerlukan Chrome/Edge, izin mikrofon, dan HTTPS (atau `localhost`). Audio tidak disimpan oleh aplikasi.
 

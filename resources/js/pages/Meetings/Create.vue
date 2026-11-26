@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import AvatarGroup from '@/components/AvatarGroup.vue';
-import MeetingEditor from '@/components/MeetingEditor.vue';
 import MinutesCanvas from '@/components/minutes/MinutesCanvas.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import { Button } from '@/components/ui/button';
@@ -13,7 +12,9 @@ import { type BreadcrumbItem, type Division, type User } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import type { JSONContent } from '@tiptap/core';
 import { CalendarDays, FileText, Link2, MapPin, Search, ShieldCheck, Users } from 'lucide-vue-next';
-import { computed, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, ref, watch } from 'vue';
+
+const MeetingEditor = defineAsyncComponent(() => import('@/components/MeetingEditor.vue'));
 
 interface Template {
     id: number;
