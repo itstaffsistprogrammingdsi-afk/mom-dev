@@ -105,6 +105,7 @@ class MeetingController extends Controller
             ]),
             'creatorName' => $request->user()->name,
             'approverName' => config('app.default_approver_name'),
+            'signatures' => [],
         ]);
     }
 
@@ -197,16 +198,24 @@ class MeetingController extends Controller
             'summaries' => fn ($query) => $query->latest('version')->limit(5),
             'attachments',
             'versions' => fn ($query) => $query->latest('version')->limit(10),
+            'signatures',
         ]);
+
+        $signatures = $this->signaturePayload($meeting);
+        $meeting->makeHidden('signatures');
 
         return Inertia::render('Meetings/Show', [
             'meeting' => $meeting,
+            'signatures' => $signatures,
             'can' => [
                 'update' => $request->user()->can('update', $meeting),
                 'finalize' => $request->user()->can('finalize', $meeting),
                 'generateAi' => $request->user()->can('update', $meeting),
                 'manage' => $request->user()->can('update', $meeting),
                 'share' => $request->user()->can('share', $meeting),
+                'signCreator' => $request->user()->can('signCreator', $meeting),
+                'signApprover' => $request->user()->can('signApprover', $meeting),
+                'changeConfidentiality' => $request->user()->can('changeConfidentiality', $meeting),
             ],
             'users' => User::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'divisions' => Division::query()->orderBy('name')->get(['id', 'name']),
@@ -217,13 +226,20 @@ class MeetingController extends Controller
     {
         $this->authorize('update', $meeting);
 
-        $meeting->load(['division:id,name,head_id', 'division.head:id,name', 'approvedBy:id,name', 'participants.user:id,name', 'tags']);
+        $meeting->load(['division:id,name,head_id', 'division.head:id,name', 'approvedBy:id,name', 'participants.user:id,name', 'tags', 'signatures']);
+
+        $signatures = $this->signaturePayload($meeting);
+        $meeting->makeHidden('signatures');
 
         $tokens = app(CollabTokenService::class);
         $collabAvailable = app(CollabAvailability::class)->isAvailable();
 
         return Inertia::render('Meetings/Edit', [
             'meeting' => $meeting,
+            'signatures' => $signatures,
+            'can' => [
+                'changeConfidentiality' => $request->user()->can('changeConfidentiality', $meeting),
+            ],
             'users' => User::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'divisions' => Division::query()->orderBy('name')->get(['id', 'name']),
             'topics' => Topic::query()->where('status', 'active')->orderBy('name')->get(['id', 'name']),
@@ -244,6 +260,7 @@ class MeetingController extends Controller
         MeetingContentParser $parser,
         MeetingTagSynchronizer $tagger,
         TipTapContentSanitizer $sanitizer,
+        AuditLogger $audit,
     ): JsonResponse {
         $this->authorize('update', $meeting);
 
@@ -264,16 +281,35 @@ class MeetingController extends Controller
             $nomor = app(MeetingNumberGenerator::class)->generate($meeting->division, $meeting->scheduled_at);
         }
 
+        $confidentiality = $this->resolveConfidentiality($request, $meeting, $validated['confidentiality'] ?? null);
+
+        if ($confidentiality['changed'] && ! $confidentiality['allowed']) {
+            // Autosave berjalan di latar belakang. Jangan gagalkan penyimpanan isi
+            // hanya karena perubahan kerahasiaan tidak diizinkan; pertahankan nilai lama.
+            $confidentiality['value'] = $confidentiality['from'];
+            $confidentiality['changed'] = false;
+        }
+
         $meeting->update([
             'title' => $validated['title'] ?? $meeting->title,
             'nomor_notulensi' => $nomor,
             'editor_mode' => $validated['editor_mode'] ?? $meeting->editor_mode ?? 'docs',
             'agenda' => $validated['agenda'] ?? $meeting->agenda,
-            'confidentiality' => $validated['confidentiality'] ?? $meeting->confidentiality,
+            'confidentiality' => $confidentiality['value'],
             'content' => $content,
             'content_text' => $parser->parse($content)['text'],
             'content_updated_at' => now(),
         ]);
+
+        if ($confidentiality['changed']) {
+            $audit->log(
+                'meeting.confidentiality_changed',
+                $meeting,
+                'Mengubah tingkat kerahasiaan',
+                ['from' => $confidentiality['from'], 'to' => $confidentiality['value']],
+                $meeting->id,
+            );
+        }
 
         $tagger->sync($meeting, $content, $request->user()->id);
 
@@ -307,10 +343,19 @@ class MeetingController extends Controller
             ?: $meeting->nomor_notulensi
             ?: app(MeetingNumberGenerator::class)->generate($meeting->division, $meeting->scheduled_at);
 
+        $confidentiality = $this->resolveConfidentiality($request, $meeting, $validated['confidentiality']);
+
+        if ($confidentiality['changed'] && ! $confidentiality['allowed']) {
+            throw ValidationException::withMessages([
+                'confidentiality' => 'Hanya pembuat notulen atau admin yang dapat mengubah tingkat kerahasiaan.',
+            ]);
+        }
+
         $meeting->update([
             ...$validated,
             'nomor_notulensi' => $nomor,
             'editor_mode' => $validated['editor_mode'] ?? $meeting->editor_mode ?? 'docs',
+            'confidentiality' => $confidentiality['value'],
             'content' => $content,
             'content_text' => $parser->parse($content)['text'],
             'content_updated_at' => now(),
@@ -320,6 +365,16 @@ class MeetingController extends Controller
 
         if ($meeting->isFinal()) {
             app(MeetingVersionService::class)->snapshot($meeting, 'admin_edit', $request->user()->id);
+        }
+
+        if ($confidentiality['changed']) {
+            $audit->log(
+                'meeting.confidentiality_changed',
+                $meeting,
+                'Mengubah tingkat kerahasiaan',
+                ['from' => $confidentiality['from'], 'to' => $confidentiality['value']],
+                $meeting->id,
+            );
         }
 
         $audit->log('meeting.updated', $meeting, 'Memperbarui isi notulen', meetingId: $meeting->id);
@@ -437,5 +492,41 @@ class MeetingController extends Controller
         $audit->log('meeting.version_restored', $meeting, "Memulihkan versi {$version->version}", meetingId: $meeting->id);
 
         return back()->with('success', "Versi {$version->version} dipulihkan.");
+    }
+
+    /**
+     * @return array{value: string, from: string, changed: bool, allowed: bool}
+     */
+    private function resolveConfidentiality(Request $request, Meeting $meeting, ?string $requested): array
+    {
+        $current = $meeting->confidentiality->value;
+        $value = $requested ?? $current;
+        $changed = $value !== $current;
+
+        return [
+            'value' => $value,
+            'from' => $current,
+            'changed' => $changed,
+            'allowed' => ! $changed || $request->user()->can('changeConfidentiality', $meeting),
+        ];
+    }
+
+    /**
+     * @return array<string, array{role: string, name: string|null, url: string, signed_at: string|null}>
+     */
+    private function signaturePayload(Meeting $meeting): array
+    {
+        $meeting->loadMissing('signatures');
+
+        return $meeting->signatures
+            ->mapWithKeys(fn ($signature) => [
+                $signature->role => [
+                    'role' => $signature->role,
+                    'name' => $signature->name,
+                    'url' => route('meeting-signatures.show', $signature),
+                    'signed_at' => $signature->signed_at?->toIso8601String(),
+                ],
+            ])
+            ->all();
     }
 }

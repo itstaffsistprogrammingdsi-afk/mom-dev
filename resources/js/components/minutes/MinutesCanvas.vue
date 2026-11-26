@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import MeetingEditor from '@/components/MeetingEditor.vue';
 import MinutesSheet from '@/components/minutes/MinutesSheet.vue';
+import SignatureBlock from '@/components/minutes/SignatureBlock.vue';
 import { formatDateTime } from '@/lib/labels';
-import type { Division } from '@/types';
+import type { Division, MeetingSignatures } from '@/types';
 import type { JSONContent } from '@tiptap/core';
 import { FileSpreadsheet, FileText } from 'lucide-vue-next';
 import { computed } from 'vue';
@@ -20,6 +21,7 @@ const props = withDefaults(
         content: JSONContent;
         creatorName: string;
         approverName: string;
+        signatures?: MeetingSignatures;
         users?: { id: number; name: string; division_id?: number | null }[];
         divisions?: Division[];
         topics?: { id: number; name: string }[];
@@ -30,6 +32,7 @@ const props = withDefaults(
     }>(),
     {
         scheduledAt: null,
+        signatures: () => ({}),
         users: () => [],
         divisions: () => [],
         topics: () => [],
@@ -170,35 +173,14 @@ const displayedAgenda = computed(() => (agendaLines.value.length > 0 ? agendaLin
                     />
                 </div>
 
-                <table class="mt-5 w-full border-collapse text-xs sm:text-sm">
-                    <tbody>
-                        <tr>
-                            <th class="w-1/2 border border-border bg-muted p-2 text-left font-semibold">
-                                Dibuat Oleh:
-                                <span class="block text-[10px] font-normal italic text-muted-foreground">(wajib diisi tanda tangan notulis)</span>
-                            </th>
-                            <th class="w-1/2 border border-border bg-muted p-2 text-left font-semibold">
-                                Disetujui Oleh:
-                                <span class="block text-[10px] font-normal italic text-muted-foreground">
-                                    (tanda tangan pimpinan sudah mengetahui &amp; approval)
-                                </span>
-                            </th>
-                        </tr>
-                        <tr>
-                            <td class="border border-border p-2 align-top">
-                                <div class="h-12"></div>
-                                <p class="font-semibold">{{ props.creatorName }}</p>
-                                <p class="text-xs text-muted-foreground">Notulis</p>
-                                <p class="text-[10px] italic text-muted-foreground">(wajib diisi nama penyusun notulen)</p>
-                            </td>
-                            <td class="border border-border p-2 align-top">
-                                <div class="h-12"></div>
-                                <p class="font-semibold">{{ props.approverName }}</p>
-                                <p class="text-xs text-muted-foreground">Pimpinan Rapat</p>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="mt-5">
+                    <SignatureBlock
+                        :creator-name="props.creatorName"
+                        :approver-name="props.approverName"
+                        :creator-signature="props.signatures?.creator ?? null"
+                        :approver-signature="props.signatures?.approver ?? null"
+                    />
+                </div>
 
                 <p class="mt-3 text-[11px] italic text-muted-foreground">
                     Notes: Dilarang mengubah format notulensi yang telah disetujui oleh Pimpinan.
@@ -256,35 +238,12 @@ const displayedAgenda = computed(() => (agendaLines.value.length > 0 ? agendaLin
                 <MinutesSheet v-model="content" />
 
                 <div class="p-3 sm:p-4">
-                    <table class="w-full border-collapse text-xs sm:text-sm">
-                        <tbody>
-                            <tr>
-                                <th class="w-1/2 border border-border bg-muted p-2 text-left font-semibold">
-                                    Dibuat Oleh:
-                                    <span class="block text-[10px] font-normal italic text-muted-foreground">(wajib diisi tanda tangan notulis)</span>
-                                </th>
-                                <th class="w-1/2 border border-border bg-muted p-2 text-left font-semibold">
-                                    Disetujui Oleh:
-                                    <span class="block text-[10px] font-normal italic text-muted-foreground">
-                                        (tanda tangan pimpinan sudah mengetahui &amp; approval)
-                                    </span>
-                                </th>
-                            </tr>
-                            <tr>
-                                <td class="border border-border p-2 align-top">
-                                    <div class="h-12"></div>
-                                    <p class="font-semibold">{{ props.creatorName }}</p>
-                                    <p class="text-xs text-muted-foreground">Notulis</p>
-                                    <p class="text-[10px] italic text-muted-foreground">(wajib diisi nama penyusun notulen)</p>
-                                </td>
-                                <td class="border border-border p-2 align-top">
-                                    <div class="h-12"></div>
-                                    <p class="font-semibold">{{ props.approverName }}</p>
-                                    <p class="text-xs text-muted-foreground">Pimpinan Rapat</p>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <SignatureBlock
+                        :creator-name="props.creatorName"
+                        :approver-name="props.approverName"
+                        :creator-signature="props.signatures?.creator ?? null"
+                        :approver-signature="props.signatures?.approver ?? null"
+                    />
                     <p class="mt-3 text-[11px] italic text-muted-foreground">
                         Notes: Dilarang mengubah format notulensi yang telah disetujui oleh Pimpinan.
                     </p>

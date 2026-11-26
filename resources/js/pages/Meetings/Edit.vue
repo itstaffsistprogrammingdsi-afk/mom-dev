@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { attendanceLabels, confidentialityLabels } from '@/lib/labels';
-import { type BreadcrumbItem, type Division, type Meeting, type Participant, type SharedData, type Tag } from '@/types';
+import { type BreadcrumbItem, type Division, type Meeting, type MeetingSignatures, type Participant, type SharedData, type Tag } from '@/types';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import type { JSONContent } from '@tiptap/core';
 import { AlertCircle, CheckCircle2, CircleDashed, Loader2, Users, Wifi } from 'lucide-vue-next';
@@ -30,6 +30,8 @@ const props = defineProps<{
     collab?: { url: string; document: string; token: string; user: string } | null;
     creatorName: string;
     approverName: string;
+    signatures: MeetingSignatures;
+    can: { changeConfidentiality: boolean };
 }>();
 
 const page = usePage<SharedData>();
@@ -282,6 +284,7 @@ function submit() {
                             :participants="participants"
                             :creator-name="props.creatorName"
                             :approver-name="props.approverName"
+                            :signatures="props.signatures"
                             :users="props.users"
                             :divisions="props.divisions"
                             :topics="props.topics"
@@ -309,9 +312,12 @@ function submit() {
                         <h2 class="text-sm font-semibold">Pengaturan</h2>
                         <div class="mt-4 space-y-1.5">
                             <Label for="confidentiality">Kerahasiaan</Label>
-                            <Select id="confidentiality" v-model="form.confidentiality">
+                            <Select id="confidentiality" v-model="form.confidentiality" :disabled="!props.can.changeConfidentiality">
                                 <option v-for="(label, value) in confidentialityLabels" :key="value" :value="value">{{ label }}</option>
                             </Select>
+                            <p v-if="!props.can.changeConfidentiality" class="text-xs text-muted-foreground">
+                                Hanya pembuat notulen atau admin yang dapat mengubah tingkat kerahasiaan.
+                            </p>
                         </div>
                     </section>
 

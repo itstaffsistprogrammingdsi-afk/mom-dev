@@ -4,7 +4,9 @@ namespace App\Services\Exports;
 
 use App\Enums\DocumentType;
 use App\Models\Meeting;
+use App\Models\MeetingSignature;
 use App\Services\MeetingNumberGenerator;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Mpdf\Mpdf;
 use Mpdf\Output\Destination;
@@ -34,6 +36,8 @@ class MeetingExportService
             'hasTable' => str_contains($contentHtml, '<table'),
             'hasResultHeading' => stripos($contentHtml, 'hasil rapat') !== false,
             'hasAgendaHeading' => (bool) preg_match('/<h[1-3][^>]*>\s*Agenda/i', $contentHtml),
+            'creatorSignature' => $this->signatureDataUri($meeting, MeetingSignature::ROLE_CREATOR),
+            'approverSignature' => $this->signatureDataUri($meeting, MeetingSignature::ROLE_APPROVER),
         ])->render();
 
         $tempDir = storage_path('app/mpdf');
@@ -377,15 +381,29 @@ class MeetingExportService
 
         $signatureRow = $signatureTable->addRow();
         $creatorCell = $signatureRow->addCell(4800);
-        $creatorCell->addText(' ');
-        $creatorCell->addText(' ');
+        $creatorSignaturePath = $this->signaturePath($meeting, MeetingSignature::ROLE_CREATOR);
+
+        if ($creatorSignaturePath) {
+            $creatorCell->addImage($creatorSignaturePath, ['width' => 150, 'height' => 55, 'alignment' => Jc::CENTER]);
+        } else {
+            $creatorCell->addText(' ');
+            $creatorCell->addText(' ');
+        }
+
         $creatorCell->addText($this->esc($meeting->creator?->name ?? '-'), ['size' => 8.5, 'bold' => true]);
         $creatorCell->addText('Notulis', ['size' => 8, 'color' => '4B5563']);
         $creatorCell->addText('(wajib diisi nama penyusun notulen)', ['size' => 7, 'italic' => true, 'color' => '4B5563']);
 
         $approverCell = $signatureRow->addCell(4800);
-        $approverCell->addText(' ');
-        $approverCell->addText(' ');
+        $approverSignaturePath = $this->signaturePath($meeting, MeetingSignature::ROLE_APPROVER);
+
+        if ($approverSignaturePath) {
+            $approverCell->addImage($approverSignaturePath, ['width' => 150, 'height' => 55, 'alignment' => Jc::CENTER]);
+        } else {
+            $approverCell->addText(' ');
+            $approverCell->addText(' ');
+        }
+
         $approverCell->addText($this->esc($meeting->approvedBy?->name ?? config('app.default_approver_name')), ['size' => 8.5, 'bold' => true]);
         $approverCell->addText('Pimpinan Rapat', ['size' => 8, 'color' => '4B5563']);
 
@@ -426,7 +444,34 @@ class MeetingExportService
             'actionItems.pic:id,name',
             'actionItems.division:id,name',
             'tags',
+            'signatures',
         ]);
+    }
+
+    private function signaturePath(Meeting $meeting, string $role): ?string
+    {
+        $signature = $meeting->signatures->firstWhere('role', $role);
+
+        if (! $signature?->signature_path) {
+            return null;
+        }
+
+        $path = Storage::disk('local')->path($signature->signature_path);
+
+        return is_file($path) ? $path : null;
+    }
+
+    private function signatureDataUri(Meeting $meeting, string $role): ?string
+    {
+        $path = $this->signaturePath($meeting, $role);
+
+        if (! $path) {
+            return null;
+        }
+
+        $mime = mime_content_type($path) ?: 'image/png';
+
+        return 'data:'.$mime.';base64,'.base64_encode((string) file_get_contents($path));
     }
 
     private function esc(string $value): string

@@ -64,6 +64,44 @@ class AttachmentTest extends TestCase
         ]);
     }
 
+    public function test_disallowed_attachment_type_is_rejected(): void
+    {
+        Storage::fake('local');
+
+        $notulis = User::factory()->create(['role' => 'notulis']);
+        $meeting = Meeting::factory()->create([
+            'created_by' => $notulis->id,
+            'status' => MeetingStatus::Draft->value,
+            'confidentiality' => Confidentiality::Open->value,
+        ]);
+
+        $this->actingAs($notulis)
+            ->post(route('attachments.store', $meeting), [
+                'file' => UploadedFile::fake()->create('shell.php', 10, 'application/x-php'),
+            ])
+            ->assertSessionHasErrors('file');
+
+        $this->assertDatabaseCount('attachments', 0);
+    }
+
+    public function test_attachment_link_must_use_http_or_https(): void
+    {
+        $notulis = User::factory()->create(['role' => 'notulis']);
+        $meeting = Meeting::factory()->create([
+            'created_by' => $notulis->id,
+            'status' => MeetingStatus::Draft->value,
+            'confidentiality' => Confidentiality::Open->value,
+        ]);
+
+        $this->actingAs($notulis)
+            ->post(route('attachments.store', $meeting), [
+                'url' => 'ftp://example.com/file.zip',
+            ])
+            ->assertSessionHasErrors('url');
+
+        $this->assertDatabaseCount('attachments', 0);
+    }
+
     public function test_outsider_cannot_download_attachment_of_restricted_meeting(): void
     {
         Storage::fake('local');

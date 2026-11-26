@@ -145,7 +145,7 @@ class QuickNoteTest extends TestCase
 
     public function test_photo_can_be_uploaded_viewed_and_removed(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
 
         $creator = User::factory()->create(['role' => 'member']);
 
@@ -169,7 +169,7 @@ class QuickNoteTest extends TestCase
 
         $this->assertNotNull($path);
         $this->assertNotNull($photoId);
-        Storage::disk('public')->assertExists($path);
+        Storage::disk('local')->assertExists($path);
         $this->assertSame(
             route('quick-notes.photo-item', [$note, $photoId]),
             data_get($note->fresh()->content, 'content.0.attrs.src'),
@@ -193,13 +193,13 @@ class QuickNoteTest extends TestCase
 
         $this->assertNull($note->fresh()->photo_path);
         $this->assertNull($note->fresh()->photos);
-        Storage::disk('public')->assertMissing($path);
+        Storage::disk('local')->assertMissing($path);
         $this->assertStringNotContainsString('"image"', json_encode($note->fresh()->content));
     }
 
     public function test_multiple_photos_can_be_attached_to_one_quick_note(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
 
         $creator = User::factory()->create(['role' => 'member']);
 
@@ -232,8 +232,8 @@ class QuickNoteTest extends TestCase
         $firstId = $photoIds[0];
         $secondId = $photoIds[1];
 
-        Storage::disk('public')->assertExists($photos[$firstId]['path']);
-        Storage::disk('public')->assertExists($photos[$secondId]['path']);
+        Storage::disk('local')->assertExists($photos[$firstId]['path']);
+        Storage::disk('local')->assertExists($photos[$secondId]['path']);
 
         $content = $note->content;
 
@@ -252,7 +252,7 @@ class QuickNoteTest extends TestCase
 
     public function test_removing_one_image_prunes_only_that_photo(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
 
         $creator = User::factory()->create(['role' => 'member']);
 
@@ -301,18 +301,18 @@ class QuickNoteTest extends TestCase
         $this->assertCount(1, $note->photos);
         $this->assertArrayHasKey($firstId, $note->photos);
         $this->assertArrayNotHasKey($secondId, $note->photos);
-        Storage::disk('public')->assertExists($photos[$firstId]['path']);
-        Storage::disk('public')->assertMissing($secondPath);
+        Storage::disk('local')->assertExists($photos[$firstId]['path']);
+        Storage::disk('local')->assertMissing($secondPath);
     }
 
     public function test_deleting_quick_note_removes_its_photo(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
 
         $creator = User::factory()->create(['role' => 'member']);
         $note = $this->makeNote($creator);
 
-        $path = UploadedFile::fake()->image('hapus.jpg')->store('quick-notes', 'public');
+        $path = UploadedFile::fake()->image('hapus.jpg')->store('quick-notes', 'local');
         $note->update([
             'photo_path' => $path,
             'photos' => [
@@ -320,13 +320,13 @@ class QuickNoteTest extends TestCase
             ],
         ]);
 
-        Storage::disk('public')->assertExists($path);
+        Storage::disk('local')->assertExists($path);
 
         $this->actingAs($creator)
             ->delete(route('quick-notes.destroy', $note))
             ->assertRedirect(route('quick-notes.index'));
 
-        Storage::disk('public')->assertMissing($path);
+        Storage::disk('local')->assertMissing($path);
     }
 
     private function makeNote(User $creator): QuickNote

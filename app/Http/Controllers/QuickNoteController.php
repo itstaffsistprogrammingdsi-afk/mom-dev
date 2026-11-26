@@ -214,7 +214,9 @@ class QuickNoteController extends Controller
         }
 
         if ($removedPaths->isNotEmpty()) {
-            Storage::disk('public')->delete($removedPaths->unique()->values()->all());
+            $paths = $removedPaths->unique()->values()->all();
+            Storage::disk('local')->delete($paths);
+            Storage::disk('public')->delete($paths);
         }
 
         $this->notifyMentions($quickNote, $createdMentions);
@@ -239,9 +241,13 @@ class QuickNoteController extends Controller
     {
         $this->authorize('view', $quickNote);
 
-        abort_unless($quickNote->photo_path && Storage::disk('public')->exists($quickNote->photo_path), 404);
+        $path = $quickNote->photo_path;
 
-        return Storage::disk('public')->response($quickNote->photo_path);
+        abort_unless($path && (Storage::disk('local')->exists($path) || Storage::disk('public')->exists($path)), 404);
+
+        $disk = Storage::disk('local')->exists($path) ? 'local' : 'public';
+
+        return Storage::disk($disk)->response($path);
     }
 
     public function photoItem(Request $request, QuickNote $quickNote, string $photo): \Symfony\Component\HttpFoundation\StreamedResponse
@@ -250,9 +256,11 @@ class QuickNoteController extends Controller
 
         $path = $quickNote->photos[$photo]['path'] ?? null;
 
-        abort_unless($path && Storage::disk('public')->exists($path), 404);
+        abort_unless($path && (Storage::disk('local')->exists($path) || Storage::disk('public')->exists($path)), 404);
 
-        return Storage::disk('public')->response($path);
+        $disk = Storage::disk('local')->exists($path) ? 'local' : 'public';
+
+        return Storage::disk($disk)->response($path);
     }
 
     public function respond(
@@ -384,7 +392,7 @@ class QuickNoteController extends Controller
             }
 
             $photos[(string) Str::uuid()] = [
-                'path' => $file->store('quick-notes', 'public'),
+                'path' => $file->store('quick-notes', 'local'),
                 'original_name' => $file->getClientOriginalName(),
             ];
         }

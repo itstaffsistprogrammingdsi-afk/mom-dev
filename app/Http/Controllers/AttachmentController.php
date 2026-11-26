@@ -18,8 +18,8 @@ class AttachmentController extends Controller
         $this->authorize('update', $meeting);
 
         $validated = $request->validate([
-            'file' => ['nullable', 'file', 'max:20480'],
-            'url' => ['nullable', 'url', 'max:2048'],
+            'file' => ['nullable', 'file', 'max:20480', 'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,jpg,jpeg,png,webp'],
+            'url' => ['nullable', 'url:http,https', 'max:2048'],
             'name' => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -37,7 +37,7 @@ class AttachmentController extends Controller
                 'disk' => 'local',
                 'path' => $path,
                 'original_name' => $file->getClientOriginalName(),
-                'mime_type' => $file->getClientMimeType(),
+                'mime_type' => $file->getMimeType(),
                 'size' => $file->getSize(),
             ]);
         } else {
@@ -56,12 +56,22 @@ class AttachmentController extends Controller
         return back()->with('success', 'Lampiran ditambahkan.');
     }
 
-    public function download(Attachment $attachment): StreamedResponse|RedirectResponse
+    public function download(Attachment $attachment, AuditLogger $audit): StreamedResponse|RedirectResponse
     {
         $this->authorize('view', $attachment->meeting);
 
+        $audit->log('attachment.downloaded', $attachment, 'Mengunduh lampiran', meetingId: $attachment->meeting_id);
+
         if ($attachment->kind === AttachmentKind::Link) {
-            return redirect()->away($attachment->url);
+            $url = (string) $attachment->url;
+
+            abort_unless(
+                str_starts_with($url, 'http://') || str_starts_with($url, 'https://'),
+                422,
+                'Tautan lampiran tidak valid.',
+            );
+
+            return redirect()->away($url);
         }
 
         abort_unless($attachment->path && Storage::disk($attachment->disk)->exists($attachment->path), 404);

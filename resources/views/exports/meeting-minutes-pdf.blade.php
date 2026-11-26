@@ -228,6 +228,11 @@
             height: 42px;
         }
 
+        .signature-image {
+            max-height: 42px;
+            max-width: 180px;
+        }
+
         .signature-hint {
             margin-top: 1px;
             font-size: 6.8pt;
@@ -374,13 +379,21 @@
         </tr>
         <tr>
             <td>
-                <div class="signature-space"></div>
+                @if ($creatorSignature ?? null)
+                    <img src="{{ $creatorSignature }}" alt="Tanda tangan notulis" class="signature-image">
+                @else
+                    <div class="signature-space"></div>
+                @endif
                 <strong>{{ $meeting->creator?->name ?? '-' }}</strong>
                 <div class="muted">Notulis</div>
                 <div class="signature-hint">(wajib diisi nama penyusun notulen)</div>
             </td>
             <td>
-                <div class="signature-space"></div>
+                @if ($approverSignature ?? null)
+                    <img src="{{ $approverSignature }}" alt="Tanda tangan pimpinan" class="signature-image">
+                @else
+                    <div class="signature-space"></div>
+                @endif
                 <strong>{{ $meeting->approvedBy?->name ?? config('app.default_approver_name') }}</strong>
                 <div class="muted">Pimpinan Rapat</div>
             </td>

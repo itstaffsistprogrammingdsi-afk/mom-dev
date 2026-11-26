@@ -75,7 +75,7 @@ class ActionItemResponseTest extends TestCase
 
     public function test_response_photo_can_be_uploaded_and_viewed(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
 
         $owner = User::factory()->create(['role' => 'notulis']);
         $pic = User::factory()->create(['role' => 'member']);
@@ -109,7 +109,7 @@ class ActionItemResponseTest extends TestCase
         $feedback = ActionItemFeedback::query()->firstOrFail();
 
         $this->assertNotNull($feedback->photo_path);
-        Storage::disk('public')->assertExists($feedback->photo_path);
+        Storage::disk('local')->assertExists($feedback->photo_path);
         $this->assertSame(
             route('action-items.feedback.photo', [$item, $feedback]),
             $feedback->photo_url,

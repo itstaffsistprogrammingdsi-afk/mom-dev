@@ -3,6 +3,8 @@ import ActionItemFeedbackDialog from '@/components/ActionItemFeedbackDialog.vue'
 import AttendanceBadge from '@/components/AttendanceBadge.vue';
 import AvatarGroup from '@/components/AvatarGroup.vue';
 import MeetingEditor from '@/components/MeetingEditor.vue';
+import MeetingSignaturePanel from '@/components/MeetingSignaturePanel.vue';
+import SignatureBlock from '@/components/minutes/SignatureBlock.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
 import TagChip from '@/components/TagChip.vue';
@@ -21,6 +23,7 @@ import {
     type Decision,
     type Division,
     type Meeting,
+    type MeetingSignatures,
     type Participant,
     type SharedData,
     type Tag,
@@ -46,6 +49,7 @@ import {
     MessageSquare,
     MoreHorizontal,
     Paperclip,
+    PenLine,
     Pencil,
     Plus,
     Printer,
@@ -121,7 +125,17 @@ interface FullMeeting extends Meeting {
 
 const props = defineProps<{
     meeting: FullMeeting;
-    can: { update: boolean; finalize: boolean; generateAi?: boolean; manage?: boolean; share?: boolean };
+    signatures: MeetingSignatures;
+    can: {
+        update: boolean;
+        finalize: boolean;
+        generateAi?: boolean;
+        manage?: boolean;
+        share?: boolean;
+        signCreator?: boolean;
+        signApprover?: boolean;
+        changeConfidentiality?: boolean;
+    };
     users?: { id: number; name: string }[];
     divisions?: Division[];
 }>();
@@ -741,6 +755,14 @@ function restoreVersion(version: Version) {
                             <span class="text-xs text-muted-foreground">Mode baca</span>
                         </div>
                         <MeetingEditor :model-value="props.meeting.content" :editable="false" />
+                        <div v-if="props.meeting.document_type === 'meeting'" class="mt-4">
+                            <SignatureBlock
+                                :creator-name="props.meeting.creator?.name ?? '-'"
+                                :approver-name="props.meeting.approved_by?.name ?? (props.signatures.approver?.name ?? 'Pimpinan Rapat')"
+                                :creator-signature="props.signatures.creator ?? null"
+                                :approver-signature="props.signatures.approver ?? null"
+                            />
+                        </div>
                     </section>
 
                     <section class="overflow-hidden rounded-lg border border-ai/25 bg-ai-surface/60 shadow-card" aria-labelledby="ai-summary-heading">
@@ -1316,6 +1338,25 @@ function restoreVersion(version: Version) {
                                     <dd class="mt-0.5">{{ confidentialityLabels[props.meeting.confidentiality] }}</dd>
                                 </div>
                             </dl>
+                        </CardContent>
+                    </Card>
+
+                    <Card v-if="props.meeting.document_type === 'meeting'">
+                        <CardHeader class="pb-3">
+                            <CardTitle class="flex items-center gap-2 text-sm">
+                                <PenLine class="size-4 text-muted-foreground" />
+                                Tanda tangan
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <MeetingSignaturePanel
+                                :meeting-id="props.meeting.id"
+                                :signatures="props.signatures"
+                                :creator-name="props.meeting.creator?.name ?? '-'"
+                                :approver-name="props.meeting.approved_by?.name ?? 'Pimpinan Rapat'"
+                                :can-sign-creator="props.can.signCreator ?? false"
+                                :can-sign-approver="props.can.signApprover ?? false"
+                            />
                         </CardContent>
                     </Card>
 

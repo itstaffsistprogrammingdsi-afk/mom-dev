@@ -8,6 +8,7 @@ use App\Models\ActionItem;
 use App\Models\Meeting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -130,5 +131,31 @@ class ActionItemManagementTest extends TestCase
         $this->actingAs($member)
             ->delete(route('action-items.destroy', $item))
             ->assertForbidden();
+    }
+
+    public function test_pic_without_meeting_access_cannot_be_assigned(): void
+    {
+        Notification::fake();
+
+        $owner = User::factory()->create(['role' => 'notulis']);
+        $pic = User::factory()->create(['role' => 'member']);
+        $meeting = Meeting::factory()->create([
+            'created_by' => $owner->id,
+            'status' => MeetingStatus::Draft->value,
+            'confidentiality' => Confidentiality::Restricted->value,
+        ]);
+
+        $this->actingAs($owner)
+            ->post(route('action-items.store', $meeting), [
+                'title' => 'Tugas lintas divisi',
+                'pic_id' => $pic->id,
+            ])
+            ->assertSessionHasErrors('pic_id');
+
+        $this->assertDatabaseMissing('action_items', [
+            'meeting_id' => $meeting->id,
+            'title' => 'Tugas lintas divisi',
+        ]);
+        Notification::assertNothingSent();
     }
 }

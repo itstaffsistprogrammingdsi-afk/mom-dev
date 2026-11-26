@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import EmptyState from '@/components/EmptyState.vue';
+import InputError from '@/components/InputError.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import Pagination from '@/components/Pagination.vue';
 import { Badge } from '@/components/ui/badge';
@@ -103,20 +104,24 @@ function updateUser(user: AdminUser, field: 'role' | 'division_id' | 'is_active'
                         <div class="space-y-1.5">
                             <Label for="new-user-name">Nama</Label>
                             <Input id="new-user-name" v-model="createForm.name" required placeholder="Nama lengkap" />
+                            <InputError :message="createForm.errors.name" />
                         </div>
                         <div class="space-y-1.5">
                             <Label for="new-user-email">Email</Label>
                             <Input id="new-user-email" v-model="createForm.email" required type="email" placeholder="nama@perusahaan.com" />
+                            <InputError :message="createForm.errors.email" />
                         </div>
                         <div class="space-y-1.5">
                             <Label for="new-user-password">Kata sandi</Label>
                             <Input id="new-user-password" v-model="createForm.password" required type="password" placeholder="Kata sandi awal" />
+                            <InputError :message="createForm.errors.password" />
                         </div>
                         <div class="space-y-1.5">
                             <Label for="new-user-role">Peran</Label>
                             <Select id="new-user-role" v-model="createForm.role">
                                 <option v-for="role in props.roles" :key="role.value" :value="role.value">{{ role.label }}</option>
                             </Select>
+                            <InputError :message="createForm.errors.role" />
                         </div>
                         <div class="space-y-1.5">
                             <Label for="new-user-division">Divisi</Label>
@@ -126,10 +131,12 @@ function updateUser(user: AdminUser, field: 'role' | 'division_id' | 'is_active'
                                     {{ division.name }}
                                 </option>
                             </Select>
+                            <InputError :message="createForm.errors.division_id" />
                         </div>
                         <div class="space-y-1.5">
                             <Label for="new-user-job">Jabatan</Label>
                             <Input id="new-user-job" v-model="createForm.job_title" placeholder="Jabatan" />
+                            <InputError :message="createForm.errors.job_title" />
                         </div>
                         <div class="flex items-end sm:col-span-2 xl:col-span-3">
                             <Button type="submit" :loading="createForm.processing">

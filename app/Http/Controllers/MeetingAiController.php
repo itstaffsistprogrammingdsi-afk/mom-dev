@@ -179,6 +179,10 @@ class MeetingAiController extends Controller
                     ? User::query()->where('name', $suggestion['pic_name'])->orWhere('email', $suggestion['pic_name'])->first()
                     : null;
 
+                if ($pic && ! Meeting::query()->visibleTo($pic)->whereKey($aiSummary->meeting_id)->exists()) {
+                    $pic = null;
+                }
+
                 $division = filled($suggestion['division_name'] ?? null)
                     ? Division::query()->where('name', $suggestion['division_name'])->first()
                     : null;

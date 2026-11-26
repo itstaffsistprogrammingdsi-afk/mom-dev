@@ -18,7 +18,16 @@ if (existsSync(envPath)) {
 }
 
 const storageDir = process.env.COLLAB_STORAGE_DIR ?? join(baseDir, 'storage');
-const collabSecret = process.env.COLLAB_SECRET ?? 'change-me-in-production';
+const configuredSecret = process.env.COLLAB_SECRET;
+const collabSecret =
+    configuredSecret && configuredSecret !== 'change-me-in-production'
+        ? configuredSecret
+        : process.env.APP_KEY;
+
+if (!collabSecret) {
+    console.error('COLLAB_SECRET (atau APP_KEY) wajib diisi. Server kolaborasi menolak berjalan tanpa secret.');
+    process.exit(1);
+}
 
 function decodeBase64Url(value) {
     return Buffer.from(value.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8');
@@ -61,8 +70,9 @@ function documentPath(documentName) {
 const server = Server.configure({
     port: Number(process.env.COLLAB_PORT ?? 1234),
     address: process.env.COLLAB_HOST ?? '127.0.0.1',
-    async onAuthenticate({ token, documentName }) {
+    async onAuthenticate({ token, documentName, connection }) {
         const user = verifyToken(token, documentName);
+        connection.readOnly = !Boolean(user.edit);
 
         return {
             user: {

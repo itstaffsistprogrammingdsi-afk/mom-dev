@@ -74,6 +74,7 @@ class QuickNote extends Model
                 ->all();
 
             if ($paths !== []) {
+                Storage::disk('local')->delete($paths);
                 Storage::disk('public')->delete($paths);
             }
         });

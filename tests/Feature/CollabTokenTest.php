@@ -40,4 +40,19 @@ class CollabTokenTest extends TestCase
             ->post(route('collab.token', $meeting))
             ->assertForbidden();
     }
+
+    public function test_collab_token_rejects_default_secret(): void
+    {
+        config()->set('collab.secret', 'change-me-in-production');
+
+        $notulis = User::factory()->create(['role' => 'notulis']);
+        $meeting = Meeting::factory()->create([
+            'created_by' => $notulis->id,
+            'confidentiality' => Confidentiality::Open->value,
+        ]);
+
+        $this->expectException(\RuntimeException::class);
+
+        app(\App\Services\CollabTokenService::class)->issue($meeting, $notulis);
+    }
 }
