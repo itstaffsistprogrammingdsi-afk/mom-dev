@@ -7,6 +7,7 @@ use App\Enums\Confidentiality;
 use App\Models\AiSummary;
 use App\Models\Meeting;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class AiSummaryService
@@ -32,12 +33,33 @@ class AiSummaryService
 
         try {
             $model = $this->model($tier);
-            $raw = $this->client($tier)->summarizeMeeting($this->payload($meeting));
+            $payload = $this->payload($meeting);
+            $contentText = (string) ($payload['content_text'] ?? '');
+            $contentHash = hash('sha256', $contentText);
+            $promptHash = hash('sha256', (string) json_encode($payload, JSON_UNESCAPED_UNICODE));
+            $cacheKey = 'ai-summary:'.hash('sha256', $tier.'|'.$model.'|'.$promptHash);
+            $raw = config('ai.driver') === 'mock' ? null : Cache::get($cacheKey);
+
+            if (! is_array($raw)) {
+                $raw = $this->client($tier)->summarizeMeeting($payload);
+
+                if (config('ai.driver') !== 'mock') {
+                    Cache::put($cacheKey, $raw, now()->addHours(6));
+                }
+            }
+
             $content = $this->normalize($raw);
 
             $summary->update([
                 'content' => $content,
-                'sources' => [['meeting_id' => $meeting->id, 'title' => $meeting->title]],
+                'sources' => [['meeting_id' => $meeting->id, 'title' => $meeting->title, 'url' => route('meetings.show', $meeting->id)]],
+                'usage' => [
+                    'content_hash' => $contentHash,
+                    'prompt_hash' => $promptHash,
+                    'input_chars' => mb_strlen($contentText),
+                    'estimated_input_tokens' => (int) ceil(mb_strlen($contentText) / 4),
+                    'tier' => $tier,
+                ],
                 'model' => config('ai.driver') === 'mock' ? 'mock' : $model,
                 'status' => AiSummaryStatus::Draft,
                 'generation_status' => 'completed',
@@ -92,7 +114,7 @@ class AiSummaryService
             'scheduled_at' => $meeting->scheduled_at?->toIso8601String(),
             'division' => $meeting->division?->name,
             'agenda' => $meeting->agenda,
-            'content_text' => $meeting->content_text,
+            'content_text' => Str::limit((string) $meeting->content_text, (int) config('ai.max_input_chars', 12000), ''),
             'participants' => $meeting->participants->map(fn ($participant) => $participant->user?->name ?? $participant->name)->filter()->values()->all(),
             'tags' => $meeting->tags->map(fn ($tag) => ['type' => $tag->type, 'name' => $tag->target_name])->values()->all(),
         ];

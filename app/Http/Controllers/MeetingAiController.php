@@ -58,25 +58,48 @@ class MeetingAiController extends Controller
 
         $this->failStaleSummaries($meeting);
 
-        $pending = $meeting->summaries()
-            ->whereIn('generation_status', ['queued', 'processing'])
-            ->exists();
+        $dailyLimit = (int) config('ai.daily_generations', 20);
 
-        if ($pending) {
-            return back()->with('error', 'Resume AI masih diproses. Tunggu hingga selesai.');
+        if ($dailyLimit > 0) {
+            $usedToday = AiSummary::query()
+                ->where('generated_by', $request->user()->id)
+                ->where('created_at', '>=', now()->startOfDay())
+                ->count();
+
+            if ($usedToday >= $dailyLimit) {
+                throw ValidationException::withMessages([
+                    'meeting' => "Kuota resume AI harian habis ({$usedToday}/{$dailyLimit}). Coba lagi besok atau minta admin menaikkan AI_DAILY_GENERATIONS.",
+                ]);
+            }
         }
 
-        $version = (int) $meeting->summaries()->max('version') + 1;
+        $summary = DB::transaction(function () use ($meeting, $request) {
+            Meeting::query()->lockForUpdate()->findOrFail($meeting->id);
 
-        $summary = $meeting->summaries()->create([
-            'scope' => 'meeting',
-            'content' => [],
-            'version' => $version,
-            'status' => AiSummaryStatus::Draft,
-            'generation_status' => 'queued',
-            'language' => 'id',
-            'generated_by' => $request->user()->id,
-        ]);
+            $pending = $meeting->summaries()
+                ->whereIn('generation_status', ['queued', 'processing'])
+                ->exists();
+
+            if ($pending) {
+                return null;
+            }
+
+            $version = (int) $meeting->summaries()->max('version') + 1;
+
+            return $meeting->summaries()->create([
+                'scope' => 'meeting',
+                'content' => [],
+                'version' => $version,
+                'status' => AiSummaryStatus::Draft,
+                'generation_status' => 'queued',
+                'language' => 'id',
+                'generated_by' => $request->user()->id,
+            ]);
+        });
+
+        if (! $summary) {
+            return back()->with('error', 'Resume AI masih diproses. Tunggu hingga selesai.');
+        }
 
         $audit->log('ai_summary.requested', $summary, 'Meminta resume AI', [
             'tier' => $tier,
@@ -107,6 +130,8 @@ class MeetingAiController extends Controller
                 'model' => $summary->model,
                 'approved_at' => $summary->approved_at?->toIso8601String(),
                 'content' => $summary->content ?? [],
+                'sources' => $summary->sources ?? [],
+                'usage' => $summary->usage ?? [],
             ])
             ->values();
 

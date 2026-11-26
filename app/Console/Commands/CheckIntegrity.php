@@ -48,6 +48,16 @@ class CheckIntegrity extends Command
 
         $this->line('Nomor notulen duplikat: '.$duplicateNumbers->count());
 
+        $duplicateSummaries = DB::table('ai_summaries')
+            ->select('meeting_id', 'version', DB::raw('COUNT(*) AS total'))
+            ->whereNotNull('meeting_id')
+            ->where('scope', 'meeting')
+            ->groupBy('meeting_id', 'version')
+            ->havingRaw('COUNT(*) > 1')
+            ->get();
+
+        $this->line('Resume AI duplikat (meeting + versi): '.$duplicateSummaries->count());
+
         $this->reportEnum('meetings', 'confidentiality', array_column(Confidentiality::cases(), 'value'));
         $this->reportEnum('meetings', 'status', ['draft', 'final', 'locked']);
         $this->reportEnum('tags', 'type', array_column(TagType::cases(), 'value'));
