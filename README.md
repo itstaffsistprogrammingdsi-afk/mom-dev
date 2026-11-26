@@ -107,6 +107,20 @@ COLLAB_TOKEN_TTL=3600
 
 Jika service kolaborasi tidak tersedia, editor tetap dapat dipakai dalam mode tunggal.
 
+## Retensi Data
+
+Retensi default: audit log 365 hari, notifikasi terbaca 90 hari, versi meeting lama 90 hari (versi terbaru selalu disimpan).
+
+```bash
+# dry-run
+php artisan mom:prune-data
+
+# eksekusi
+php artisan mom:prune-data --force
+```
+
+Scheduler menjalankan `mom:prune-data --force` setiap pukul 03.00 Asia/Jakarta.
+
 ## Autentikasi Dua Faktor
 
 Buka **Pengaturan > Autentikasi Dua Faktor** untuk mengaktifkan TOTP (Google Authenticator/Microsoft Authenticator). Setelah aktif, login memerlukan kode 6 digit; recovery code dapat dipakai satu kali.

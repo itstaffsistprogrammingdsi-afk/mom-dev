@@ -18,3 +18,9 @@ Schedule::command('mom:check-failed-jobs')
     ->everyFifteenMinutes()
     ->onOneServer()
     ->withoutOverlapping();
+
+Schedule::command('mom:prune-data --force')
+    ->dailyAt('03:00')
+    ->timezone('Asia/Jakarta')
+    ->onOneServer()
+    ->withoutOverlapping();
