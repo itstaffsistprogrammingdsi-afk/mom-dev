@@ -11,6 +11,7 @@ use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\CollabTokenController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DivisionController;
+use App\Http\Controllers\HealthController;
 use App\Http\Controllers\MeetingAiController;
 use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\MeetingExportController;
@@ -22,6 +23,8 @@ use App\Http\Controllers\QuickNoteController;
 use App\Http\Controllers\RelatedController;
 use App\Http\Controllers\TopicController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/health', HealthController::class)->name('health');
 
 Route::get('/', function () {
     return redirect()->route(auth()->check() ? 'dashboard' : 'login');

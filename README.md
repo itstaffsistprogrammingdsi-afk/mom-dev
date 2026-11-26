@@ -107,6 +107,15 @@ COLLAB_TOKEN_TTL=3600
 
 Jika service kolaborasi tidak tersedia, editor tetap dapat dipakai dalam mode tunggal.
 
+## Health Check & Runbook Singkat
+
+Endpoint publik `GET /health` memeriksa database, cache, konfigurasi queue, konfigurasi AI, dan status Hocuspocus. Status `503` diberikan jika komponen inti gagal; status Hocuspocus dilaporkan terpisah sebagai `collab`.
+
+- **Queue macet / email tidak terkirim:** cek `php artisan queue:work --queue=ai,notifications,default`, lalu `failed_jobs`; restart worker setelah deploy.
+- **AI down:** cek `AI_BASE_URL`, `AI_API_KEY`, dan `failed_jobs`; job AI akan retry dengan backoff, lalu masuk `failed_jobs` setelah habis percobaan.
+- **Hocuspocus down:** editor tetap dapat dipakai mode tunggal; cek `COLLAB_URL` dan log `collab/server.js`.
+- **Rollback:** revert commit aplikasi, lalu jalankan `php artisan migrate:rollback --step=1` hanya untuk migrasi index baru.
+
 ## Queue dan Scheduler
 
 Default `.env.example` memakai `QUEUE_CONNECTION=database`, sehingga worker wajib berjalan agar job (termasuk resume AI) diproses. Untuk produksi gunakan `database` atau Redis lalu jalankan worker:
