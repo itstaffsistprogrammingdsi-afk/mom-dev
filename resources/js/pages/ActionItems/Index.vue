@@ -130,7 +130,11 @@ async function applyBulkStatus() {
 
 function applyFilters() {
     selectedIds.value = [];
-    router.get(route('action-items.index'), { ...filters, view: props.view }, { preserveState: true, replace: true });
+    router.get(route('action-items.index'), { ...filters, view: props.view }, {
+        preserveState: true,
+        replace: true,
+        only: ['items', 'board', 'view', 'filters', 'stats'],
+    });
 }
 
 function resetFilters() {
@@ -141,7 +145,11 @@ function resetFilters() {
 
 function switchView(view: 'list' | 'board') {
     selectedIds.value = [];
-    router.get(route('action-items.index'), { ...filters, view }, { preserveState: true, replace: true });
+    router.get(route('action-items.index'), { ...filters, view }, {
+        preserveState: true,
+        replace: true,
+        only: ['items', 'board', 'view', 'filters', 'stats'],
+    });
 }
 
 const boardColumns = [

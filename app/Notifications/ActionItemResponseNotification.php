@@ -19,7 +19,9 @@ class ActionItemResponseNotification extends Notification implements ShouldQueue
         public ActionItem $actionItem,
         public ActionItemFeedback $feedback,
         public User $responder,
-    ) {}
+    ) {
+        $this->onQueue('notifications');
+    }
 
     public function via(object $notifiable): array
     {

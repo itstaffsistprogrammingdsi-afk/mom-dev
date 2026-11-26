@@ -62,8 +62,10 @@ const form = useForm<EditForm>({
     content: (props.meeting.content ?? { type: 'doc', content: [{ type: 'paragraph' }] }) as JSONContent,
 });
 
-const autosaveState = ref<'idle' | 'saving' | 'saved' | 'error'>('idle');
+const autosaveState = ref<'idle' | 'saving' | 'saved' | 'error' | 'offline'>('idle');
 const lastSavedAt = ref<string | null>(null);
+const isDirty = ref(false);
+const isOffline = ref(false);
 let autosaveTimer: ReturnType<typeof setTimeout> | null = null;
 let autosaveReady = false;
 
@@ -80,6 +82,10 @@ const autosaveLabel = computed(() => {
         return 'Gagal menyimpan otomatis';
     }
 
+    if (autosaveState.value === 'offline') {
+        return 'Offline — perubahan akan disinkronkan';
+    }
+
     return 'Autosave aktif';
 });
 
@@ -88,8 +94,12 @@ const autosaveTone = computed(() => {
         return 'border-destructive/30 bg-destructive/10 text-destructive';
     }
 
+    if (autosaveState.value === 'offline') {
+        return 'border-warning/30 bg-warning/10 text-warning-strong';
+    }
+
     if (autosaveState.value === 'saved') {
-        return 'border-success/30 bg-success/10 text-success';
+        return 'border-success/30 bg-success/10 text-success-strong';
     }
 
     return 'border-border bg-muted/40 text-muted-foreground';
@@ -130,7 +140,55 @@ function tagHref(tag: Tag): string | undefined {
     return route('topics.show-id', tag.target_id);
 }
 
+function handleOnline() {
+    isOffline.value = false;
+
+    if (isDirty.value) {
+        scheduleAutosave();
+    }
+}
+
+function handleOffline() {
+    isOffline.value = true;
+
+    if (autosaveTimer) {
+        clearTimeout(autosaveTimer);
+        autosaveTimer = null;
+    }
+
+    if (isDirty.value) {
+        autosaveState.value = 'offline';
+    }
+}
+
+function handleBeforeUnload(event: BeforeUnloadEvent) {
+    if (!isDirty.value) {
+        return;
+    }
+
+    event.preventDefault();
+    event.returnValue = '';
+}
+
+function scheduleAutosave() {
+    if (autosaveTimer) {
+        clearTimeout(autosaveTimer);
+    }
+
+    autosaveTimer = setTimeout(runAutosave, 1500);
+}
+
 onMounted(() => {
+    isOffline.value = !navigator.onLine;
+
+    if (isOffline.value) {
+        autosaveState.value = 'offline';
+    }
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
     window.setTimeout(() => {
         autosaveReady = true;
     }, 800);
@@ -143,17 +201,27 @@ watch(
             return;
         }
 
-        if (autosaveTimer) {
-            clearTimeout(autosaveTimer);
+        isDirty.value = true;
+
+        if (isOffline.value) {
+            autosaveState.value = 'offline';
+
+            return;
         }
 
-        autosaveTimer = setTimeout(runAutosave, 1500);
+        scheduleAutosave();
     },
     { deep: true },
 );
 
 async function runAutosave() {
     if (form.processing || props.meeting.status !== 'draft') {
+        return;
+    }
+
+    if (isOffline.value) {
+        autosaveState.value = 'offline';
+
         return;
     }
 
@@ -189,9 +257,10 @@ async function runAutosave() {
             hour: '2-digit',
             minute: '2-digit',
         });
+        isDirty.value = false;
         autosaveState.value = 'saved';
     } catch {
-        autosaveState.value = 'error';
+        autosaveState.value = isOffline.value ? 'offline' : 'error';
     }
 }
 
@@ -199,6 +268,10 @@ onBeforeUnmount(() => {
     if (autosaveTimer) {
         clearTimeout(autosaveTimer);
     }
+
+    window.removeEventListener('online', handleOnline);
+    window.removeEventListener('offline', handleOffline);
+    window.removeEventListener('beforeunload', handleBeforeUnload);
 });
 
 function submit() {
@@ -206,7 +279,11 @@ function submit() {
         clearTimeout(autosaveTimer);
     }
 
-    form.patch(route('meetings.update', props.meeting.id));
+    form.patch(route('meetings.update', props.meeting.id), {
+        onSuccess: () => {
+            isDirty.value = false;
+        },
+    });
 }
 </script>
 
@@ -230,6 +307,7 @@ function submit() {
                             <Loader2 v-if="autosaveState === 'saving'" class="size-3.5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
                             <CheckCircle2 v-else-if="autosaveState === 'saved'" class="size-3.5" aria-hidden="true" />
                             <AlertCircle v-else-if="autosaveState === 'error'" class="size-3.5" aria-hidden="true" />
+                            <Wifi v-else-if="autosaveState === 'offline'" class="size-3.5" aria-hidden="true" />
                             <CircleDashed v-else class="size-3.5" aria-hidden="true" />
                             {{ autosaveLabel }}
                         </span>

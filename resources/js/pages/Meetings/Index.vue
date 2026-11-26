@@ -209,7 +209,12 @@ function clearFilter(key: FilterKey) {
 
 function applyFilters() {
     isLoading.value = true;
-    router.get(route('meetings.index'), { ...filters }, { preserveState: true, replace: true, onFinish: () => (isLoading.value = false) });
+    router.get(route('meetings.index'), { ...filters }, {
+        preserveState: true,
+        replace: true,
+        only: ['meetings', 'filters'],
+        onFinish: () => (isLoading.value = false),
+    });
 }
 
 function resetFilters() {
@@ -442,6 +447,7 @@ function resetFilters() {
                     v-for="meeting in props.meetings.data"
                     :key="meeting.id"
                     :href="route('meetings.show', meeting.id)"
+                    prefetch
                     class="group flex flex-col gap-3 border-b border-border p-4 transition-colors duration-fast ease-ui last:border-b-0 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:flex-row sm:items-center sm:gap-4 md:p-5"
                 >
                     <div class="hidden w-12 shrink-0 flex-col items-center justify-center rounded-md border border-border bg-muted/40 py-2 sm:flex">

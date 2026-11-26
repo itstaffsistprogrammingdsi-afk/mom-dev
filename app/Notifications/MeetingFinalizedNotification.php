@@ -18,7 +18,9 @@ class MeetingFinalizedNotification extends Notification implements ShouldQueueAf
     public function __construct(
         public Meeting $meeting,
         public array $tasks = [],
-    ) {}
+    ) {
+        $this->onQueue('notifications');
+    }
 
     public function via(object $notifiable): array
     {

@@ -15,7 +15,9 @@ class ActionItemDueSoonNotification extends Notification implements ShouldQueueA
     public function __construct(
         public ActionItem $actionItem,
         public string $kind = 'h1',
-    ) {}
+    ) {
+        $this->onQueue('notifications');
+    }
 
     public function via(object $notifiable): array
     {

@@ -12,7 +12,10 @@ class AiSummaryReadyNotification extends Notification implements ShouldQueueAfte
 {
     use Queueable;
 
-    public function __construct(public AiSummary $summary) {}
+    public function __construct(public AiSummary $summary)
+    {
+        $this->onQueue('notifications');
+    }
 
     public function via(object $notifiable): array
     {

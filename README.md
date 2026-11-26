@@ -112,8 +112,10 @@ Jika service kolaborasi tidak tersedia, editor tetap dapat dipakai dalam mode tu
 Default `.env.example` memakai `QUEUE_CONNECTION=database`, sehingga worker wajib berjalan agar job (termasuk resume AI) diproses. Untuk produksi gunakan `database` atau Redis lalu jalankan worker:
 
 ```bash
-php artisan queue:work
+php artisan queue:work --queue=ai,notifications,default
 ```
+
+Untuk produksi, jalankan worker terpisah untuk `ai` dan `notifications` agar job AI panjang tidak memblokir email/notifikasi.
 
 Pengingat action item dijadwalkan setiap pukul 09.00:
 

@@ -18,7 +18,9 @@ class QuickNoteResponseNotification extends Notification implements ShouldQueueA
         public QuickNote $quickNote,
         public QuickNoteMention $mention,
         public User $responder,
-    ) {}
+    ) {
+        $this->onQueue('notifications');
+    }
 
     public function via(object $notifiable): array
     {

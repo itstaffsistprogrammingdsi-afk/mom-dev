@@ -12,7 +12,10 @@ class ActionItemAssignedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(public ActionItem $actionItem) {}
+    public function __construct(public ActionItem $actionItem)
+    {
+        $this->onQueue('notifications');
+    }
 
     public function via(object $notifiable): array
     {
