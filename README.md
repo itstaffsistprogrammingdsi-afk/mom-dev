@@ -116,6 +116,20 @@ Endpoint publik `GET /health` memeriksa database, cache, konfigurasi queue, konf
 - **Hocuspocus down:** editor tetap dapat dipakai mode tunggal; cek `COLLAB_URL` dan log `collab/server.js`.
 - **Rollback:** revert commit aplikasi, lalu jalankan `php artisan migrate:rollback --step=1` hanya untuk migrasi index baru.
 
+## Pemeriksaan Integritas
+
+Jalankan dry-run sebelum migrasi integritas:
+
+```bash
+php artisan mom:check-integrity
+```
+
+Untuk membersihkan duplikat peserta setelah laporan ditinjau:
+
+```bash
+php artisan mom:check-integrity --fix-participants
+```
+
 ## Queue dan Scheduler
 
 Default `.env.example` memakai `QUEUE_CONNECTION=database`, sehingga worker wajib berjalan agar job (termasuk resume AI) diproses. Untuk produksi gunakan `database` atau Redis lalu jalankan worker:
