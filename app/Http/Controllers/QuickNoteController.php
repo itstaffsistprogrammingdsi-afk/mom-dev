@@ -133,7 +133,7 @@ class QuickNoteController extends Controller
             ->with('success', 'Quick Note berhasil dibuat.');
     }
 
-    public function show(Request $request, QuickNote $quickNote): Response
+    public function show(Request $request, QuickNote $quickNote, \App\Services\Exports\TiptapHtmlRenderer $renderer): Response
     {
         $this->authorize('view', $quickNote);
 
@@ -141,6 +141,7 @@ class QuickNoteController extends Controller
 
         return Inertia::render('QuickNotes/Show', [
             'note' => $quickNote,
+            'contentHtml' => $renderer->render($quickNote->content),
             'can' => [
                 'update' => $request->user()->can('update', $quickNote),
                 'delete' => $request->user()->can('delete', $quickNote),

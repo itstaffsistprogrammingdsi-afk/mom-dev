@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
-import MeetingEditor from '@/components/MeetingEditor.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import QuickNoteMentionChip from '@/components/QuickNoteMentionChip.vue';
 import QuickNoteResponseDialog from '@/components/QuickNoteResponseDialog.vue';
@@ -15,6 +14,7 @@ import { computed, ref } from 'vue';
 
 const props = defineProps<{
     note: QuickNote;
+    contentHtml: string;
     can: { update: boolean; delete: boolean };
     currentUserId: number;
 }>();
@@ -26,40 +26,6 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const mentions = computed(() => props.note.mentions ?? []);
 
-const contentWithResponseHours = computed(() => {
-    const content = JSON.parse(JSON.stringify(props.note.content ?? { type: 'doc', content: [{ type: 'paragraph' }] })) as {
-        type?: string;
-        attrs?: Record<string, unknown>;
-        content?: unknown[];
-    };
-    const hoursByUser = new Map<number, number>();
-
-    for (const mention of mentions.value) {
-        if (mention.user_id) {
-            hoursByUser.set(mention.user_id, mention.response_hours);
-        }
-    }
-
-    const walk = (node: { type?: string; attrs?: Record<string, unknown>; content?: unknown[] }) => {
-        if (node.type === 'mention' && node.attrs?.type === 'person') {
-            const hours = hoursByUser.get(Number(node.attrs.id));
-
-            if (hours) {
-                node.attrs = { ...node.attrs, responseHours: hours };
-            }
-        }
-
-        for (const child of node.content ?? []) {
-            if (child && typeof child === 'object') {
-                walk(child as { type?: string; attrs?: Record<string, unknown>; content?: unknown[] });
-            }
-        }
-    };
-
-    walk(content);
-
-    return content;
-});
 const respondedCount = computed(() => mentions.value.filter((mention) => mention.responded_at).length);
 const pendingCount = computed(() => mentions.value.filter((mention) => !mention.responded_at).length);
 const overdueCount = computed(() => mentions.value.filter((mention) => mention.is_overdue).length);
@@ -148,14 +114,9 @@ function deleteNote() {
                 <div class="min-w-0 space-y-6">
                     <section class="space-y-2">
                         <h2 class="text-sm font-semibold text-foreground">Isi catatan</h2>
-                        <MeetingEditor
-                            :model-value="contentWithResponseHours"
-                            :users="[]"
-                            :divisions="[]"
-                            :topics="[]"
-                            :editable="false"
-                            :show-tag-picker="false"
-                        />
+                        <div class="meeting-editor" data-readonly="true">
+                            <div class="ProseMirror" v-html="props.contentHtml" />
+                        </div>
                     </section>
 
                     <section class="rounded-lg border border-border bg-card" aria-labelledby="quick-note-recipients-heading">
