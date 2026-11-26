@@ -130,6 +130,8 @@ Untuk membersihkan duplikat peserta setelah laporan ditinjau:
 php artisan mom:check-integrity --fix-participants
 ```
 
+Di production, jalankan dry-run ini **sebelum** migrasi integritas (`2026_11_26_000006` sampai `000008`). Migrasi unique peserta dan konversi `notifications.data` ke `jsonb` akan gagal bila masih ada duplikat/JSON tidak valid; perbaiki datanya lebih dulu.
+
 ## Queue dan Scheduler
 
 Default `.env.example` memakai `QUEUE_CONNECTION=database`, sehingga worker wajib berjalan agar job (termasuk resume AI) diproses. Untuk produksi gunakan `database` atau Redis lalu jalankan worker:
