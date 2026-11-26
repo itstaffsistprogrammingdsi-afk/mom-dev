@@ -9,6 +9,12 @@ class CollabTokenService
 {
     public function issue(Meeting $meeting, User $user, bool $canEdit = true): string
     {
+        $secret = (string) config('collab.secret');
+
+        if ($secret === '' || $secret === 'change-me-in-production') {
+            throw new \RuntimeException('COLLAB_SECRET belum dikonfigurasi dengan aman.');
+        }
+
         $payload = [
             'mid' => $meeting->id,
             'uid' => $user->id,
@@ -18,7 +24,7 @@ class CollabTokenService
         ];
 
         $encoded = $this->base64UrlEncode(json_encode($payload, JSON_UNESCAPED_UNICODE));
-        $signature = hash_hmac('sha256', $encoded, (string) config('collab.secret'));
+        $signature = hash_hmac('sha256', $encoded, $secret);
 
         return $encoded.'.'.$signature;
     }

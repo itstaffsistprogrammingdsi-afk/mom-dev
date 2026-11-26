@@ -15,6 +15,7 @@ use App\Http\Controllers\MeetingAiController;
 use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\MeetingExportController;
 use App\Http\Controllers\MeetingShareController;
+use App\Http\Controllers\MeetingSignatureController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PeopleController;
 use App\Http\Controllers\QuickNoteController;
@@ -40,6 +41,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('notulen/{meeting}/kunci', [MeetingController::class, 'lock'])->name('meetings.lock');
     Route::post('notulen/{meeting}/buka-kunci', [MeetingController::class, 'unlock'])->name('meetings.unlock');
     Route::post('notulen/{meeting}/versi/{version}/pulihkan', [MeetingController::class, 'restoreVersion'])->name('meetings.versions.restore');
+
+    Route::post('notulen/{meeting}/tanda-tangan/{role}', [MeetingSignatureController::class, 'store'])
+        ->whereIn('role', ['creator', 'approver'])
+        ->name('meeting-signatures.store');
+    Route::delete('notulen/{meeting}/tanda-tangan/{role}', [MeetingSignatureController::class, 'destroy'])
+        ->whereIn('role', ['creator', 'approver'])
+        ->name('meeting-signatures.destroy');
+    Route::get('tanda-tangan/{signature}', [MeetingSignatureController::class, 'show'])->name('meeting-signatures.show');
 
     Route::post('notulen/{meeting}/lampiran', [AttachmentController::class, 'store'])->name('attachments.store');
     Route::get('lampiran/{attachment}', [AttachmentController::class, 'download'])->name('attachments.download');

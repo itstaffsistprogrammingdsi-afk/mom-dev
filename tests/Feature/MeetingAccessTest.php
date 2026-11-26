@@ -269,4 +269,119 @@ class MeetingAccessTest extends TestCase
             ->patch(route('action-items.status', $task), ['status' => 'done'])
             ->assertForbidden();
     }
+
+    public function test_non_creator_notulis_confidentiality_change_is_ignored_by_autosave(): void
+    {
+        $creator = $this->userWithRole('notulis');
+        $other = $this->userWithRole('notulis');
+        $meeting = $this->meeting([
+            'created_by' => $creator->id,
+            'status' => MeetingStatus::Draft->value,
+            'confidentiality' => Confidentiality::Open->value,
+        ]);
+
+        $this->actingAs($other)
+            ->patchJson(route('meetings.autosave', $meeting), [
+                'title' => 'Judul tetap tersimpan',
+                'confidentiality' => Confidentiality::Secret->value,
+            ])
+            ->assertOk();
+
+        $meeting->refresh();
+        $this->assertSame('Judul tetap tersimpan', $meeting->title);
+        $this->assertSame(Confidentiality::Open, $meeting->confidentiality);
+        $this->assertDatabaseMissing('audit_logs', [
+            'action' => 'meeting.confidentiality_changed',
+            'meeting_id' => $meeting->id,
+        ]);
+    }
+
+    public function test_creator_can_change_confidentiality_and_change_is_audited(): void
+    {
+        $creator = $this->userWithRole('notulis');
+        $meeting = $this->meeting([
+            'created_by' => $creator->id,
+            'status' => MeetingStatus::Draft->value,
+            'confidentiality' => Confidentiality::Open->value,
+        ]);
+
+        $this->actingAs($creator)
+            ->patchJson(route('meetings.autosave', $meeting), [
+                'confidentiality' => Confidentiality::Restricted->value,
+            ])
+            ->assertOk();
+
+        $this->assertSame(Confidentiality::Restricted, $meeting->fresh()->confidentiality);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'meeting.confidentiality_changed',
+            'meeting_id' => $meeting->id,
+        ]);
+    }
+
+    public function test_non_creator_cannot_change_confidentiality_via_update(): void
+    {
+        $creator = $this->userWithRole('notulis');
+        $other = $this->userWithRole('notulis');
+        $meeting = $this->meeting([
+            'created_by' => $creator->id,
+            'status' => MeetingStatus::Draft->value,
+            'confidentiality' => Confidentiality::Open->value,
+        ]);
+
+        $this->actingAs($other)
+            ->patch(route('meetings.update', $meeting), [
+                'title' => $meeting->title,
+                'confidentiality' => Confidentiality::Secret->value,
+                'content' => ['type' => 'doc', 'content' => [['type' => 'paragraph']]],
+            ])
+            ->assertSessionHasErrors('confidentiality');
+
+        $this->assertSame(Confidentiality::Open, $meeting->fresh()->confidentiality);
+    }
+
+    public function test_searchable_array_only_contains_text_fields(): void
+    {
+        $meeting = $this->meeting([
+            'title' => 'Rapat Anggaran',
+            'agenda' => 'Agenda rapat',
+            'content_text' => 'Isi pembahasan',
+        ]);
+
+        $this->assertSame(['title', 'agenda', 'content_text'], array_keys($meeting->toSearchableArray()));
+    }
+
+    public function test_topic_index_counts_only_visible_decisions(): void
+    {
+        $viewer = $this->userWithRole('member');
+        $topic = Topic::factory()->create(['status' => 'active']);
+
+        $visible = $this->meeting(['confidentiality' => Confidentiality::Open->value]);
+        $hidden = $this->meeting(['confidentiality' => Confidentiality::Restricted->value]);
+
+        $visible->decisions()->create(['content' => 'Keputusan terbuka', 'topic_id' => $topic->id]);
+        $hidden->decisions()->create(['content' => 'Keputusan rahasia', 'topic_id' => $topic->id]);
+
+        $this->actingAs($viewer)
+            ->get(route('topics.index'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Topics/Index')
+                ->where('topics.0.decisions_count', 1)
+            );
+    }
+
+    public function test_people_page_does_not_expose_sensitive_user_fields(): void
+    {
+        $viewer = $this->userWithRole('member');
+        $person = $this->userWithRole('member');
+
+        $this->actingAs($viewer)
+            ->get(route('people.show', $person))
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('People/Show')
+                ->where('person.id', $person->id)
+                ->missing('person.google_id')
+                ->missing('person.last_login_at')
+                ->missing('person.notification_preferences')
+            );
+    }
 }

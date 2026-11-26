@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\Confidentiality;
 use App\Models\Meeting;
 use App\Models\User;
 
@@ -46,8 +47,33 @@ class MeetingPolicy
 
     public function share(User $user, Meeting $meeting): bool
     {
+        if (! $this->view($user, $meeting)) {
+            return false;
+        }
+
+        if (in_array($meeting->confidentiality, [Confidentiality::Restricted, Confidentiality::Secret], true)) {
+            return $user->isAdmin() || $meeting->created_by === $user->id;
+        }
+
+        return $user->isAdmin() || $meeting->created_by === $user->id || $user->canWriteMinutes();
+    }
+
+    public function changeConfidentiality(User $user, Meeting $meeting): bool
+    {
         return $this->view($user, $meeting)
-            && ($user->isAdmin() || $meeting->created_by === $user->id || $user->canWriteMinutes());
+            && ($user->isAdmin() || $meeting->created_by === $user->id);
+    }
+
+    public function signCreator(User $user, Meeting $meeting): bool
+    {
+        return $this->view($user, $meeting)
+            && ($user->isAdmin() || $meeting->created_by === $user->id);
+    }
+
+    public function signApprover(User $user, Meeting $meeting): bool
+    {
+        return $this->view($user, $meeting)
+            && ($user->isAdmin() || $meeting->approved_by === $user->id);
     }
 
     public function lock(User $user, Meeting $meeting): bool

@@ -18,7 +18,7 @@ class TopicController extends Controller
             ->where('status', 'active')
             ->withCount([
                 'meetings' => fn ($query) => $query->visibleTo($user),
-                'decisions',
+                'decisions' => fn ($query) => $query->whereHas('meeting', fn ($meeting) => $meeting->visibleTo($user)),
             ])
             ->orderBy('name')
             ->get();

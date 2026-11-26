@@ -17,6 +17,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -46,7 +47,6 @@ class ActionItemController extends Controller
             $board = ActionItem::query()
                 ->visibleTo($user)
                 ->filter($filters)
-                ->open()
                 ->with(['meeting:id,title,scheduled_at', 'pic:id,name', 'division:id,name', 'feedback.user:id,name'])
                 ->orderByRaw('due_date IS NULL')
                 ->orderBy('due_date')
@@ -79,6 +79,7 @@ class ActionItemController extends Controller
         $this->authorize('update', $meeting);
 
         $validated = $this->validatePayload($request);
+        $this->assertPicCanViewMeeting($validated['pic_id'] ?? null, $meeting);
         $status = ActionItemStatus::from($validated['status'] ?? ActionItemStatus::New->value);
         $responseHours = (int) ($validated['response_hours'] ?? 24);
         $item = $meeting->actionItems()->create([
@@ -103,6 +104,7 @@ class ActionItemController extends Controller
 
         $previousPic = $actionItem->pic_id;
         $validated = $this->validatePayload($request);
+        $this->assertPicCanViewMeeting($validated['pic_id'] ?? null, $actionItem->meeting);
         $status = isset($validated['status'])
             ? ActionItemStatus::from($validated['status'])
             : $actionItem->status;
@@ -157,6 +159,21 @@ class ActionItemController extends Controller
             'status' => ['nullable', Rule::enum(ActionItemStatus::class)],
             'notes' => ['nullable', 'string'],
         ]);
+    }
+
+    private function assertPicCanViewMeeting(?int $picId, Meeting $meeting): void
+    {
+        if (! $picId) {
+            return;
+        }
+
+        $pic = User::query()->find($picId);
+
+        if (! $pic || ! Meeting::query()->visibleTo($pic)->whereKey($meeting->id)->exists()) {
+            throw ValidationException::withMessages([
+                'pic_id' => 'PIC yang dipilih tidak memiliki akses ke notulen ini.',
+            ]);
+        }
     }
 
     private function notifyAssignee(ActionItem $actionItem): void
@@ -237,7 +254,7 @@ class ActionItemController extends Controller
         ]);
 
         $photoPath = $request->hasFile('photo')
-            ? $request->file('photo')->store("action-item-feedback/{$actionItem->id}", 'public')
+            ? $request->file('photo')->store("action-item-feedback/{$actionItem->id}", 'local')
             : null;
 
         $feedback = $actionItem->feedback()->create([
@@ -274,7 +291,11 @@ class ActionItemController extends Controller
 
         $recipientUsers = $recipients->resolve($actionItem->meeting, $request->user());
 
-        if ($actionItem->pic && $actionItem->pic->id !== $request->user()->id) {
+        if (
+            $actionItem->pic
+            && $actionItem->pic->id !== $request->user()->id
+            && Meeting::query()->visibleTo($actionItem->pic)->whereKey($actionItem->meeting_id)->exists()
+        ) {
             $recipientUsers = $recipientUsers->push($actionItem->pic);
         }
 
@@ -297,8 +318,14 @@ class ActionItemController extends Controller
         $this->authorize('view', $actionItem->meeting);
 
         abort_unless($feedback->action_item_id === $actionItem->id, 404);
-        abort_unless($feedback->photo_path && Storage::disk('public')->exists($feedback->photo_path), 404);
+        abort_unless(
+            $feedback->photo_path
+            && (Storage::disk('local')->exists($feedback->photo_path) || Storage::disk('public')->exists($feedback->photo_path)),
+            404,
+        );
 
-        return Storage::disk('public')->response($feedback->photo_path);
+        $disk = Storage::disk('local')->exists($feedback->photo_path) ? 'local' : 'public';
+
+        return Storage::disk($disk)->response($feedback->photo_path);
     }
 }

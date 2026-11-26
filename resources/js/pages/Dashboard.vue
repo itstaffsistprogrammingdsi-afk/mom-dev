@@ -123,7 +123,7 @@ const today = new Intl.DateTimeFormat('id-ID', {
                                 <p class="font-medium leading-tight">{{ task.title }}</p>
                                 <p class="text-xs text-muted-foreground">{{ task.meeting?.title }} · tenggat {{ formatDate(task.due_date) }}</p>
                             </div>
-                            <span v-if="task.is_overdue" class="text-xs font-medium text-rose-600">Terlambat</span>
+                            <span v-if="task.is_overdue" class="text-xs font-medium text-destructive-strong">Terlambat</span>
                             <StatusBadge v-else kind="action" :value="task.status" />
                         </Link>
                     </CardContent>

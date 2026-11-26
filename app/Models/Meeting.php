@@ -119,6 +119,11 @@ class Meeting extends Model
         return $this->hasMany(MeetingVersion::class)->orderByDesc('version');
     }
 
+    public function signatures(): HasMany
+    {
+        return $this->hasMany(MeetingSignature::class);
+    }
+
     public function isFinal(): bool
     {
         return $this->status === MeetingStatus::Final;
@@ -136,11 +141,11 @@ class Meeting extends Model
         }
 
         return $query->where(function (Builder $query) use ($user) {
-            $query->where('confidentiality', Confidentiality::Open->value)
-                ->orWhere('created_by', $user->id)
+            $query->where($query->qualifyColumn('confidentiality'), Confidentiality::Open->value)
+                ->orWhere($query->qualifyColumn('created_by'), $user->id)
                 ->orWhereHas('participants', fn (Builder $q) => $q->where('user_id', $user->id))
                 ->orWhere(function (Builder $q) use ($user) {
-                    $q->where('confidentiality', '!=', Confidentiality::Secret->value)
+                    $q->where($q->qualifyColumn('confidentiality'), '!=', Confidentiality::Secret->value)
                         ->whereHas('tags', function (Builder $tag) use ($user) {
                             $tag->where(function (Builder $inner) use ($user) {
                                 $inner->where('type', 'person')->where('target_id', $user->id);
@@ -181,15 +186,9 @@ class Meeting extends Model
     public function toSearchableArray(): array
     {
         return [
-            'id' => $this->id,
             'title' => $this->title,
             'agenda' => $this->agenda,
             'content_text' => $this->content_text,
-            'document_type' => $this->document_type?->value,
-            'status' => $this->status?->value,
-            'meeting_type' => $this->meeting_type?->value,
-            'division_id' => $this->division_id,
-            'scheduled_at' => $this->scheduled_at?->timestamp,
         ];
     }
 

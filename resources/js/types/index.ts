@@ -82,6 +82,15 @@ export interface Tag {
     target_name: string | null;
 }
 
+export interface MeetingSignature {
+    role: 'creator' | 'approver';
+    name: string | null;
+    url: string;
+    signed_at: string | null;
+}
+
+export type MeetingSignatures = Partial<Record<'creator' | 'approver', MeetingSignature>>;
+
 export interface Participant {
     id: number;
     user_id: number | null;

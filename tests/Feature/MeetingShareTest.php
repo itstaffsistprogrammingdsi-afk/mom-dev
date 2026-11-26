@@ -116,4 +116,53 @@ class MeetingShareTest extends TestCase
             ])
             ->assertForbidden();
     }
+
+    public function test_non_creator_notulis_cannot_share_secret_meeting(): void
+    {
+        Mail::fake();
+
+        $owner = User::factory()->create(['role' => 'notulis']);
+        $participant = User::factory()->create(['role' => 'notulis']);
+        $meeting = Meeting::factory()->create([
+            'created_by' => $owner->id,
+            'confidentiality' => Confidentiality::Secret->value,
+        ]);
+        $meeting->participants()->create([
+            'user_id' => $participant->id,
+            'name' => $participant->name,
+            'email' => $participant->email,
+        ]);
+
+        $this->actingAs($participant)
+            ->post(route('meetings.share', $meeting), [
+                'recipients' => 'satu@example.com',
+                'include_pdf' => false,
+                'confirm_share' => true,
+            ])
+            ->assertForbidden();
+
+        Mail::assertNothingSent();
+    }
+
+    public function test_creator_can_share_secret_meeting_with_confirmation(): void
+    {
+        Mail::fake();
+
+        $creator = User::factory()->create(['role' => 'notulis']);
+        $meeting = Meeting::factory()->create([
+            'created_by' => $creator->id,
+            'confidentiality' => Confidentiality::Secret->value,
+        ]);
+
+        $this->actingAs($creator)
+            ->post(route('meetings.share', $meeting), [
+                'recipients' => 'satu@example.com',
+                'include_pdf' => false,
+                'confirm_share' => true,
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        Mail::assertSent(MeetingSharedMail::class, 1);
+    }
 }

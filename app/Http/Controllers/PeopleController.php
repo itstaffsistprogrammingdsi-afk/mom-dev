@@ -37,8 +37,13 @@ class PeopleController extends Controller
             ->limit(30)
             ->get();
 
+        $person = User::query()
+            ->select(['id', 'name', 'email', 'job_title', 'division_id', 'avatar'])
+            ->with('division:id,name', 'headedDivisions:id,name,head_id')
+            ->findOrFail($user->id);
+
         return Inertia::render('People/Show', [
-            'person' => $user->load('division:id,name', 'headedDivisions:id,name,head_id'),
+            'person' => $person,
             'meetings' => $meetings,
             'tasks' => $tasks,
         ]);
