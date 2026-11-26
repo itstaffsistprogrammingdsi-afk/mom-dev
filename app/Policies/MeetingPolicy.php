@@ -15,8 +15,7 @@ class MeetingPolicy
 
     public function view(User $user, Meeting $meeting): bool
     {
-        return $user->isAdmin()
-            || Meeting::query()->visibleTo($user)->whereKey($meeting->id)->exists();
+        return Meeting::query()->visibleTo($user)->whereKey($meeting->id)->exists();
     }
 
     public function create(User $user): bool

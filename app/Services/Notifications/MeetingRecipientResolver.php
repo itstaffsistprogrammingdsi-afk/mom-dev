@@ -15,11 +15,12 @@ class MeetingRecipientResolver
      */
     public function resolve(Meeting $meeting, ?User $exclude = null): Collection
     {
-        $meeting->loadMissing(['participants', 'tags']);
+        $meeting->loadMissing(['participants', 'tags', 'admins']);
 
         $participantIds = $meeting->participants->pluck('user_id')->filter();
         $personTagIds = $meeting->tags->where('type', TagType::Person)->pluck('target_id')->filter();
         $divisionTagIds = $meeting->tags->where('type', TagType::Division)->pluck('target_id')->filter();
+        $adminIds = $meeting->admins->pluck('id')->filter();
 
         $userIds = $participantIds
             ->push($meeting->created_by)
@@ -41,6 +42,8 @@ class MeetingRecipientResolver
             }
         } elseif ($meeting->confidentiality === Confidentiality::Restricted) {
             $userIds = $userIds->merge($personTagIds);
+        } elseif ($meeting->confidentiality === Confidentiality::Secret) {
+            $userIds = $userIds->merge($adminIds);
         }
 
         $candidates = User::query()
@@ -54,7 +57,7 @@ class MeetingRecipientResolver
         }
 
         return $candidates
-            ->filter(fn (User $user) => $user->isAdmin()
+            ->filter(fn (User $user) => ($user->isAdmin() && $adminIds->contains($user->id))
                 || $user->id === $meeting->created_by
                 || $participantIds->contains($user->id)
                 || ($meeting->confidentiality === Confidentiality::Division

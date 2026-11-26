@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Scout\Searchable;
@@ -93,6 +94,11 @@ class Meeting extends Model
         return $this->hasMany(MeetingParticipant::class);
     }
 
+    public function admins(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'meeting_admins')->withTimestamps();
+    }
+
     public function tags(): HasMany
     {
         return $this->hasMany(Tag::class);
@@ -146,29 +152,27 @@ class Meeting extends Model
     public function scopeVisibleTo(Builder $query, User $user): Builder
     {
         if ($user->isAdmin()) {
-            return $query;
+            return $query->where(function (Builder $query) use ($user) {
+                $query->where($query->qualifyColumn('confidentiality'), '!=', Confidentiality::Secret->value)
+                    ->orWhere($query->qualifyColumn('created_by'), $user->id)
+                    ->orWhereHas('participants', fn (Builder $q) => $q->where('user_id', $user->id))
+                    ->orWhereHas('admins', fn (Builder $q) => $q->where('user_id', $user->id))
+                    ->orWhereExists(fn ($sub) => $sub->selectRaw('1')
+                        ->from('meeting_access')
+                        ->whereColumn('meeting_access.meeting_id', $query->qualifyColumn('id'))
+                        ->where('meeting_access.user_id', $user->id));
+            });
         }
 
         return $query->where(function (Builder $query) use ($user) {
             $query->where($query->qualifyColumn('confidentiality'), Confidentiality::Open->value)
                 ->orWhere($query->qualifyColumn('created_by'), $user->id)
-                ->orWhereHas('participants', fn (Builder $q) => $q->where('user_id', $user->id));
-
-            if ($user->division_id) {
-                $query->orWhere(function (Builder $q) use ($user) {
-                    $q->where($q->qualifyColumn('confidentiality'), Confidentiality::Division->value)
-                        ->whereHas('tags', fn (Builder $tag) => $tag
-                            ->where('type', 'division')
-                            ->where('target_id', $user->division_id));
-                });
-            }
-
-            $query->orWhere(function (Builder $q) use ($user) {
-                $q->where($q->qualifyColumn('confidentiality'), Confidentiality::Restricted->value)
-                    ->whereHas('tags', fn (Builder $tag) => $tag
-                        ->where('type', 'person')
-                        ->where('target_id', $user->id));
-            });
+                ->orWhereHas('participants', fn (Builder $q) => $q->where('user_id', $user->id))
+                ->orWhereHas('admins', fn (Builder $q) => $q->where('user_id', $user->id))
+                ->orWhereExists(fn ($sub) => $sub->selectRaw('1')
+                    ->from('meeting_access')
+                    ->whereColumn('meeting_access.meeting_id', $query->qualifyColumn('id'))
+                    ->where('meeting_access.user_id', $user->id));
         });
     }
 

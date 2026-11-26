@@ -201,6 +201,7 @@ class MeetingController extends Controller
             'creator:id,name',
             'approvedBy:id,name',
             'approver:id,name',
+            'admins:id,name',
             'template:id,name,document_type',
             'participants.user:id,name,email',
             'tags',
@@ -246,6 +247,7 @@ class MeetingController extends Controller
             'users' => User::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'divisions' => Division::query()->orderBy('name')->get(['id', 'name']),
             'topics' => Topic::query()->where('status', 'active')->orderBy('name')->get(['id', 'name']),
+            'adminUsers' => User::query()->where('role', 'admin')->where('is_active', true)->orderBy('name')->get(['id', 'name']),
         ]);
     }
 

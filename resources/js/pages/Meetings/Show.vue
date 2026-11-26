@@ -84,6 +84,8 @@ interface Summary {
     error_message: string | null;
     model: string | null;
     approved_at: string | null;
+    sources?: { meeting_id: number; title: string; url?: string }[];
+    usage?: Record<string, unknown>;
 }
 
 type AiTier = 'auto' | 'expert';
@@ -119,6 +121,7 @@ interface FullMeeting extends Meeting {
     versions: Version[];
     approved_by?: { id: number; name: string } | null;
     approver?: { id: number; name: string } | null;
+    admins?: { id: number; name: string }[];
     template?: { id: number; name: string } | null;
     finalized_at: string | null;
 }
@@ -140,6 +143,7 @@ const props = defineProps<{
     users?: { id: number; name: string }[];
     divisions?: Division[];
     topics?: { id: number; name: string }[];
+    adminUsers?: { id: number; name: string }[];
 }>();
 
 const page = usePage<SharedData>();
@@ -158,6 +162,14 @@ const feedbackPendingStatus = ref<string | null>(null);
 const shareOpen = ref(false);
 const copiedSummaryId = ref<number | null>(null);
 let copyTimer: ReturnType<typeof setTimeout> | null = null;
+
+const adminForm = useForm({
+    admin_ids: (props.meeting.admins ?? []).map((admin) => String(admin.id)),
+});
+
+function saveDocumentAdmins() {
+    adminForm.patch(route('meeting-admins.update', props.meeting.id), { preserveScroll: true });
+}
 
 const decisionForm = useForm({
     content: '',
@@ -829,6 +841,30 @@ function restoreVersion(version: Version) {
                         </div>
                     </section>
 
+                    <Card v-if="props.meeting.confidentiality === 'secret' && props.can.changeConfidentiality">
+                        <CardHeader>
+                            <CardTitle class="text-base">Admin khusus dokumen</CardTitle>
+                            <p class="text-sm text-muted-foreground">
+                                Hanya admin yang dipilih di sini yang dapat membuka notulen secret ini selain peserta dan pembuat.
+                            </p>
+                        </CardHeader>
+                        <CardContent>
+                            <form class="space-y-3" @submit.prevent="saveDocumentAdmins">
+                                <div class="grid gap-2 sm:grid-cols-2">
+                                    <label
+                                        v-for="admin in props.adminUsers ?? []"
+                                        :key="admin.id"
+                                        class="flex items-center gap-2 rounded-md border border-border/70 px-3 py-2 text-sm"
+                                    >
+                                        <input v-model="adminForm.admin_ids" type="checkbox" :value="String(admin.id)" class="size-4 rounded border-input accent-primary" />
+                                        {{ admin.name }}
+                                    </label>
+                                </div>
+                                <Button type="submit" size="sm" :loading="adminForm.processing">Simpan admin dokumen</Button>
+                            </form>
+                        </CardContent>
+                    </Card>
+
                     <section class="overflow-hidden rounded-lg border border-ai/25 bg-ai-surface/60 shadow-card" aria-labelledby="ai-summary-heading">
                         <div class="flex flex-col gap-4 border-b border-ai/15 p-5 md:flex-row md:items-start md:justify-between md:p-6">
                             <div class="flex gap-3">
@@ -946,6 +982,15 @@ function restoreVersion(version: Version) {
                                         </li>
                                     </ul>
                                 </div>
+
+                                <p v-if="summary.sources?.length" class="mt-4 flex flex-wrap gap-x-1 text-xs text-muted-foreground">
+                                    <span>Sumber:</span>
+                                    <template v-for="(source, index) in summary.sources" :key="source.meeting_id">
+                                        <a v-if="source.url" :href="source.url" class="font-medium text-primary underline underline-offset-2">{{ source.title }}</a>
+                                        <span v-else>{{ source.title }}</span>
+                                        <span v-if="index < summary.sources.length - 1" aria-hidden="true">,</span>
+                                    </template>
+                                </p>
 
                                 <div
                                     v-if="summary.status === 'draft' && summary.generation_status === 'completed' && canManage"

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\Confidentiality;
+use App\Enums\MeetingStatus;
 use App\Models\Decision;
 use App\Models\Meeting;
 use App\Models\User;
@@ -19,6 +20,7 @@ class DecisionTest extends TestCase
         $meeting = Meeting::factory()->create([
             'created_by' => $notulis->id,
             'confidentiality' => Confidentiality::Open->value,
+            'status' => MeetingStatus::Draft->value,
         ]);
 
         $this->actingAs($notulis)

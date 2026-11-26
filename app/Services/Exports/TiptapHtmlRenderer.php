@@ -162,7 +162,7 @@ class TiptapHtmlRenderer
      */
     private function image(array $node): string
     {
-        $src = $this->safeUrl($node['attrs']['src'] ?? null);
+        $src = $this->safeImageUrl($node['attrs']['src'] ?? null);
 
         if (! $src) {
             return '';
@@ -204,6 +204,10 @@ class TiptapHtmlRenderer
 
         $url = trim($url);
 
+        if (str_starts_with($url, '//')) {
+            return null;
+        }
+
         if (str_starts_with($url, '/')) {
             return $url;
         }
@@ -211,5 +215,23 @@ class TiptapHtmlRenderer
         $scheme = parse_url($url, PHP_URL_SCHEME);
 
         return in_array($scheme, ['http', 'https', 'mailto'], true) ? $url : null;
+    }
+
+    private function safeImageUrl(?string $url): ?string
+    {
+        $url = $this->safeUrl($url);
+
+        if (! $url || str_starts_with($url, '/')) {
+            return $url;
+        }
+
+        $host = parse_url($url, PHP_URL_HOST);
+        $appHost = parse_url((string) config('app.url'), PHP_URL_HOST);
+
+        if (! is_string($host) || ! is_string($appHost) || $host === '') {
+            return null;
+        }
+
+        return hash_equals(strtolower($appHost), strtolower($host)) ? $url : null;
     }
 }
