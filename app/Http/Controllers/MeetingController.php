@@ -40,16 +40,20 @@ class MeetingController extends Controller
         $user = $request->user();
         $filters = $request->only(['search', 'division', 'topic', 'status', 'type', 'document_type', 'from', 'to']);
 
-        if (filled($filters['search'] ?? null)) {
-            $meetings = Meeting::search($filters['search'])
-                ->query(fn (Builder $query) => $query
-                    ->visibleTo($user)
-                    ->filter(collect($filters)->except('search')->all())
-                    ->select([
-                        'id', 'title', 'document_type', 'meeting_type', 'division_id', 'created_by',
-                        'scheduled_at', 'status', 'confidentiality',
-                    ])
-                )
+        $search = trim((string) ($filters['search'] ?? ''));
+
+        if ($search !== '') {
+            $meetings = Meeting::query()
+                ->visibleTo($user)
+                ->filter(collect($filters)->except('search')->all())
+                ->searchText($search)
+                ->select([
+                    'id', 'title', 'document_type', 'meeting_type', 'division_id', 'created_by',
+                    'scheduled_at', 'status', 'confidentiality',
+                ])
+                ->with(['division:id,name', 'creator:id,name'])
+                ->orderByRaw("ts_rank(search_vector, websearch_to_tsquery('simple', ?)) DESC", [$search])
+                ->orderByDesc('scheduled_at')
                 ->paginate(12)
                 ->withQueryString();
         } else {

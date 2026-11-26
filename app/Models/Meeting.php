@@ -19,6 +19,8 @@ class Meeting extends Model
 {
     use HasFactory, Searchable, SoftDeletes;
 
+    protected $hidden = ['search_vector'];
+
     protected $fillable = [
         'title',
         'nomor_notulensi',
@@ -168,6 +170,26 @@ class Meeting extends Model
                         ->where('target_id', $user->id));
             });
         });
+    }
+
+    public function scopeSearchText(Builder $query, string $search): Builder
+    {
+        $search = trim($search);
+
+        if ($search === '') {
+            return $query;
+        }
+
+        $terms = collect(preg_split('/[^\pL\pN]+/u', $search) ?: [])
+            ->filter()
+            ->map(fn (string $term) => mb_strtolower($term).':*')
+            ->implode(' & ');
+
+        if ($terms === '') {
+            return $query;
+        }
+
+        return $query->whereRaw("search_vector @@ to_tsquery('simple', ?)", [$terms]);
     }
 
     public function scopeFilter(Builder $query, array $filters): Builder

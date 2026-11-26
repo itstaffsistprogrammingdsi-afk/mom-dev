@@ -107,6 +107,10 @@ COLLAB_TOKEN_TTL=3600
 
 Jika service kolaborasi tidak tersedia, editor tetap dapat dipakai dalam mode tunggal.
 
+## Pencarian Notulen
+
+Pencarian daftar notulen memakai generated `tsvector` PostgreSQL (`title` A, `agenda` B, `content_text` C), GIN index, prefix query, dan ranking `ts_rank`. Trigram GIN tetap tersedia untuk fallback pencarian substring di modul lain.
+
 ## Health Check & Runbook Singkat
 
 Endpoint publik `GET /health` memeriksa database, cache, konfigurasi queue, konfigurasi AI, dan status Hocuspocus. Status `503` diberikan jika komponen inti gagal; status Hocuspocus dilaporkan terpisah sebagai `collab`.
