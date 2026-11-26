@@ -40,6 +40,11 @@ class MeetingAccessTest extends TestCase
         $this->actingAs($admin)
             ->get(route('meetings.show', $meeting))
             ->assertOk();
+
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'meeting.viewed',
+            'meeting_id' => $meeting->id,
+        ]);
     }
 
     public function test_participant_can_view_restricted_meeting(): void

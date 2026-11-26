@@ -56,9 +56,11 @@ Untuk pengembangan frontend:
 npm run dev
 ```
 
-## Akun Demo
+## Akun Demo (khusus lokal/testing)
 
-| Peran | Email | Password |
+> **Jangan jalankan `php artisan migrate --seed` di production.** Akun demo memakai password default dan hanya untuk pengembangan. Untuk production, buat admin melalui prosedur aman dan gunakan password acak/forced reset.
+
+| Peran | Email | Password (lokal) |
 |---|---|---|
 | Admin | admin@mom.test | password |
 | Notulis | notulis@mom.test | password |
@@ -68,7 +70,7 @@ npm run dev
 | Staf IT | staff@mom.test | password |
 | Direksi | direksi@mom.test | password |
 
-Registrasi publik aktif; pengguna baru otomatis mendapat peran Anggota. Admin dapat mengubah peran dan menonaktifkan akun dari menu Admin > Pengguna.
+Registrasi publik aktif di lingkungan lokal/demo; pengguna baru otomatis mendapat peran Anggota. Untuk production, nonaktifkan registrasi publik atau batasi ke domain/invite, lalu gunakan admin untuk mengelola akun.
 
 ## AI
 
