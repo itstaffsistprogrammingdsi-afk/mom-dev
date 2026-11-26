@@ -2,6 +2,7 @@
 
 namespace App\Services\Notifications;
 
+use App\Enums\Confidentiality;
 use App\Enums\TagType;
 use App\Models\Meeting;
 use App\Models\User;
@@ -38,8 +39,21 @@ class MeetingRecipientResolver
             ->when($exclude, fn ($query) => $query->whereKeyNot($exclude->id))
             ->get();
 
+        if ($meeting->confidentiality === Confidentiality::Open) {
+            return $candidates->values();
+        }
+
+        $participantIds = $meeting->participants->pluck('user_id')->filter();
+        $personTagIds = $meeting->tags->where('type', TagType::Person)->pluck('target_id')->filter();
+        $divisionTagIds = $meeting->tags->where('type', TagType::Division)->pluck('target_id')->filter();
+
         return $candidates
-            ->filter(fn (User $user) => Meeting::query()->visibleTo($user)->whereKey($meeting->id)->exists())
+            ->filter(fn (User $user) => $user->isAdmin()
+                || $user->id === $meeting->created_by
+                || $participantIds->contains($user->id)
+                || ($meeting->confidentiality !== Confidentiality::Secret
+                    && ($personTagIds->contains($user->id)
+                        || ($user->division_id && $divisionTagIds->contains($user->division_id)))))
             ->values();
     }
 }

@@ -45,6 +45,10 @@ class MeetingController extends Controller
                 ->query(fn (Builder $query) => $query
                     ->visibleTo($user)
                     ->filter(collect($filters)->except('search')->all())
+                    ->select([
+                        'id', 'title', 'document_type', 'meeting_type', 'division_id', 'created_by',
+                        'scheduled_at', 'status', 'confidentiality',
+                    ])
                 )
                 ->paginate(12)
                 ->withQueryString();
@@ -62,7 +66,7 @@ class MeetingController extends Controller
                 ->withQueryString();
         }
 
-        $meetings->load(['division:id,name', 'creator:id,name']);
+        $meetings->loadMissing(['division:id,name', 'creator:id,name']);
 
         return Inertia::render('Meetings/Index', [
             'meetings' => $meetings,
@@ -180,9 +184,13 @@ class MeetingController extends Controller
             ->with('success', 'Notulen berhasil dibuat.');
     }
 
-    public function show(Request $request, Meeting $meeting): Response
+    public function show(Request $request, Meeting $meeting, AuditLogger $audit): Response
     {
         $this->authorize('view', $meeting);
+
+        if ($meeting->confidentiality === Confidentiality::Secret) {
+            $audit->log('meeting.viewed', $meeting, 'Melihat notulen rahasia', meetingId: $meeting->id);
+        }
 
         $meeting->load([
             'division:id,name',
@@ -197,25 +205,36 @@ class MeetingController extends Controller
             'actionItems.feedback.user:id,name',
             'summaries' => fn ($query) => $query->latest('version')->limit(5),
             'attachments',
-            'versions' => fn ($query) => $query->latest('version')->limit(10),
+            'versions' => fn ($query) => $query
+                ->select(['id', 'meeting_id', 'version', 'reason', 'created_at'])
+                ->latest('version')
+                ->limit(10),
             'signatures',
         ]);
 
         $signatures = $this->signaturePayload($meeting);
         $meeting->makeHidden('signatures');
 
+        $user = $request->user();
+        $canManage = ! $meeting->isLocked()
+            && ($user->isAdmin() || (! $meeting->isFinal() && ($meeting->created_by === $user->id || $user->canWriteMinutes())));
+        $canShare = in_array($meeting->confidentiality, [Confidentiality::Restricted, Confidentiality::Secret], true)
+            ? ($user->isAdmin() || $meeting->created_by === $user->id)
+            : ($user->isAdmin() || $meeting->created_by === $user->id || $user->canWriteMinutes());
+
         return Inertia::render('Meetings/Show', [
             'meeting' => $meeting,
             'signatures' => $signatures,
             'can' => [
-                'update' => $request->user()->can('update', $meeting),
-                'finalize' => $request->user()->can('finalize', $meeting),
-                'generateAi' => $request->user()->can('update', $meeting),
-                'manage' => $request->user()->can('update', $meeting),
-                'share' => $request->user()->can('share', $meeting),
-                'signCreator' => $request->user()->can('signCreator', $meeting),
-                'signApprover' => $request->user()->can('signApprover', $meeting),
-                'changeConfidentiality' => $request->user()->can('changeConfidentiality', $meeting),
+                'update' => $canManage,
+                'finalize' => ! $meeting->isLocked()
+                    && ($user->isAdmin() || $meeting->created_by === $user->id || $user->canWriteMinutes()),
+                'generateAi' => $canManage,
+                'manage' => $canManage,
+                'share' => $canShare,
+                'signCreator' => $user->isAdmin() || $meeting->created_by === $user->id,
+                'signApprover' => $user->isAdmin() || $meeting->approved_by === $user->id,
+                'changeConfidentiality' => $user->isAdmin() || $meeting->created_by === $user->id,
             ],
             'users' => User::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'divisions' => Division::query()->orderBy('name')->get(['id', 'name']),

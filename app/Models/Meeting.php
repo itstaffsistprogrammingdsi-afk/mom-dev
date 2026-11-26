@@ -8,6 +8,7 @@ use App\Enums\MeetingStatus;
 use App\Enums\MeetingType;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -179,8 +180,8 @@ class Meeting extends Model
             ->when($filters['status'] ?? null, fn (Builder $q, $status) => $q->where('status', $status))
             ->when($filters['type'] ?? null, fn (Builder $q, $type) => $q->where('meeting_type', $type))
             ->when($filters['document_type'] ?? null, fn (Builder $q, $type) => $q->where('document_type', $type))
-            ->when($filters['from'] ?? null, fn (Builder $q, $from) => $q->whereDate('scheduled_at', '>=', $from))
-            ->when($filters['to'] ?? null, fn (Builder $q, $to) => $q->whereDate('scheduled_at', '<=', $to));
+            ->when($filters['from'] ?? null, fn (Builder $q, $from) => $q->where('scheduled_at', '>=', Carbon::parse($from)->startOfDay()))
+            ->when($filters['to'] ?? null, fn (Builder $q, $to) => $q->where('scheduled_at', '<', Carbon::parse($to)->addDay()->startOfDay()));
     }
 
     public function toSearchableArray(): array
