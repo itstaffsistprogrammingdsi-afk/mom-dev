@@ -140,7 +140,7 @@ watch(
         <DialogContent class="sm:max-w-lg">
             <DialogHeader>
                 <DialogTitle>Respons dan feedback</DialogTitle>
-                <DialogDescription>{{ props.task?.title ?? 'Pilih action item untuk melihat respons.' }}</DialogDescription>
+                <DialogDescription>{{ props.task?.title ?? 'Pilih tindak lanjut untuk melihat respons.' }}</DialogDescription>
             </DialogHeader>
 
             <div v-if="props.task" class="space-y-4">

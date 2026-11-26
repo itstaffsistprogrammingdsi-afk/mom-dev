@@ -24,7 +24,7 @@ function isActive(url: string): boolean {
                     as-child
                     :tooltip="item.title"
                     :is-active="isActive(item.url)"
-                    class="h-10 rounded-md px-3 font-medium transition-[background-color,color,box-shadow] duration-fast ease-ui data-[active=true]:shadow-sm max-sm:h-11"
+                    class="h-10 rounded-lg px-3 font-medium transition-[background-color,color] duration-fast ease-ui max-sm:h-11"
                 >
                     <Link :href="item.url" prefetch :aria-current="isActive(item.url) ? 'page' : undefined">
                         <component :is="item.icon" />

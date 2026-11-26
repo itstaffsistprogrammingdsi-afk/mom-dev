@@ -26,9 +26,9 @@ const page = usePage<SharedData>();
 const mainNavItems = computed<NavItem[]>(() => [
     { title: 'Dashboard', url: '/dashboard', icon: LayoutGrid },
     { title: 'Dokumen', url: '/notulen', icon: FileText },
-    { title: 'Quick Note', url: '/quick-notes', icon: StickyNote },
-    { title: 'Terkait Saya', url: '/terkait-saya', icon: Inbox },
-    { title: 'Action Item', url: '/tugas', icon: ListChecks },
+    { title: 'Catatan cepat', url: '/quick-notes', icon: StickyNote },
+    { title: 'Terkait saya', url: '/terkait-saya', icon: Inbox },
+    { title: 'Tindak lanjut', url: '/tugas', icon: ListChecks },
     { title: 'Topik', url: '/topik', icon: Hash },
     {
         title: 'Notifikasi',
@@ -42,7 +42,7 @@ const adminNavItems = computed<NavItem[]>(() => [
     { title: 'Divisi', url: '/admin/divisi', icon: Building2 },
     { title: 'Pengguna', url: '/admin/pengguna', icon: Users },
     { title: 'Peran & Akses', url: '/admin/peran', icon: ShieldCheck },
-    { title: 'Topik', url: '/admin/topik', icon: Hash },
+    { title: 'Kelola topik', url: '/admin/topik', icon: Hash },
     { title: 'Template', url: '/admin/template', icon: FileStack },
     { title: 'Audit Log', url: '/admin/audit', icon: ScrollText },
 ]);

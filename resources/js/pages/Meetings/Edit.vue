@@ -80,30 +80,30 @@ const autosaveLabel = computed(() => {
     }
 
     if (autosaveState.value === 'error') {
-        return 'Gagal menyimpan otomatis';
+        return 'Gagal menyimpan';
     }
 
     if (autosaveState.value === 'offline') {
         return 'Offline — perubahan akan disinkronkan';
     }
 
-    return 'Autosave aktif';
+    return 'Tersimpan otomatis';
 });
 
 const autosaveTone = computed(() => {
     if (autosaveState.value === 'error') {
-        return 'border-destructive/30 bg-destructive/10 text-destructive';
+        return 'text-destructive';
     }
 
     if (autosaveState.value === 'offline') {
-        return 'border-warning/30 bg-warning/10 text-warning-strong';
+        return 'text-warning-strong';
     }
 
     if (autosaveState.value === 'saved') {
-        return 'border-success/30 bg-success/10 text-success-strong';
+        return 'text-success-strong';
     }
 
-    return 'border-border bg-muted/40 text-muted-foreground';
+    return 'text-muted-foreground';
 });
 
 const collabActive = computed(() => Boolean(props.collab));
@@ -295,12 +295,12 @@ function submit() {
         <form class="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-4 py-6 md:px-8 md:py-8" @submit.prevent="submit">
             <PageHeader
                 :title="props.meeting.document_type === 'meeting' ? 'Sunting notulen' : 'Sunting dokumen'"
-                description="Perubahan tercatat di audit log. Dokumen final hanya dapat diubah oleh admin."
+                description="Perubahan tersimpan otomatis dan tercatat di audit log. Dokumen final hanya dapat diubah oleh admin."
             >
                 <template #actions>
                     <div class="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
                         <span
-                            class="inline-flex basis-full items-center justify-center gap-2 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors duration-fast sm:basis-auto sm:justify-start"
+                            class="inline-flex basis-full items-center justify-center gap-2 text-xs font-medium transition-colors duration-fast sm:basis-auto sm:justify-start"
                             :class="autosaveTone"
                             role="status"
                             aria-live="polite"
@@ -313,9 +313,9 @@ function submit() {
                             {{ autosaveLabel }}
                         </span>
                         <Button variant="outline" as-child class="flex-1 sm:flex-none">
-                            <Link :href="route('meetings.show', props.meeting.id)">Batal</Link>
+                            <Link :href="route('meetings.show', props.meeting.id)">Lihat dokumen</Link>
                         </Button>
-                        <Button type="submit" :loading="form.processing" class="flex-1 sm:flex-none">Simpan perubahan</Button>
+                        <Button type="submit" :loading="form.processing" class="flex-1 sm:flex-none">Selesai</Button>
                     </div>
                 </template>
             </PageHeader>
@@ -350,7 +350,7 @@ function submit() {
                     <section class="space-y-2">
                         <div class="flex flex-wrap items-end justify-between gap-2">
                             <Label>Isi dokumen</Label>
-                            <p class="text-xs text-muted-foreground">Autosave berjalan setiap 1,5 detik saat dokumen berstatus draf.</p>
+                            <p class="text-xs text-muted-foreground">Tersimpan otomatis setiap 1,5 detik saat dokumen berstatus draf.</p>
                         </div>
                         <MinutesCanvas
                             v-if="props.meeting.document_type === 'meeting'"

@@ -42,7 +42,7 @@ const results = ref<SearchResults>({ meetings: [], topics: [], people: [] });
 const staticActions: ResultItem[] = [
     { key: 'nav-dashboard', title: 'Dashboard', subtitle: 'Ringkasan hari ini', url: '/dashboard', icon: LayoutGrid },
     { key: 'nav-meetings', title: 'Dokumen', subtitle: 'Semua notulen dan dokumen', url: '/notulen', icon: FileText },
-    { key: 'nav-tasks', title: 'Action Item', subtitle: 'Daftar dan board tugas', url: '/tugas', icon: ListChecks },
+    { key: 'nav-tasks', title: 'Tindak lanjut', subtitle: 'Daftar dan papan tugas', url: '/tugas', icon: ListChecks },
     { key: 'nav-quick-notes', title: 'Quick Note', subtitle: 'Catatan cepat', url: '/quick-notes', icon: StickyNote },
     { key: 'nav-notifications', title: 'Notifikasi', subtitle: 'Pemberitahuan terbaru', url: '/notifikasi', icon: Bell },
     { key: 'nav-settings', title: 'Pengaturan', subtitle: 'Profil, kata sandi, dan preferensi', url: '/settings/profile', icon: Settings },

@@ -8,7 +8,7 @@ const props = withDefaults(
         as?: string;
     }>(),
     {
-        as: 'h3',
+        as: 'h2',
     },
 );
 </script>

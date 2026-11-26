@@ -13,24 +13,21 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
     compact: false,
 });
+
+const icon = props.icon;
 </script>
 
 <template>
     <div
         :class="
             cn(
-                'flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border bg-muted/20 px-6 text-center',
-                compact ? 'py-8' : 'py-14',
+                'flex flex-col items-center justify-center gap-2 rounded-xl bg-muted/45 px-6 text-center',
+                compact ? 'py-6' : 'py-10',
                 props.class,
             )
         "
     >
-        <div
-            v-if="icon"
-            class="flex size-11 items-center justify-center rounded-full bg-surface text-muted-foreground shadow-soft-xs ring-1 ring-border/70"
-        >
-            <component :is="icon" class="size-5" aria-hidden="true" />
-        </div>
+        <component :is="icon" v-if="icon" class="size-5 text-muted-foreground" aria-hidden="true" />
 
         <div class="space-y-1">
             <p class="text-sm font-medium text-foreground">{{ title }}</p>

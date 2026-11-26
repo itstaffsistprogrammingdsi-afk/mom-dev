@@ -11,21 +11,55 @@ defineProps<{
 
 <template>
     <div class="mom-auth">
-        <div class="sky" aria-hidden="true">
-            <span class="cloud cloud-one"></span>
-            <span class="cloud cloud-two"></span>
-            <span class="cloud cloud-three"></span>
-        </div>
-
         <main class="page-shell">
             <section class="login-card" aria-label="Halaman masuk MoM">
-                <aside class="visual-panel" aria-label="MoM, sistem notulensi modern">
-                    <img
-                        src="/images/mom-auth-visual.webp"
-                        alt="Maskot MoM di atas bukit dengan ikon kalender, catatan, dan produktivitas"
-                        class="visual-art"
-                    />
-                    <div class="visual-shade" aria-hidden="true"></div>
+                <aside
+                    class="visual-panel"
+                    style="background: hsl(var(--background))"
+                    aria-label="Pratinjau notulen MoM"
+                >
+                    <div class="flex min-h-[690px] flex-col justify-center gap-10 p-10 max-sm:min-h-[260px] max-sm:p-6 max-sm:gap-6">
+                        <div class="max-w-sm">
+                            <p class="text-xs font-medium text-muted-foreground">Ruang kerja notulen</p>
+                            <h2 class="mt-3 text-3xl font-semibold leading-tight tracking-[-0.03em] text-foreground">
+                                Catat. Putuskan. Tindak lanjuti.
+                            </h2>
+                            <p class="mt-3 text-sm leading-6 text-muted-foreground">
+                                Satu tempat untuk notulen, keputusan, dan tugas lintas divisi.
+                            </p>
+                        </div>
+
+                        <div class="max-w-md rounded-2xl border border-border/80 bg-card p-5 text-card-foreground shadow-soft-md max-sm:hidden">
+                            <div class="flex items-start justify-between gap-3 border-b border-border/70 pb-3">
+                                <div>
+                                    <p class="text-[11px] text-muted-foreground">Notulen rapat mingguan</p>
+                                    <p class="mt-0.5 text-sm font-semibold">Digitalisasi Arsip</p>
+                                </div>
+                                <span class="rounded-md bg-success-soft px-2 py-0.5 text-[10px] font-medium text-success-strong">Final</span>
+                            </div>
+
+                            <div class="mt-4 space-y-1.5">
+                                <p class="text-[11px] font-medium text-muted-foreground">Keputusan</p>
+                                <p class="text-sm leading-6">Arsip aktif dipindai ke repositori bersama sebelum akhir bulan.</p>
+                            </div>
+
+                            <div class="mt-4 grid grid-cols-2 gap-3 border-t border-border/70 pt-3 text-xs">
+                                <div>
+                                    <p class="text-muted-foreground">Tindak lanjut</p>
+                                    <p class="mt-0.5 font-medium">Migrasi arsip</p>
+                                </div>
+                                <div>
+                                    <p class="text-muted-foreground">Tenggat</p>
+                                    <p class="mt-0.5 font-medium">12 Des 2026</p>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
+                                <span class="inline-flex size-5 items-center justify-center rounded-full bg-accent text-[10px] font-semibold text-accent-foreground">RN</span>
+                                Rina Notulis · 4 peserta
+                            </div>
+                        </div>
+                    </div>
                 </aside>
 
                 <section class="form-panel">

@@ -62,7 +62,12 @@ const filters = reactive({
 });
 
 const isLoading = ref(false);
+const showFilters = ref(false);
 const toast = useToast();
+
+const activeFilterCount = computed(() => {
+    return ['division', 'topic', 'status', 'type', 'document_type', 'from', 'to'].filter((key) => filters[key as keyof typeof filters]).length;
+});
 
 function toDateInputValue(date: Date): string {
     const copy = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
@@ -251,138 +256,141 @@ function resetFilters() {
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
-            <PageHeader title="Notulen & Dokumen" description="Seluruh notulen, proposal, laporan, dan brosur yang dapat Anda akses.">
+            <PageHeader title="Dokumen" description="Notulen, proposal, laporan, dan brosur yang dapat Anda akses.">
                 <template #actions>
                     <Button v-if="props.canCreate" as-child>
                         <Link :href="route('meetings.create')">
                             <Plus class="size-4" aria-hidden="true" />
-                            Buat dokumen
+                            Buat notulen
                         </Link>
                     </Button>
                 </template>
             </PageHeader>
 
-            <form class="rounded-lg border border-border bg-card p-4 md:p-5" @submit.prevent="applyFilters">
-                <div class="mb-4 flex items-start gap-3">
-                    <div class="flex size-9 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground">
-                        <SlidersHorizontal class="size-4" aria-hidden="true" />
-                    </div>
-                    <div class="min-w-0">
-                        <p class="text-sm font-medium text-foreground">Cari dan filter dokumen</p>
-                        <p class="text-xs leading-relaxed text-muted-foreground">Kombinasikan kata kunci, divisi, topik, status, dan tanggal.</p>
-                    </div>
-                    <Button type="button" variant="outline" size="sm" class="ml-auto shrink-0" @click="presetDialogOpen = true">
-                        <Bookmark class="size-3.5" aria-hidden="true" />
-                        Preset
-                    </Button>
-                </div>
-
-                <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                    <div class="space-y-1.5 sm:col-span-2">
-                        <Label for="meeting-search">Cari</Label>
-                        <div class="relative">
-                            <Search
-                                class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-                                aria-hidden="true"
-                            />
-                            <Input
-                                id="meeting-search"
-                                v-model="filters.search"
-                                type="search"
-                                placeholder="Judul atau isi dokumen"
-                                class="pl-9 pr-9 [&::-webkit-search-cancel-button]:hidden"
-                            />
-                            <button
-                                v-if="filters.search"
-                                type="button"
-                                class="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm p-1 text-muted-foreground transition-colors duration-fast hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                aria-label="Hapus kata kunci"
-                                @click="filters.search = ''"
-                            >
-                                <X class="size-4" aria-hidden="true" />
-                            </button>
-                        </div>
+            <form class="space-y-3" @submit.prevent="applyFilters">
+                <div class="flex flex-col gap-2 sm:flex-row">
+                    <div class="relative min-w-0 flex-1">
+                        <Search
+                            class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                            aria-hidden="true"
+                        />
+                        <Input
+                            id="meeting-search"
+                            v-model="filters.search"
+                            type="search"
+                            placeholder="Cari judul atau isi dokumen"
+                            class="h-10 pl-9 pr-9 [&::-webkit-search-cancel-button]:hidden"
+                        />
+                        <button
+                            v-if="filters.search"
+                            type="button"
+                            class="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm p-1 text-muted-foreground transition-colors duration-fast hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            aria-label="Hapus kata kunci"
+                            @click="filters.search = ''"
+                        >
+                            <X class="size-4" aria-hidden="true" />
+                        </button>
                     </div>
 
-                    <div class="space-y-1.5">
-                        <Label for="filter-division">Divisi</Label>
-                        <Select id="filter-division" v-model="filters.division">
-                            <option value="">Semua divisi</option>
-                            <option v-for="division in props.divisions" :key="division.id" :value="String(division.id)">{{ division.name }}</option>
-                        </Select>
-                    </div>
-
-                    <div class="space-y-1.5">
-                        <Label for="filter-topic">Topik</Label>
-                        <Select id="filter-topic" v-model="filters.topic">
-                            <option value="">Semua topik</option>
-                            <option v-for="topic in props.topics" :key="topic.id" :value="String(topic.id)">#{{ topic.name }}</option>
-                        </Select>
-                    </div>
-
-                    <div class="space-y-1.5">
-                        <Label for="filter-document-type">Jenis dokumen</Label>
-                        <Select id="filter-document-type" v-model="filters.document_type">
-                            <option value="">Semua jenis</option>
-                            <option v-for="type in props.documentTypes" :key="type.value" :value="type.value">{{ type.label }}</option>
-                        </Select>
-                    </div>
-
-                    <div class="space-y-1.5">
-                        <Label for="filter-meeting-type">Jenis rapat</Label>
-                        <Select id="filter-meeting-type" v-model="filters.type">
-                            <option value="">Semua jenis rapat</option>
-                            <option v-for="(label, value) in meetingTypeLabels" :key="value" :value="value">{{ label }}</option>
-                        </Select>
-                    </div>
-
-                    <div class="space-y-1.5">
-                        <Label for="filter-status">Status</Label>
-                        <Select id="filter-status" v-model="filters.status">
-                            <option value="">Semua status</option>
-                            <option v-for="(label, value) in statusLabels" :key="value" :value="value">{{ label }}</option>
-                        </Select>
-                    </div>
-
-                    <div class="space-y-1.5 sm:col-span-2">
-                        <Label>Rentang tanggal</Label>
-                        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                            <Input v-model="filters.from" type="date" aria-label="Dari tanggal" />
-                            <Input v-model="filters.to" type="date" aria-label="Sampai tanggal" />
-                        </div>
-                        <div class="flex flex-wrap items-center gap-1.5 pt-1">
-                            <button
-                                type="button"
-                                class="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors duration-fast hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-sm:min-h-11"
-                                @click="setDateRange(6)"
-                            >
-                                7 hari terakhir
-                            </button>
-                            <button
-                                type="button"
-                                class="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors duration-fast hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-sm:min-h-11"
-                                @click="setDateRange(29)"
-                            >
-                                30 hari terakhir
-                            </button>
-                            <button
-                                v-if="filters.from || filters.to"
-                                type="button"
-                                class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium text-primary transition-colors duration-fast hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-sm:min-h-11"
-                                @click="clearDateRange"
-                            >
-                                Hapus tanggal
-                            </button>
-                        </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <Button type="button" variant="outline" class="flex-1 sm:flex-none" :aria-expanded="showFilters" @click="showFilters = !showFilters">
+                            <SlidersHorizontal class="size-4" aria-hidden="true" />
+                            Filter
+                            <span v-if="activeFilterCount" class="rounded-md bg-primary/10 px-1.5 text-[11px] font-semibold text-primary">{{ activeFilterCount }}</span>
+                        </Button>
+                        <Button type="button" variant="outline" class="flex-1 sm:flex-none" @click="presetDialogOpen = true">
+                            <Bookmark class="size-4" aria-hidden="true" />
+                            Preset
+                        </Button>
+                        <Button type="submit" variant="outline" class="flex-1 sm:flex-none">
+                            <Search class="size-4" aria-hidden="true" />
+                            Cari
+                        </Button>
                     </div>
                 </div>
 
-                <div class="mt-4 flex flex-wrap items-center justify-end gap-2 border-t border-border/60 pt-4">
-                    <Button type="button" variant="outline" @click="resetFilters">Reset</Button>
-                    <Button type="submit">
-                        <Search class="size-4" aria-hidden="true" />
-                        Terapkan filter
-                    </Button>
+                <div v-show="showFilters" class="rounded-xl border border-border/80 bg-surface p-4 md:p-5">
+                    <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                        <div class="space-y-1.5">
+                            <Label for="filter-division">Divisi</Label>
+                            <Select id="filter-division" v-model="filters.division">
+                                <option value="">Semua divisi</option>
+                                <option v-for="division in props.divisions" :key="division.id" :value="String(division.id)">{{ division.name }}</option>
+                            </Select>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <Label for="filter-topic">Topik</Label>
+                            <Select id="filter-topic" v-model="filters.topic">
+                                <option value="">Semua topik</option>
+                                <option v-for="topic in props.topics" :key="topic.id" :value="String(topic.id)">#{{ topic.name }}</option>
+                            </Select>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <Label for="filter-document-type">Jenis dokumen</Label>
+                            <Select id="filter-document-type" v-model="filters.document_type">
+                                <option value="">Semua jenis</option>
+                                <option v-for="type in props.documentTypes" :key="type.value" :value="type.value">{{ type.label }}</option>
+                            </Select>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <Label for="filter-meeting-type">Jenis rapat</Label>
+                            <Select id="filter-meeting-type" v-model="filters.type">
+                                <option value="">Semua jenis rapat</option>
+                                <option v-for="(label, value) in meetingTypeLabels" :key="value" :value="value">{{ label }}</option>
+                            </Select>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <Label for="filter-status">Status</Label>
+                            <Select id="filter-status" v-model="filters.status">
+                                <option value="">Semua status</option>
+                                <option v-for="(label, value) in statusLabels" :key="value" :value="value">{{ label }}</option>
+                            </Select>
+                        </div>
+
+                        <div class="space-y-1.5 sm:col-span-2">
+                            <Label>Rentang tanggal</Label>
+                            <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                <Input v-model="filters.from" type="date" aria-label="Dari tanggal" />
+                                <Input v-model="filters.to" type="date" aria-label="Sampai tanggal" />
+                            </div>
+                            <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                                <button
+                                    type="button"
+                                    class="inline-flex items-center rounded-lg bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors duration-fast hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-sm:min-h-11"
+                                    @click="setDateRange(6)"
+                                >
+                                    7 hari terakhir
+                                </button>
+                                <button
+                                    type="button"
+                                    class="inline-flex items-center rounded-lg bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors duration-fast hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-sm:min-h-11"
+                                    @click="setDateRange(29)"
+                                >
+                                    30 hari terakhir
+                                </button>
+                                <button
+                                    v-if="filters.from || filters.to"
+                                    type="button"
+                                    class="inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-medium text-primary transition-colors duration-fast hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-sm:min-h-11"
+                                    @click="clearDateRange"
+                                >
+                                    Hapus tanggal
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 flex flex-wrap items-center justify-end gap-2 border-t border-border/60 pt-4">
+                        <Button type="button" variant="outline" @click="resetFilters">Reset</Button>
+                        <Button type="submit">
+                            <Search class="size-4" aria-hidden="true" />
+                            Terapkan filter
+                        </Button>
+                    </div>
                 </div>
             </form>
 
@@ -392,7 +400,7 @@ function resetFilters() {
                     v-for="chip in activeFilterChips"
                     :key="chip.key"
                     type="button"
-                    class="inline-flex items-center gap-1 rounded-full border border-border bg-surface px-2.5 py-1 text-xs text-secondary-foreground transition-colors duration-fast ease-out-soft hover:border-primary/30 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                    class="inline-flex items-center gap-1 rounded-lg border border-border bg-surface px-2.5 py-1 text-xs text-secondary-foreground transition-colors duration-fast ease-out-soft hover:border-primary/30 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                     :aria-label="`Hapus filter ${chip.label}`"
                     @click="clearFilter(chip.key)"
                 >

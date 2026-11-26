@@ -59,7 +59,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <AuthBase kicker="Sistem notulensi" title="Masuk ke ruang kerja" description="Akses notulen, action item, dan topik divisi Anda.">
+    <AuthBase kicker="Sistem notulensi" title="Masuk ke ruang kerja" description="Akses notulen, tindak lanjut, dan topik divisi Anda.">
         <Head title="Masuk" />
 
         <div
@@ -146,9 +146,9 @@ onBeforeUnmount(() => {
             <span>Masuk dengan Google</span>
         </button>
 
-        <p class="signup-note">
+        <p v-if="props.canRegister" class="signup-note">
             Belum punya akun?
-            <Link v-if="props.canRegister" :href="route('register')" class="text-link">Daftar</Link>
+            <Link :href="route('register')" class="text-link">Daftar</Link>
         </p>
         <p class="signup-note mt-2">
             Butuh bantuan?

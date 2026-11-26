@@ -20,7 +20,7 @@ const props = defineProps<{
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Quick Note', href: '/quick-notes' },
+    { title: 'Catatan cepat', href: '/quick-notes' },
     { title: props.note.title, href: `/quick-notes/${props.note.id}` },
 ];
 
@@ -215,7 +215,7 @@ function deleteNote() {
                                 :aria-valuenow="responseProgress"
                                 aria-valuemin="0"
                                 aria-valuemax="100"
-                                aria-label="Progres respons Quick Note"
+                                aria-label="Progres respons Catatan cepat"
                             >
                                 <div
                                     class="h-full origin-left rounded-full bg-success transition-transform duration-popover ease-ui motion-reduce:transition-none"
@@ -267,7 +267,7 @@ function deleteNote() {
 
         <ConfirmDialog
             v-model:open="deleteOpen"
-            title="Hapus Quick Note?"
+            title="Hapus Catatan cepat?"
             description="Catatan beserta data responsnya akan dihapus permanen."
             confirm-label="Hapus catatan"
             @confirm="deleteNote"

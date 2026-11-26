@@ -303,6 +303,8 @@ let aiPollTimer: ReturnType<typeof setInterval> | null = null;
 
 const hasPendingAiSummary = computed(() => aiSummaries.value.some((summary) => ['queued', 'processing'].includes(summary.generation_status)));
 const doneTaskCount = computed(() => props.meeting.action_items.filter((task) => task.status === 'done').length);
+const openTaskCount = computed(() => props.meeting.action_items.filter((task) => !['done', 'cancelled'].includes(task.status)).length);
+const previewTasks = computed(() => props.meeting.action_items.slice(0, 3));
 const taskProgress = computed(() => {
     if (props.meeting.action_items.length === 0) {
         return 0;
@@ -450,7 +452,7 @@ function finalize() {
     askConfirm(
         {
             title: isMeeting ? 'Finalkan notulen?' : 'Finalkan dokumen?',
-            description: 'Setelah difinalkan, isi dokumen dikunci untuk perubahan. Pastikan keputusan dan action item sudah lengkap.',
+            description: 'Setelah difinalkan, isi dokumen dikunci untuk perubahan. Pastikan keputusan dan Tindak lanjut sudah lengkap.',
             label: isMeeting ? 'Finalkan notulen' : 'Finalkan dokumen',
             kind: 'finalize',
         },
@@ -507,7 +509,7 @@ function summaryToText(summary: Summary): string {
     }
 
     if (summary.content.action_items?.length) {
-        lines.push('', 'Action item');
+        lines.push('', 'Tindak lanjut');
 
         for (const item of summary.content.action_items) {
             const owner = item.pic_name ?? item.division_name;
@@ -632,9 +634,9 @@ function saveEditTask(task: ActionItem) {
 function deleteTask(task: ActionItem) {
     askConfirm(
         {
-            title: 'Hapus action item?',
+            title: 'Hapus Tindak lanjut?',
             description: `"${task.title}" akan dihapus dari dokumen ini. Tindakan ini tidak dapat dibatalkan.`,
-            label: 'Hapus action item',
+            label: 'Hapus Tindak lanjut',
             tone: 'danger',
         },
         () => router.delete(route('action-items.destroy', task.id), { preserveScroll: true }),
@@ -819,8 +821,8 @@ function restoreVersion(version: Version) {
             </div>
 
             <div class="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-                <div class="min-w-0 space-y-6">
-                    <section class="space-y-2">
+                <div class="flex min-w-0 flex-col gap-6">
+                    <section class="order-1 space-y-2 xl:order-2">
                         <div class="flex flex-wrap items-center justify-between gap-2">
                             <h2 class="flex items-center gap-2 text-base font-semibold">
                                 <FileText class="size-4 text-muted-foreground" />
@@ -865,17 +867,15 @@ function restoreVersion(version: Version) {
                         </CardContent>
                     </Card>
 
-                    <section class="overflow-hidden rounded-lg border border-ai/25 bg-ai-surface/60 shadow-card" aria-labelledby="ai-summary-heading">
-                        <div class="flex flex-col gap-4 border-b border-ai/15 p-5 md:flex-row md:items-start md:justify-between md:p-6">
+                    <section class="order-2 overflow-hidden rounded-xl border border-ai-border/80 bg-ai-soft/60 xl:order-1" aria-labelledby="ai-summary-heading">
+                        <div class="flex flex-col gap-4 border-b border-ai-border/70 p-4 md:flex-row md:items-start md:justify-between md:p-5">
                             <div class="flex gap-3">
-                                <span class="flex size-10 shrink-0 items-center justify-center rounded-md bg-ai/10 text-ai">
-                                    <ScanText class="size-5" aria-hidden="true" />
-                                </span>
+                                <ScanText class="mt-0.5 size-4 shrink-0 text-ai" aria-hidden="true" />
                                 <div>
                                     <div class="flex flex-wrap items-center gap-2">
                                         <h2 id="ai-summary-heading" class="text-base font-semibold">Resume AI</h2>
-                                        <span class="rounded-full bg-card/80 px-2.5 py-0.5 text-[11px] font-medium text-ai ring-1 ring-ai/20"
-                                            >Dibuat oleh AI</span
+                                        <span class="rounded-md bg-card/80 px-2 py-0.5 text-[11px] font-medium text-muted-foreground ring-1 ring-border/70"
+                                            >Draf AI · perlu diperiksa</span
                                         >
                                     </div>
                                     <p class="mt-1 text-sm leading-6 text-muted-foreground">
@@ -909,21 +909,21 @@ function restoreVersion(version: Version) {
                             </div>
                         </div>
 
-                        <div class="space-y-4 p-5 md:p-6">
-                            <div v-if="aiSummaries.length === 0" class="rounded-lg border border-dashed border-ai/25 bg-card/60 p-5">
+                        <div class="space-y-4 p-4 md:p-5">
+                            <div v-if="aiSummaries.length === 0" class="rounded-lg bg-card/70 p-4">
                                 <p class="text-sm font-medium">Belum ada resume</p>
                                 <p class="mt-1 text-sm leading-6 text-muted-foreground">
                                     {{
                                         props.meeting.confidentiality === 'secret' && !canGenerate
                                             ? 'AI dinonaktifkan untuk notulen rahasia. Tulis ringkasan secara manual.'
                                             : canGenerate
-                                              ? 'Buat resume untuk merangkum poin penting, keputusan, dan action item.'
+                                              ? 'Buat resume untuk merangkum poin penting, keputusan, dan Tindak lanjut.'
                                               : 'Resume belum tersedia untuk dokumen ini.'
                                     }}
                                 </p>
                             </div>
 
-                            <article v-for="summary in aiSummaries" :key="summary.id" class="rounded-lg border border-ai/15 bg-card/85 p-4">
+                            <article v-for="summary in aiSummaries" :key="summary.id" class="rounded-lg bg-card p-4 ring-1 ring-border/60">
                                 <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
                                     <span class="font-medium text-ai">Versi {{ summary.version }}</span>
                                     <span aria-hidden="true">·</span>
@@ -974,7 +974,7 @@ function restoreVersion(version: Version) {
                                 </div>
 
                                 <div v-if="summary.content.action_items?.length" class="mt-4">
-                                    <p class="text-xs font-semibold text-foreground">Usulan action item</p>
+                                    <p class="text-xs font-semibold text-foreground">Usulan Tindak lanjut</p>
                                     <ul class="mt-2 space-y-1.5">
                                         <li v-for="(item, index) in summary.content.action_items" :key="index" class="flex gap-2 text-sm leading-6">
                                             <span class="mt-2 size-1.5 shrink-0 rounded-full bg-ai" aria-hidden="true"></span>
@@ -1005,7 +1005,7 @@ function restoreVersion(version: Version) {
                                     class="mt-4"
                                 >
                                     <Button size="sm" variant="outline" @click="applySummaryActions(summary)">
-                                        Terapkan action item
+                                        Terapkan Tindak lanjut
                                     </Button>
                                 </div>
 
@@ -1020,7 +1020,7 @@ function restoreVersion(version: Version) {
                         </div>
                     </section>
 
-                    <Card>
+                    <Card class="order-3 border-border/80 shadow-none">
                         <CardHeader class="flex-row items-start justify-between gap-3">
                             <div>
                                 <CardTitle class="text-base">Keputusan</CardTitle>
@@ -1110,11 +1110,11 @@ function restoreVersion(version: Version) {
                         </CardContent>
                     </Card>
 
-                    <Card>
+                    <Card id="action-items" class="order-4 scroll-mt-24 border-border/80 shadow-none">
                         <CardHeader class="gap-3">
                             <div class="flex flex-row items-start justify-between gap-3">
                                 <div>
-                                    <CardTitle class="text-base">Action item</CardTitle>
+                                    <CardTitle class="text-base">Tindak lanjut</CardTitle>
                                     <p class="text-sm text-muted-foreground">PIC dan tenggat wajib sebelum finalisasi.</p>
                                 </div>
                                 <span class="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">
@@ -1128,7 +1128,7 @@ function restoreVersion(version: Version) {
                                     :aria-valuenow="taskProgress"
                                     aria-valuemin="0"
                                     aria-valuemax="100"
-                                    aria-label="Progres action item"
+                                    aria-label="Progres Tindak lanjut"
                                 >
                                     <div
                                         class="h-full origin-left rounded-full bg-success transition-transform duration-popover ease-ui motion-reduce:transition-none"
@@ -1191,7 +1191,7 @@ function restoreVersion(version: Version) {
                                 class="rounded-lg border border-dashed border-border px-4 py-8 text-center"
                             >
                                 <ListChecks class="mx-auto size-6 text-muted-foreground" aria-hidden="true" />
-                                <p class="mt-2 text-sm font-medium">Belum ada action item</p>
+                                <p class="mt-2 text-sm font-medium">Belum ada Tindak lanjut</p>
                                 <p class="mt-1 text-xs text-muted-foreground">Tambahkan tugas, PIC, dan tenggat agar tindak lanjut tidak terlewat.</p>
                             </div>
 
@@ -1348,7 +1348,7 @@ function restoreVersion(version: Version) {
                         </CardContent>
                     </Card>
 
-                    <Card>
+                    <Card class="order-5 border-border/80 shadow-none">
                         <CardHeader>
                             <CardTitle class="text-base">Lampiran</CardTitle>
                         </CardHeader>
@@ -1449,6 +1449,41 @@ function restoreVersion(version: Version) {
                 </div>
 
                 <aside class="min-w-0 space-y-4">
+                    <Card class="border-border/80 shadow-none">
+                        <CardHeader class="flex-row items-center justify-between space-y-0 pb-3">
+                            <CardTitle class="flex items-center gap-2 text-sm">
+                                <ListChecks class="size-4 text-muted-foreground" aria-hidden="true" />
+                                Tindak lanjut
+                            </CardTitle>
+                            <a href="#action-items" class="text-xs font-medium text-primary hover:underline">Lihat semua</a>
+                        </CardHeader>
+                        <CardContent class="space-y-3">
+                            <div v-if="props.meeting.action_items.length === 0" class="text-sm text-muted-foreground">
+                                Belum ada tindak lanjut.
+                            </div>
+                            <template v-else>
+                                <div class="flex items-center justify-between text-xs text-muted-foreground">
+                                    <span>{{ openTaskCount }} terbuka · {{ doneTaskCount }} selesai</span>
+                                    <span class="tabular-nums">{{ taskProgress }}%</span>
+                                </div>
+                                <div class="h-1.5 overflow-hidden rounded-full bg-muted" role="progressbar" :aria-valuenow="taskProgress" aria-valuemin="0" aria-valuemax="100" aria-label="Progres tindak lanjut">
+                                    <div class="h-full origin-left rounded-full bg-primary transition-transform duration-base" :style="{ transform: `scaleX(${taskProgress / 100})` }"></div>
+                                </div>
+                                <ul class="space-y-2">
+                                    <li v-for="task in previewTasks" :key="task.id" class="flex items-start justify-between gap-2 text-sm">
+                                        <span class="min-w-0">
+                                            <span class="block truncate font-medium">{{ task.title }}</span>
+                                            <span class="block text-xs text-muted-foreground">{{ task.pic?.name ?? task.pic_name ?? 'Belum ada PIC' }}</span>
+                                        </span>
+                                        <span class="shrink-0 text-xs" :class="task.is_overdue ? 'font-medium text-destructive-strong' : 'text-muted-foreground'">
+                                            {{ formatDate(task.due_date) }}
+                                        </span>
+                                    </li>
+                                </ul>
+                            </template>
+                        </CardContent>
+                    </Card>
+
                     <Card>
                         <CardHeader class="pb-3">
                             <CardTitle class="flex items-center gap-2 text-sm">

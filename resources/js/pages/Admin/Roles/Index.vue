@@ -24,7 +24,7 @@ const capabilities: { label: string; roles: string[] }[] = [
     { label: 'Membuat dan menyunting draf dokumen', roles: ['admin', 'notulis'] },
     { label: 'Memfinalkan dokumen', roles: ['admin', 'notulis'] },
     { label: 'Menyunting dokumen setelah final', roles: ['admin'] },
-    { label: 'Mengelola action item pada dokumen draf', roles: ['admin', 'notulis'] },
+    { label: 'Mengelola tindak lanjut pada dokumen draf', roles: ['admin', 'notulis'] },
     { label: 'Memperbarui status tugas sendiri sebagai PIC', roles: ['admin', 'notulis', 'member'] },
     { label: 'Menjalankan resume AI dan menerapkannya', roles: ['admin', 'notulis'] },
     { label: 'Mengelola pengguna, divisi, topik, dan template', roles: ['admin'] },

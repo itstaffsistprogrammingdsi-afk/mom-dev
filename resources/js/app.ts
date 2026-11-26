@@ -1,3 +1,4 @@
+import '@fontsource-variable/plus-jakarta-sans';
 import '../css/app.css';
 import '../css/auth.css';
 

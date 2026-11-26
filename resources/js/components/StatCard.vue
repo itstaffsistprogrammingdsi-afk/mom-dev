@@ -15,24 +15,22 @@ withDefaults(defineProps<Props>(), {
 });
 
 const toneClasses: Record<string, string> = {
-    default: 'bg-accent text-accent-foreground',
-    warning: 'bg-warning-soft text-warning-strong',
-    danger: 'bg-destructive-soft text-destructive-strong',
-    success: 'bg-success-soft text-success-strong',
+    default: 'text-muted-foreground',
+    warning: 'text-warning-strong',
+    danger: 'text-destructive-strong',
+    success: 'text-success-strong',
 };
 </script>
 
 <template>
-    <Card>
-        <CardContent class="flex items-start justify-between gap-3 p-card">
-            <div class="space-y-1">
-                <p class="text-sm font-medium text-muted-foreground">{{ label }}</p>
-                <p class="text-3xl font-semibold tabular-nums tracking-tight text-foreground">{{ value }}</p>
-                <p v-if="hint" class="text-xs leading-relaxed text-muted-foreground">{{ hint }}</p>
+    <Card class="border-border/80 shadow-none">
+        <CardContent class="p-4">
+            <div class="flex items-center gap-2">
+                <component :is="icon" v-if="icon" class="size-3.5 shrink-0" :class="toneClasses[tone]" aria-hidden="true" />
+                <p class="text-xs font-medium text-muted-foreground">{{ label }}</p>
             </div>
-            <div v-if="icon" class="rounded-md p-2" :class="toneClasses[tone]">
-                <component :is="icon" class="size-5" aria-hidden="true" />
-            </div>
+            <p class="mt-2 text-2xl font-semibold leading-none tabular-nums tracking-[-0.02em] text-foreground">{{ value }}</p>
+            <p v-if="hint" class="mt-1.5 text-xs leading-relaxed text-muted-foreground">{{ hint }}</p>
         </CardContent>
     </Card>
 </template>

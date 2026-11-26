@@ -161,16 +161,14 @@ const breadcrumbs: BreadcrumbItem[] = [
                 </div>
 
                 <aside class="min-w-0 space-y-4">
-                    <section class="overflow-hidden rounded-lg border border-ai/25 bg-ai-surface/60 shadow-card" aria-labelledby="topic-ai-heading">
-                        <div class="flex gap-3 border-b border-ai/15 p-5">
-                            <span class="flex size-10 shrink-0 items-center justify-center rounded-md bg-ai/10 text-ai">
-                                <ScanText class="size-5" aria-hidden="true" />
-                            </span>
+                    <section class="overflow-hidden rounded-xl border border-ai-border/80 bg-ai-soft/60" aria-labelledby="topic-ai-heading">
+                        <div class="flex gap-3 border-b border-ai-border/70 p-4">
+                            <ScanText class="mt-0.5 size-4 shrink-0 text-ai" aria-hidden="true" />
                             <div>
                                 <div class="flex flex-wrap items-center gap-2">
                                     <h2 id="topic-ai-heading" class="text-sm font-semibold">Resume lintas notulen</h2>
-                                    <span class="rounded-full bg-card/80 px-2 py-0.5 text-[11px] font-medium text-ai ring-1 ring-ai/20"
-                                        >Dibuat oleh AI</span
+                                    <span class="rounded-md bg-card/80 px-2 py-0.5 text-[11px] font-medium text-muted-foreground ring-1 ring-border/70"
+                                        >Draf AI · perlu diperiksa</span
                                     >
                                 </div>
                                 <p class="mt-1 text-xs leading-5 text-muted-foreground">Ringkasan dari notulen yang telah disetujui.</p>
@@ -180,7 +178,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                             <p v-if="props.summaries.length === 0" class="text-sm leading-6 text-muted-foreground">
                                 Belum ada resume lintas notulen yang disetujui.
                             </p>
-                            <article v-for="summary in props.summaries" :key="summary.id" class="rounded-md border border-ai/15 bg-card/85 p-3.5">
+                            <article v-for="summary in props.summaries" :key="summary.id" class="rounded-md bg-card p-3.5 ring-1 ring-border/60">
                                 <p class="text-xs text-muted-foreground">
                                     Versi {{ summary.version }} · disetujui {{ formatDate(summary.approved_at) }}
                                 </p>
