@@ -4,6 +4,7 @@ import AuthBase from '@/layouts/AuthLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { Eye, EyeOff, LockKeyhole, LogIn, Mail } from 'lucide-vue-next';
 import { onBeforeUnmount, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 const props = withDefaults(
     defineProps<{
@@ -22,6 +23,7 @@ const form = useForm({
     password: '',
     remember: false,
 });
+const { t } = useI18n();
 
 const showPassword = ref(false);
 const notice = ref('');
@@ -36,7 +38,7 @@ const submit = () => {
 };
 
 const showGoogleNotice = () => {
-    notice.value = 'Login Google belum dikonfigurasi. Hubungi administrator sistem.';
+    notice.value = t('auth.googleUnavailable');
 
     if (noticeTimer) {
         clearTimeout(noticeTimer);
@@ -59,8 +61,8 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <AuthBase kicker="Sistem notulensi" title="Masuk ke ruang kerja" description="Akses notulen, tindak lanjut, dan topik divisi Anda.">
-        <Head title="Masuk" />
+    <AuthBase :kicker="t('auth.kicker')" :title="t('auth.title')" :description="t('auth.description')">
+        <Head :title="t('auth.submit')" />
 
         <div
             v-if="props.status"
@@ -71,7 +73,7 @@ onBeforeUnmount(() => {
 
         <form class="login-form" @submit.prevent="submit">
             <div class="field-group">
-                <label for="email">Email</label>
+                <label for="email">{{ t('auth.email') }}</label>
                 <div class="input-wrap" :class="{ 'has-error': form.errors.email }">
                     <Mail class="field-icon" aria-hidden="true" />
                     <input
@@ -90,7 +92,7 @@ onBeforeUnmount(() => {
             </div>
 
             <div class="field-group">
-                <label for="password">Kata sandi</label>
+                <label for="password">{{ t('auth.password') }}</label>
                 <div class="input-wrap" :class="{ 'has-error': form.errors.password }">
                     <LockKeyhole class="field-icon" aria-hidden="true" />
                     <input
@@ -123,36 +125,36 @@ onBeforeUnmount(() => {
                     <span class="custom-checkbox" aria-hidden="true">
                         <svg viewBox="0 0 16 16"><path d="m3 8 3.1 3.1L13 4.5" /></svg>
                     </span>
-                    <span>Ingat saya</span>
+                    <span>{{ t('auth.remember') }}</span>
                 </label>
-                <Link v-if="props.canResetPassword" :href="route('password.request')" class="text-link"> Lupa password? </Link>
+                <Link v-if="props.canResetPassword" :href="route('password.request')" class="text-link"> {{ t('auth.forgot') }} </Link>
             </div>
 
             <button type="submit" class="primary-button" :class="{ 'is-loading': form.processing }" :disabled="form.processing">
-                <span class="button-label">Masuk</span>
+                <span class="button-label">{{ t('auth.submit') }}</span>
                 <LogIn class="button-arrow" aria-hidden="true" />
                 <span class="button-spinner" aria-hidden="true"></span>
             </button>
         </form>
 
-        <div class="separator"><span></span><small>atau</small><span></span></div>
+        <div class="separator"><span></span><small>{{ t('auth.or') }}</small><span></span></div>
 
         <a v-if="props.googleEnabled" :href="route('auth.google.redirect')" class="google-button">
             <GoogleIcon />
-            <span>Masuk dengan Google</span>
+            <span>{{ t('auth.google') }}</span>
         </a>
         <button v-else type="button" class="google-button" @click="showGoogleNotice">
             <GoogleIcon />
-            <span>Masuk dengan Google</span>
+            <span>{{ t('auth.google') }}</span>
         </button>
 
         <p v-if="props.canRegister" class="signup-note">
-            Belum punya akun?
-            <Link :href="route('register')" class="text-link">Daftar</Link>
+            {{ t('auth.noAccount') }}
+            <Link :href="route('register')" class="text-link">{{ t('auth.register') }}</Link>
         </p>
         <p class="signup-note mt-2">
-            Butuh bantuan?
-            <button type="button" class="text-link" @click="openHelp">Hubungi administrator</button>
+            {{ t('auth.help') }}
+            <button type="button" class="text-link" @click="openHelp">{{ t('auth.contactAdmin') }}</button>
         </p>
         <p class="copyright">&copy; {{ year }} MoM. Workspace for better meetings.</p>
 
@@ -168,8 +170,8 @@ onBeforeUnmount(() => {
                     <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" />
                 </svg>
             </div>
-            <h3>Butuh bantuan masuk?</h3>
-            <p>Hubungi administrator sistem untuk mendapatkan akses atau mengatur ulang password akun MoM Anda.</p>
+            <h3>{{ t('auth.helpTitle') }}</h3>
+            <p>{{ t('auth.helpBody') }}</p>
             <button type="button" class="dialog-close" @click="helpDialog?.close()">Mengerti</button>
         </dialog>
 

@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { currentLocale } from '@/i18n';
 import { formatDateTime } from '@/lib/labels';
 import type { ActionItem, ActionItemFeedback } from '@/types';
 import { useForm } from '@inertiajs/vue3';
@@ -67,7 +68,7 @@ const form = useForm<{
     photo: null,
 });
 
-const numberFormat = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 });
+const numberFormat = new Intl.NumberFormat(currentLocale(), { maximumFractionDigits: 1 });
 
 const showResponseHours = computed(() => props.canRespond && props.task !== null && !props.task.response_due_at);
 const responseDueSoon = computed(() => {

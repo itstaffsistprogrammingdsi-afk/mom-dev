@@ -45,6 +45,11 @@ class HandleInertiaRequests extends Middleware
                     ? Cache::remember("notifications:unread:{$user->id}", now()->addSeconds(15), fn () => $user->unreadNotifications()->count())
                     : 0,
             ],
+            'preferences' => [
+                'locale' => $user?->locale ?? app()->getLocale(),
+                'appearance' => $user?->appearance ?? 'system',
+                'timezone' => $user?->timezone ?? 'Asia/Jakarta',
+            ],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),

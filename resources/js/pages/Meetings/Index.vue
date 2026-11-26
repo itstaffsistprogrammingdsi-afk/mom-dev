@@ -12,11 +12,12 @@ import { Select } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/composables/useToast';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { formatDateTime, meetingTypeLabels, statusLabels } from '@/lib/labels';
+import { documentTypeLabels, formatDateTime, meetingTypeLabels, statusLabels } from '@/lib/labels';
 import { type BreadcrumbItem, type Division, type Meeting } from '@/types';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { Bookmark, FileText, Plus, RotateCcw, Search, SlidersHorizontal, Trash2, X } from 'lucide-vue-next';
 import { computed, reactive, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 interface Paginated<T> {
     data: T[];
@@ -35,7 +36,7 @@ const props = defineProps<{
     canCreate: boolean;
 }>();
 
-const breadcrumbs: BreadcrumbItem[] = [{ title: 'Dokumen', href: '/notulen' }];
+const breadcrumbs = computed<BreadcrumbItem[]>(() => [{ title: t('nav.documents'), href: '/notulen' }]);
 
 function dateParts(value?: string | null): { day: string; month: string } {
     if (!value) {
@@ -45,8 +46,8 @@ function dateParts(value?: string | null): { day: string; month: string } {
     const date = new Date(value);
 
     return {
-        day: new Intl.DateTimeFormat('id-ID', { day: '2-digit' }).format(date),
-        month: new Intl.DateTimeFormat('id-ID', { month: 'short' }).format(date),
+        day: new Intl.DateTimeFormat(locale.value, { day: '2-digit' }).format(date),
+        month: new Intl.DateTimeFormat(locale.value, { month: 'short' }).format(date),
     };
 }
 
@@ -64,6 +65,7 @@ const filters = reactive({
 const isLoading = ref(false);
 const showFilters = ref(false);
 const toast = useToast();
+const { t, locale } = useI18n();
 
 const activeFilterCount = computed(() => {
     return ['division', 'topic', 'status', 'type', 'document_type', 'from', 'to'].filter((key) => filters[key as keyof typeof filters]).length;
@@ -170,38 +172,37 @@ const activeFilterChips = computed<{ key: FilterKey; label: string }[]>(() => {
     const chips: { key: FilterKey; label: string }[] = [];
 
     if (filters.search) {
-        chips.push({ key: 'search', label: `Cari: ${filters.search}` });
+        chips.push({ key: 'search', label: `${t('common.search')}: ${filters.search}` });
     }
 
     if (filters.division) {
         const division = props.divisions.find((item) => String(item.id) === filters.division);
-        chips.push({ key: 'division', label: `Divisi: ${division?.name ?? filters.division}` });
+        chips.push({ key: 'division', label: `${t('meetings.filters.division')}: ${division?.name ?? filters.division}` });
     }
 
     if (filters.topic) {
         const topic = props.topics.find((item) => String(item.id) === filters.topic);
-        chips.push({ key: 'topic', label: `Topik: #${topic?.name ?? filters.topic}` });
+        chips.push({ key: 'topic', label: `${t('meetings.filters.topic')}: #${topic?.name ?? filters.topic}` });
     }
 
     if (filters.document_type) {
-        const type = props.documentTypes.find((item) => item.value === filters.document_type);
-        chips.push({ key: 'document_type', label: `Jenis: ${type?.label ?? filters.document_type}` });
+        chips.push({ key: 'document_type', label: `${t('meetings.filters.documentType')}: ${documentTypeLabels[filters.document_type] ?? filters.document_type}` });
     }
 
     if (filters.type) {
-        chips.push({ key: 'type', label: `Rapat: ${meetingTypeLabels[filters.type] ?? filters.type}` });
+        chips.push({ key: 'type', label: `${t('meetings.filters.meetingType')}: ${meetingTypeLabels[filters.type] ?? filters.type}` });
     }
 
     if (filters.status) {
-        chips.push({ key: 'status', label: `Status: ${statusLabels[filters.status] ?? filters.status}` });
+        chips.push({ key: 'status', label: `${t('meetings.filters.status')}: ${statusLabels[filters.status] ?? filters.status}` });
     }
 
     if (filters.from) {
-        chips.push({ key: 'from', label: `Dari: ${filters.from}` });
+        chips.push({ key: 'from', label: `${t('meetings.filters.from')}: ${filters.from}` });
     }
 
     if (filters.to) {
-        chips.push({ key: 'to', label: `Sampai: ${filters.to}` });
+        chips.push({ key: 'to', label: `${t('meetings.filters.to')}: ${filters.to}` });
     }
 
     return chips;
@@ -256,12 +257,12 @@ function resetFilters() {
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
-            <PageHeader title="Dokumen" description="Notulen, proposal, laporan, dan brosur yang dapat Anda akses.">
+            <PageHeader :title="t('meetings.title')" :description="t('meetings.description')">
                 <template #actions>
                     <Button v-if="props.canCreate" as-child>
                         <Link :href="route('meetings.create')">
                             <Plus class="size-4" aria-hidden="true" />
-                            Buat notulen
+                            {{ t('meetings.new') }}
                         </Link>
                     </Button>
                 </template>
@@ -278,7 +279,7 @@ function resetFilters() {
                             id="meeting-search"
                             v-model="filters.search"
                             type="search"
-                            placeholder="Cari judul atau isi dokumen"
+                            :placeholder="t('common.searchPlaceholder')"
                             class="h-10 pl-9 pr-9 [&::-webkit-search-cancel-button]:hidden"
                         />
                         <button
@@ -295,16 +296,16 @@ function resetFilters() {
                     <div class="flex flex-wrap items-center gap-2">
                         <Button type="button" variant="outline" class="flex-1 sm:flex-none" :aria-expanded="showFilters" @click="showFilters = !showFilters">
                             <SlidersHorizontal class="size-4" aria-hidden="true" />
-                            Filter
+                            {{ t('common.filter') }}
                             <span v-if="activeFilterCount" class="rounded-md bg-primary/10 px-1.5 text-[11px] font-semibold text-primary">{{ activeFilterCount }}</span>
                         </Button>
                         <Button type="button" variant="outline" class="flex-1 sm:flex-none" @click="presetDialogOpen = true">
                             <Bookmark class="size-4" aria-hidden="true" />
-                            Preset
+                            {{ t('meetings.filters.preset') }}
                         </Button>
                         <Button type="submit" variant="outline" class="flex-1 sm:flex-none">
                             <Search class="size-4" aria-hidden="true" />
-                            Cari
+                            {{ t('common.search') }}
                         </Button>
                     </div>
                 </div>
@@ -312,50 +313,50 @@ function resetFilters() {
                 <div v-show="showFilters" class="rounded-xl border border-border/80 bg-surface p-4 md:p-5">
                     <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                         <div class="space-y-1.5">
-                            <Label for="filter-division">Divisi</Label>
+                            <Label for="filter-division">{{ t('meetings.filters.division') }}</Label>
                             <Select id="filter-division" v-model="filters.division">
-                                <option value="">Semua divisi</option>
+                                <option value="">{{ t('meetings.filters.allDivisions') }}</option>
                                 <option v-for="division in props.divisions" :key="division.id" :value="String(division.id)">{{ division.name }}</option>
                             </Select>
                         </div>
 
                         <div class="space-y-1.5">
-                            <Label for="filter-topic">Topik</Label>
+                            <Label for="filter-topic">{{ t('meetings.filters.topic') }}</Label>
                             <Select id="filter-topic" v-model="filters.topic">
-                                <option value="">Semua topik</option>
+                                <option value="">{{ t('meetings.filters.allTopics') }}</option>
                                 <option v-for="topic in props.topics" :key="topic.id" :value="String(topic.id)">#{{ topic.name }}</option>
                             </Select>
                         </div>
 
                         <div class="space-y-1.5">
-                            <Label for="filter-document-type">Jenis dokumen</Label>
+                            <Label for="filter-document-type">{{ t('meetings.filters.documentType') }}</Label>
                             <Select id="filter-document-type" v-model="filters.document_type">
-                                <option value="">Semua jenis</option>
-                                <option v-for="type in props.documentTypes" :key="type.value" :value="type.value">{{ type.label }}</option>
+                                <option value="">{{ t('meetings.filters.allTypes') }}</option>
+                                <option v-for="type in props.documentTypes" :key="type.value" :value="type.value">{{ documentTypeLabels[type.value] ?? type.label }}</option>
                             </Select>
                         </div>
 
                         <div class="space-y-1.5">
-                            <Label for="filter-meeting-type">Jenis rapat</Label>
+                            <Label for="filter-meeting-type">{{ t('meetings.filters.meetingType') }}</Label>
                             <Select id="filter-meeting-type" v-model="filters.type">
-                                <option value="">Semua jenis rapat</option>
+                                <option value="">{{ t('meetings.filters.allMeetingTypes') }}</option>
                                 <option v-for="(label, value) in meetingTypeLabels" :key="value" :value="value">{{ label }}</option>
                             </Select>
                         </div>
 
                         <div class="space-y-1.5">
-                            <Label for="filter-status">Status</Label>
+                            <Label for="filter-status">{{ t('meetings.filters.status') }}</Label>
                             <Select id="filter-status" v-model="filters.status">
-                                <option value="">Semua status</option>
+                                <option value="">{{ t('meetings.filters.allStatuses') }}</option>
                                 <option v-for="(label, value) in statusLabels" :key="value" :value="value">{{ label }}</option>
                             </Select>
                         </div>
 
                         <div class="space-y-1.5 sm:col-span-2">
-                            <Label>Rentang tanggal</Label>
+                            <Label>{{ t('meetings.filters.dateRange') }}</Label>
                             <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                                <Input v-model="filters.from" type="date" aria-label="Dari tanggal" />
-                                <Input v-model="filters.to" type="date" aria-label="Sampai tanggal" />
+                                <Input v-model="filters.from" type="date" :aria-label="t('meetings.filters.from')" />
+                                <Input v-model="filters.to" type="date" :aria-label="t('meetings.filters.to')" />
                             </div>
                             <div class="flex flex-wrap items-center gap-1.5 pt-1">
                                 <button
@@ -363,14 +364,14 @@ function resetFilters() {
                                     class="inline-flex items-center rounded-lg bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors duration-fast hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-sm:min-h-11"
                                     @click="setDateRange(6)"
                                 >
-                                    7 hari terakhir
+                                    {{ t('meetings.filters.last7') }}
                                 </button>
                                 <button
                                     type="button"
                                     class="inline-flex items-center rounded-lg bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors duration-fast hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-sm:min-h-11"
                                     @click="setDateRange(29)"
                                 >
-                                    30 hari terakhir
+                                    {{ t('meetings.filters.last30') }}
                                 </button>
                                 <button
                                     v-if="filters.from || filters.to"
@@ -378,24 +379,24 @@ function resetFilters() {
                                     class="inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-medium text-primary transition-colors duration-fast hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-sm:min-h-11"
                                     @click="clearDateRange"
                                 >
-                                    Hapus tanggal
+                                    {{ t('meetings.filters.clearDate') }}
                                 </button>
                             </div>
                         </div>
                     </div>
 
                     <div class="mt-4 flex flex-wrap items-center justify-end gap-2 border-t border-border/60 pt-4">
-                        <Button type="button" variant="outline" @click="resetFilters">Reset</Button>
+                        <Button type="button" variant="outline" @click="resetFilters">{{ t('common.reset') }}</Button>
                         <Button type="submit">
                             <Search class="size-4" aria-hidden="true" />
-                            Terapkan filter
+                            {{ t('meetings.filters.apply') }}
                         </Button>
                     </div>
                 </div>
             </form>
 
             <div v-if="activeFilterChips.length" class="flex flex-wrap items-center gap-2">
-                <span class="text-xs font-medium text-subtle-foreground">Filter aktif</span>
+                <span class="text-xs font-medium text-subtle-foreground">{{ t('meetings.activeFilters') }}</span>
                 <button
                     v-for="chip in activeFilterChips"
                     :key="chip.key"
@@ -407,14 +408,14 @@ function resetFilters() {
                     {{ chip.label }}
                     <X class="size-3" aria-hidden="true" />
                 </button>
-                <Button variant="ghost" size="sm" @click="resetFilters">Hapus semua</Button>
+                <Button variant="ghost" size="sm" @click="resetFilters">{{ t('meetings.removeAll') }}</Button>
             </div>
 
             <div class="flex flex-wrap items-end justify-between gap-2">
                 <div>
-                    <h2 class="text-sm font-semibold text-foreground">Daftar dokumen</h2>
+                    <h2 class="text-sm font-semibold text-foreground">{{ t('meetings.listTitle') }}</h2>
                     <p class="text-xs text-muted-foreground">
-                        {{ props.meetings.total }} dokumen{{ activeFilterChips.length ? ' sesuai filter' : '' }}
+                        {{ activeFilterChips.length ? t('meetings.countFiltered', { n: props.meetings.total }) : t('meetings.count', { n: props.meetings.total }) }}
                     </p>
                 </div>
             </div>
@@ -433,18 +434,18 @@ function resetFilters() {
             <EmptyState
                 v-else-if="props.meetings.data.length === 0"
                 :icon="FileText"
-                title="Tidak ada dokumen yang cocok"
-                description="Coba longgarkan filter, atau buat dokumen baru bila Anda memiliki akses notulis."
+                :title="t('meetings.emptyTitle')"
+                :description="t('meetings.emptyBody')"
             >
                 <div class="flex flex-wrap justify-center gap-2">
                     <Button variant="outline" @click="resetFilters">
                         <RotateCcw class="size-4" aria-hidden="true" />
-                        Reset filter
+                        {{ t('common.reset') }} {{ t('common.filter').toLowerCase() }}
                     </Button>
                     <Button v-if="props.canCreate" as-child>
                         <Link :href="route('meetings.create')">
                             <Plus class="size-4" aria-hidden="true" />
-                            Buat dokumen
+                            {{ t('meetings.new') }}
                         </Link>
                     </Button>
                 </div>
@@ -488,7 +489,7 @@ function resetFilters() {
 
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <p class="text-sm text-muted-foreground">
-                    Menampilkan {{ props.meetings.from ?? 0 }}–{{ props.meetings.to ?? 0 }} dari {{ props.meetings.total }} dokumen
+                    {{ t('common.showing', { from: props.meetings.from ?? 0, to: props.meetings.to ?? 0, total: props.meetings.total }) }}
                 </p>
                 <Pagination :links="props.meetings.links" />
             </div>

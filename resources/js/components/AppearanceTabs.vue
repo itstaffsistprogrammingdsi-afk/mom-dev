@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useAppearance } from '@/composables/useAppearance';
 import { Monitor, Moon, Sun } from 'lucide-vue-next';
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 interface Props {
     class?: string;
@@ -11,31 +13,32 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const { appearance, updateAppearance } = useAppearance();
+const { t } = useI18n();
 
-const tabs = [
-    { value: 'light', Icon: Sun, label: 'Terang' },
-    { value: 'dark', Icon: Moon, label: 'Gelap' },
-    { value: 'system', Icon: Monitor, label: 'Sistem' },
-] as const;
+const tabs = computed(() => [
+    { value: 'light' as const, Icon: Sun, label: t('theme.light') },
+    { value: 'dark' as const, Icon: Moon, label: t('theme.dark') },
+    { value: 'system' as const, Icon: Monitor, label: t('theme.system') },
+]);
 </script>
 
 <template>
-    <div :class="['inline-flex gap-1 rounded-lg bg-neutral-100 p-1 dark:bg-neutral-800', props.class]">
+    <div :class="['inline-flex gap-1 rounded-lg border border-border/70 bg-muted/50 p-1', props.class]">
         <button
             v-for="{ value, Icon, label } in tabs"
             :key="value"
             type="button"
             :aria-pressed="appearance === value"
-            @click="updateAppearance(value)"
-            :class="[
-                'flex items-center rounded-md px-3.5 py-1.5 transition-colors',
+            class="flex min-h-10 items-center rounded-md px-3.5 py-1.5 text-sm transition-colors duration-fast"
+            :class="
                 appearance === value
-                    ? 'bg-white shadow-sm dark:bg-neutral-700 dark:text-neutral-100'
-                    : 'text-neutral-500 hover:bg-neutral-200/60 hover:text-black dark:text-neutral-400 dark:hover:bg-neutral-700/60',
-            ]"
+                    ? 'bg-surface text-foreground shadow-soft-xs'
+                    : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground'
+            "
+            @click="updateAppearance(value)"
         >
-            <component :is="Icon" class="-ml-1 h-4 w-4" />
-            <span class="ml-1.5 text-sm">{{ label }}</span>
+            <component :is="Icon" class="-ml-1 size-4" aria-hidden="true" />
+            <span class="ml-1.5">{{ label }}</span>
         </button>
     </div>
 </template>

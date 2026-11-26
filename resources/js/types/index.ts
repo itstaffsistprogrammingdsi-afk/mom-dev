@@ -24,6 +24,11 @@ export interface SharedData {
     name: string;
     auth: Auth;
     notifications: { unread: number };
+    preferences: {
+        locale: 'id' | 'en';
+        appearance: 'light' | 'dark' | 'system';
+        timezone: string;
+    };
     flash: { success?: string; error?: string };
     ziggy: {
         location: string;

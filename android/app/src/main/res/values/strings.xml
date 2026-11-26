@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MoM</string>
+    <string name="title_activity_main">MoM</string>
+    <string name="package_name">id.mom.notulensi</string>
+    <string name="custom_url_scheme">id.mom.notulensi</string>
+</resources>

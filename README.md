@@ -164,6 +164,36 @@ FTS lebih mahal karena menghitung `ts_rank` untuk seluruh hasil, tetapi tetap ja
 - Preferensi notifikasi ada di **Pengaturan > Notifikasi**: aktif/nonaktifkan kanal in-app, salinan email, serta kategori notulen, action item, dan Quick Note. Peringatan sistem untuk admin tetap tampil di aplikasi.
 - `MeetingEditor` dimuat secara async di halaman buat/sunting dan mode dokumen; mode sheet tidak memuat editor Tiptap.
 
+## Bahasa, Tema, dan PWA
+
+- Bahasa antarmuka: **Indonesia** dan **English**, dapat diganti dari header atau **Pengaturan > Tampilan**. Pilihan disimpan di profil pengguna dan cookie/localStorage untuk halaman login.
+- Berkas terjemahan frontend: `resources/js/i18n/locales/id.json` dan `en.json`; backend: `lang/id` dan `lang/en`.
+- Tema: **Terang / Gelap / Ikuti sistem**. Preferensi disinkronkan ke kolom `appearance` pengguna dan diterapkan sebelum render untuk mencegah flash.
+- PWA: `public/manifest.webmanifest`, `public/sw.js`, `public/offline.html`, ikon di `public/icons`. Service worker hanya menyimpan aset statis dan halaman offline; HTML/API terautentikasi tidak di-cache.
+- Tombol **Pasang MoM** muncul jika browser mendukung `beforeinstallprompt`.
+
+## Aplikasi Android (Capacitor)
+
+Proyek Android ada di `android/` dengan package `id.mom.notulensi`. APK debug terakhir:
+
+```text
+storage/app/builds/mom-debug-2026-11-26.apk
+```
+
+Build ulang (ganti URL dengan domain HTTPS produksi):
+
+```bash
+export CAPACITOR_SERVER_URL=https://mom.perusahaan.com
+npm run mobile:sync
+cd android
+./gradlew assembleDebug
+# release: ./gradlew bundleRelease
+```
+
+APK debug saat ini memakai `http://192.168.10.145:8100` untuk pengujian LAN. HP harus berada di jaringan yang sama dan server harus berjalan dengan `php artisan serve --host=0.0.0.0 --port=8100`. Untuk produksi wajib HTTPS dan build ulang dengan `CAPACITOR_SERVER_URL` HTTPS.
+
+Fitur native yang sudah disiapkan: deep link `mom://notulen/{id}`, tombol back Android, status bar, share sheet, dan splash screen. **Push FCM belum aktif** karena belum ada project Firebase/`google-services.json`; lihat `docs/MOBILE-ANDROID.md`.
+
 ## Health Check & Runbook Singkat
 
 Endpoint publik `GET /health` memeriksa database, cache, konfigurasi queue, konfigurasi AI, dan status Hocuspocus. Status `503` diberikan jika komponen inti gagal; status Hocuspocus dilaporkan terpisah sebagai `collab`.

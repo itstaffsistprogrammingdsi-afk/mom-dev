@@ -1,0 +1,40 @@
+<?php
+
+return [
+    'required' => 'Kolom :attribute wajib diisi.',
+    'email' => 'Kolom :attribute harus berupa alamat email yang valid.',
+    'string' => 'Kolom :attribute harus berupa teks.',
+    'integer' => 'Kolom :attribute harus berupa angka bulat.',
+    'boolean' => 'Kolom :attribute harus bernilai benar atau salah.',
+    'array' => 'Kolom :attribute harus berupa array.',
+    'date' => 'Kolom :attribute bukan tanggal yang valid.',
+    'timezone' => 'Kolom :attribute harus berupa zona waktu yang valid.',
+    'confirmed' => 'Konfirmasi :attribute tidak cocok.',
+    'current_password' => 'Kata sandi tidak cocok.',
+    'in' => 'Nilai :attribute yang dipilih tidak valid.',
+    'exists' => 'Nilai :attribute yang dipilih tidak valid.',
+    'unique' => ':attribute sudah digunakan.',
+    'max' => [
+        'string' => 'Kolom :attribute tidak boleh lebih dari :max karakter.',
+        'numeric' => 'Kolom :attribute tidak boleh lebih dari :max.',
+        'array' => 'Kolom :attribute tidak boleh lebih dari :max item.',
+        'file' => 'Berkas :attribute tidak boleh lebih dari :max kilobyte.',
+    ],
+    'min' => [
+        'string' => 'Kolom :attribute minimal :min karakter.',
+        'numeric' => 'Kolom :attribute minimal :min.',
+        'array' => 'Kolom :attribute minimal :min item.',
+        'file' => 'Berkas :attribute minimal :min kilobyte.',
+    ],
+    'attributes' => [
+        'email' => 'email',
+        'password' => 'kata sandi',
+        'current_password' => 'kata sandi saat ini',
+        'name' => 'nama',
+        'title' => 'judul',
+        'content' => 'isi',
+        'locale' => 'bahasa',
+        'appearance' => 'tema',
+        'timezone' => 'zona waktu',
+    ],
+];

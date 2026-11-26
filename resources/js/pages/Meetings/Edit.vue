@@ -14,6 +14,7 @@ import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import type { JSONContent } from '@tiptap/core';
 import { AlertCircle, CheckCircle2, CircleDashed, Loader2, Users, Wifi } from 'lucide-vue-next';
 import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 const MeetingEditor = defineAsyncComponent(() => import('@/components/MeetingEditor.vue'));
 
@@ -37,6 +38,7 @@ const props = defineProps<{
 
 const page = usePage<SharedData>();
 const user = computed(() => page.props.auth.user);
+const { t, locale } = useI18n();
 const collabUrl = props.collab?.url ?? null;
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -72,22 +74,22 @@ let autosaveReady = false;
 
 const autosaveLabel = computed(() => {
     if (autosaveState.value === 'saving') {
-        return 'Menyimpan…';
+        return t('editor.autosave.saving');
     }
 
     if (autosaveState.value === 'saved') {
-        return `Tersimpan ${lastSavedAt.value ?? ''}`.trim();
+        return t('editor.autosave.saved', { time: lastSavedAt.value ?? '' }).trim();
     }
 
     if (autosaveState.value === 'error') {
-        return 'Gagal menyimpan';
+        return t('editor.autosave.failed');
     }
 
     if (autosaveState.value === 'offline') {
-        return 'Offline — perubahan akan disinkronkan';
+        return t('editor.autosave.offline');
     }
 
-    return 'Tersimpan otomatis';
+    return t('editor.autosave.idle');
 });
 
 const autosaveTone = computed(() => {
@@ -254,7 +256,7 @@ async function runAutosave() {
         }
 
         const data = await response.json();
-        lastSavedAt.value = new Date(data.saved_at).toLocaleTimeString('id-ID', {
+        lastSavedAt.value = new Date(data.saved_at).toLocaleTimeString(locale.value, {
             hour: '2-digit',
             minute: '2-digit',
         });
@@ -294,8 +296,8 @@ function submit() {
     <AppLayout :breadcrumbs="breadcrumbs">
         <form class="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-4 py-6 md:px-8 md:py-8" @submit.prevent="submit">
             <PageHeader
-                :title="props.meeting.document_type === 'meeting' ? 'Sunting notulen' : 'Sunting dokumen'"
-                description="Perubahan tersimpan otomatis dan tercatat di audit log. Dokumen final hanya dapat diubah oleh admin."
+                :title="props.meeting.document_type === 'meeting' ? t('editor.title') : t('editor.titleDocument')"
+                :description="t('editor.description')"
             >
                 <template #actions>
                     <div class="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
@@ -313,9 +315,9 @@ function submit() {
                             {{ autosaveLabel }}
                         </span>
                         <Button variant="outline" as-child class="flex-1 sm:flex-none">
-                            <Link :href="route('meetings.show', props.meeting.id)">Lihat dokumen</Link>
+                            <Link :href="route('meetings.show', props.meeting.id)">{{ t('editor.viewDocument') }}</Link>
                         </Button>
-                        <Button type="submit" :loading="form.processing" class="flex-1 sm:flex-none">Selesai</Button>
+                        <Button type="submit" :loading="form.processing" class="flex-1 sm:flex-none">{{ t('editor.finish') }}</Button>
                     </div>
                 </template>
             </PageHeader>
@@ -324,7 +326,7 @@ function submit() {
                 <div class="min-w-0 space-y-6">
                     <section class="rounded-lg border border-border bg-card p-5 md:p-6">
                         <div class="space-y-1.5">
-                            <Label for="title">Judul</Label>
+                            <Label for="title">{{ t('editor.titleField') }}</Label>
                             <Input
                                 id="title"
                                 v-model="form.title"
@@ -336,7 +338,7 @@ function submit() {
                         </div>
 
                         <div class="mt-4 space-y-1.5">
-                            <Label for="agenda">Agenda</Label>
+                            <Label for="agenda">{{ t('editor.agenda') }}</Label>
                             <textarea
                                 id="agenda"
                                 v-model="form.agenda"
@@ -349,8 +351,8 @@ function submit() {
 
                     <section class="space-y-2">
                         <div class="flex flex-wrap items-end justify-between gap-2">
-                            <Label>Isi dokumen</Label>
-                            <p class="text-xs text-muted-foreground">Tersimpan otomatis setiap 1,5 detik saat dokumen berstatus draf.</p>
+                            <Label>{{ t('editor.content') }}</Label>
+                            <p class="text-xs text-muted-foreground">{{ t('editor.autosaveHint') }}</p>
                         </div>
                         <MinutesCanvas
                             v-if="props.meeting.document_type === 'meeting'"

@@ -17,6 +17,7 @@ import { type ActionItem, type BreadcrumbItem, type Division, type SharedData } 
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { AlertTriangle, ListChecks, MessageSquare, RotateCcw, Search, SlidersHorizontal } from 'lucide-vue-next';
 import { computed, reactive, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 interface Paginated<T> {
     data: T[];
@@ -38,7 +39,8 @@ const props = defineProps<{
 }>();
 
 const page = usePage<SharedData>();
-const breadcrumbs: BreadcrumbItem[] = [{ title: 'Tindak lanjut', href: '/tugas' }];
+const breadcrumbs = computed<BreadcrumbItem[]>(() => [{ title: t('nav.tasks'), href: '/tugas' }]);
+const { t } = useI18n();
 
 const filters = reactive({
     search: props.filters.search ?? '',
@@ -193,11 +195,11 @@ function overdueText(hours?: number | null): string {
 </script>
 
 <template>
-    <Head title="Tindak lanjut" />
+    <Head :title="t('tasks.title')" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex flex-col gap-section p-page lg:p-page-lg">
-            <PageHeader title="Tindak lanjut" description="Pantau tugas dari seluruh dokumen yang dapat Anda akses.">
+        <div class="flex flex-col gap-section p-page pb-24 lg:p-page-lg">
+            <PageHeader :title="t('tasks.title')" :description="t('tasks.description')">
                 <template #actions>
                     <div class="inline-flex rounded-lg border border-border bg-surface p-1">
                         <Button
@@ -206,7 +208,7 @@ function overdueText(hours?: number | null): string {
                             :aria-pressed="props.view === 'list'"
                             @click="switchView('list')"
                         >
-                            Daftar
+                            {{ t('tasks.list') }}
                         </Button>
                         <Button
                             :variant="props.view === 'board' ? 'secondary' : 'ghost'"
@@ -214,7 +216,7 @@ function overdueText(hours?: number | null): string {
                             :aria-pressed="props.view === 'board'"
                             @click="switchView('board')"
                         >
-                            Papan
+                            {{ t('tasks.board') }}
                         </Button>
                     </div>
                 </template>
@@ -222,10 +224,10 @@ function overdueText(hours?: number | null): string {
 
             <StatStrip
                 :items="[
-                    { label: 'Total tugas', value: props.stats.total },
-                    { label: 'Terbuka', value: props.stats.open },
-                    { label: 'Terlambat', value: props.stats.overdue, tone: props.stats.overdue > 0 ? 'danger' : 'default' },
-                    { label: 'Selesai', value: props.stats.done, tone: 'success' },
+                    { label: t('tasks.stats.total'), value: props.stats.total },
+                    { label: t('tasks.stats.open'), value: props.stats.open },
+                    { label: t('tasks.stats.overdue'), value: props.stats.overdue, tone: props.stats.overdue > 0 ? 'danger' : 'default' },
+                    { label: t('tasks.stats.done'), value: props.stats.done, tone: 'success' },
                 ]"
             />
 

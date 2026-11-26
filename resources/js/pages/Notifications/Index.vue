@@ -11,6 +11,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
 import { Bell } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 interface NotificationRow {
     id: string;
@@ -29,8 +30,9 @@ const props = defineProps<{
     unreadCount: number;
 }>();
 
-const breadcrumbs: BreadcrumbItem[] = [{ title: 'Notifikasi', href: '/notifikasi' }];
+const breadcrumbs = computed<BreadcrumbItem[]>(() => [{ title: t('nav.notifications'), href: '/notifikasi' }]);
 const markingAll = ref(false);
+const { t } = useI18n();
 
 function markAllRead() {
     markingAll.value = true;
@@ -48,11 +50,11 @@ function groupLabel(value: string): string {
     const startOfDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     const diffDays = Math.round((startOfToday.getTime() - startOfDate.getTime()) / 86_400_000);
 
-    if (diffDays <= 0) return 'Hari ini';
-    if (diffDays === 1) return 'Kemarin';
-    if (diffDays < 7) return 'Minggu ini';
+    if (diffDays <= 0) return t('notifications.groups.today');
+    if (diffDays === 1) return t('notifications.groups.yesterday');
+    if (diffDays < 7) return t('notifications.groups.week');
 
-    return 'Lebih lama';
+    return t('notifications.groups.older');
 }
 
 const groups = computed(() => {
@@ -69,21 +71,21 @@ const groups = computed(() => {
 </script>
 
 <template>
-    <Head title="Notifikasi" />
+    <Head :title="t('notifications.title')" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex flex-col gap-section p-page lg:p-page-lg">
-            <PageHeader title="Notifikasi" :description="`${props.unreadCount} notifikasi belum dibaca.`">
+        <div class="flex flex-col gap-section p-page pb-24 lg:p-page-lg">
+            <PageHeader :title="t('notifications.title')" :description="t('notifications.description', { n: props.unreadCount })">
                 <template #actions>
-                    <Button v-if="props.unreadCount > 0" variant="outline" :loading="markingAll" @click="markAllRead"> Tandai semua terbaca </Button>
+                    <Button v-if="props.unreadCount > 0" variant="outline" :loading="markingAll" @click="markAllRead"> {{ t('notifications.markAll') }} </Button>
                 </template>
             </PageHeader>
 
             <EmptyState
                 v-if="props.notifications.data.length === 0"
                 :icon="Bell"
-                title="Belum ada notifikasi"
-                description="Anda akan menerima pemberitahuan saat di-tag, diberi tugas, atau notulen difinalkan."
+                :title="t('notifications.emptyTitle')"
+                :description="t('notifications.emptyBody')"
             />
 
             <div v-else class="space-y-4">
@@ -105,7 +107,7 @@ const groups = computed(() => {
                                 <span class="min-w-0 flex-1 space-y-1">
                                     <span class="flex flex-wrap items-center gap-2">
                                         <span class="font-medium">{{ notification.data.title ?? 'Pemberitahuan' }}</span>
-                                        <Badge v-if="!notification.read_at" variant="info">Baru</Badge>
+                                        <Badge v-if="!notification.read_at" variant="info">{{ t('notifications.new') }}</Badge>
                                     </span>
                                     <span class="block text-sm leading-relaxed text-muted-foreground">{{ notification.data.message }}</span>
                                     <span class="block text-xs text-muted-foreground">{{ formatDateTime(notification.created_at) }}</span>

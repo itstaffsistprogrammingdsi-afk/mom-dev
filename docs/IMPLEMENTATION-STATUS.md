@@ -15,6 +15,10 @@ Dokumen ini menjadi rujukan cepat untuk kondisi kode saat ini. PRD/Blueprint/ERD
 | Cache | Database cache (dapat ditingkatkan ke Redis) |
 | Kolaborasi | Hocuspocus/Yjs, token HMAC dengan TTL |
 | 2FA | TOTP (`pragmarx/google2fa`) + recovery code |
+| Internasionalisasi | vue-i18n, locale `id`/`en`, preferensi per pengguna |
+| Tema | light/dark/system, sinkron ke profil pengguna |
+| PWA | manifest, service worker, offline fallback, install prompt |
+| Android | Capacitor remote URL, package `id.mom.notulensi`, debug APK |
 | Akses notulen | `meeting_access` projection + Aturan langsung untuk peserta/admin |
 
 ## Peran

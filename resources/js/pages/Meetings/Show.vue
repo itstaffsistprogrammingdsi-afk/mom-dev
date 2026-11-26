@@ -16,6 +16,7 @@ import { Select } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { confidentialityLabels, documentTypeClasses, documentTypeLabels, formatDate, formatDateTime, meetingTypeLabels } from '@/lib/labels';
+import { isNativePlatform, shareDocument } from '@/mobile/native';
 import {
     type ActionItem,
     type BreadcrumbItem,
@@ -62,6 +63,7 @@ import {
     X,
 } from 'lucide-vue-next';
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 interface Summary {
     id: number;
@@ -148,12 +150,13 @@ const props = defineProps<{
 
 const page = usePage<SharedData>();
 const user = computed(() => page.props.auth.user);
+const { t } = useI18n();
 const errors = computed(() => (page.props.errors ?? {}) as Record<string, string>);
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dokumen', href: '/notulen' },
+const breadcrumbs = computed<BreadcrumbItem[]>(() => [
+    { title: t('nav.documents'), href: '/notulen' },
     { title: props.meeting.title, href: `/notulen/${props.meeting.id}` },
-];
+]);
 
 const aiConsent = ref(false);
 const editingTaskId = ref<number | null>(null);
@@ -539,6 +542,12 @@ async function copySummary(summary: Summary) {
 }
 
 function openShare() {
+    if (isNativePlatform()) {
+        void shareDocument(props.meeting.title, route('meetings.show', props.meeting.id));
+
+        return;
+    }
+
     shareForm.clearErrors();
     shareOpen.value = true;
 }
@@ -710,13 +719,13 @@ function restoreVersion(version: Version) {
                 <template #actions>
                     <Button v-if="props.can.share" variant="outline" @click="openShare">
                         <Share2 class="size-4" />
-                        Bagikan
+                        {{ t('meetings.detail.share') }}
                     </Button>
                     <DropdownMenu>
                         <DropdownMenuTrigger as-child>
                             <Button variant="outline">
                                 <Download class="size-4" />
-                                Ekspor
+                                {{ t('meetings.detail.export') }}
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" class="w-52">
@@ -748,12 +757,12 @@ function restoreVersion(version: Version) {
                     <Button v-if="props.can.update" as-child variant="outline">
                         <Link :href="route('meetings.edit', props.meeting.id)">
                             <Pencil class="size-4" />
-                            Sunting
+                            {{ t('meetings.detail.edit') }}
                         </Link>
                     </Button>
                     <Button v-if="props.can.finalize && props.meeting.status === 'draft'" @click="finalize">
                         <CheckCircle2 class="size-4" />
-                        {{ props.meeting.document_type === 'meeting' ? 'Finalkan notulen' : 'Finalkan dokumen' }}
+                        {{ t('meetings.detail.finalize') }}
                     </Button>
                     <DropdownMenu v-if="user.role === 'admin' && ['final', 'locked'].includes(props.meeting.status)">
                         <DropdownMenuTrigger as-child>
@@ -826,9 +835,9 @@ function restoreVersion(version: Version) {
                         <div class="flex flex-wrap items-center justify-between gap-2">
                             <h2 class="flex items-center gap-2 text-base font-semibold">
                                 <FileText class="size-4 text-muted-foreground" />
-                                Isi dokumen
+                                {{ t('meetings.detail.content') }}
                             </h2>
-                            <span class="text-xs text-muted-foreground">Mode baca</span>
+                            <span class="text-xs text-muted-foreground">{{ t('meetings.detail.readMode') }}</span>
                         </div>
                         <div class="meeting-editor" data-readonly="true">
                             <div class="ProseMirror" v-html="props.contentHtml" />
@@ -873,13 +882,13 @@ function restoreVersion(version: Version) {
                                 <ScanText class="mt-0.5 size-4 shrink-0 text-ai" aria-hidden="true" />
                                 <div>
                                     <div class="flex flex-wrap items-center gap-2">
-                                        <h2 id="ai-summary-heading" class="text-base font-semibold">Resume AI</h2>
+                                        <h2 id="ai-summary-heading" class="text-base font-semibold">{{ t('ai.title') }}</h2>
                                         <span class="rounded-md bg-card/80 px-2 py-0.5 text-[11px] font-medium text-muted-foreground ring-1 ring-border/70"
-                                            >Draf AI · perlu diperiksa</span
+                                            >{{ t('ai.draft') }}</span
                                         >
                                     </div>
                                     <p class="mt-1 text-sm leading-6 text-muted-foreground">
-                                        Ringkasan otomatis dari isi notulen. Periksa kembali sebelum dipakai.
+                                        {{ t('ai.description') }}
                                     </p>
                                 </div>
                             </div>
@@ -892,7 +901,7 @@ function restoreVersion(version: Version) {
                                     <DropdownMenuTrigger as-child>
                                         <Button variant="outline" size="sm">
                                             <ScanText class="size-4" />
-                                            {{ aiSummaries.length ? 'Buat ulang' : 'Buat resume' }}
+                                            {{ aiSummaries.length ? t('ai.regenerate') : t('ai.generate') }}
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end" class="w-64">
@@ -911,13 +920,13 @@ function restoreVersion(version: Version) {
 
                         <div class="space-y-4 p-4 md:p-5">
                             <div v-if="aiSummaries.length === 0" class="rounded-lg bg-card/70 p-4">
-                                <p class="text-sm font-medium">Belum ada resume</p>
+                                <p class="text-sm font-medium">{{ t('ai.emptyTitle') }}</p>
                                 <p class="mt-1 text-sm leading-6 text-muted-foreground">
                                     {{
                                         props.meeting.confidentiality === 'secret' && !canGenerate
-                                            ? 'AI dinonaktifkan untuk notulen rahasia. Tulis ringkasan secara manual.'
+                                            ? t('meetings.detail.secretOff')
                                             : canGenerate
-                                              ? 'Buat resume untuk merangkum poin penting, keputusan, dan Tindak lanjut.'
+                                              ? t('ai.emptyBody')
                                               : 'Resume belum tersedia untuk dokumen ini.'
                                     }}
                                 </p>
@@ -1023,7 +1032,7 @@ function restoreVersion(version: Version) {
                     <Card class="order-3 border-border/80 shadow-none">
                         <CardHeader class="flex-row items-start justify-between gap-3">
                             <div>
-                                <CardTitle class="text-base">Keputusan</CardTitle>
+                                <CardTitle class="text-base">{{ t('meetings.detail.decisions') }}</CardTitle>
                                 <p class="text-sm text-muted-foreground">Hasil yang disepakati dalam dokumen ini.</p>
                             </div>
                             <span class="rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">{{
@@ -1114,7 +1123,7 @@ function restoreVersion(version: Version) {
                         <CardHeader class="gap-3">
                             <div class="flex flex-row items-start justify-between gap-3">
                                 <div>
-                                    <CardTitle class="text-base">Tindak lanjut</CardTitle>
+                                    <CardTitle class="text-base">{{ t('meetings.detail.followUps') }}</CardTitle>
                                     <p class="text-sm text-muted-foreground">PIC dan tenggat wajib sebelum finalisasi.</p>
                                 </div>
                                 <span class="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">
@@ -1350,7 +1359,7 @@ function restoreVersion(version: Version) {
 
                     <Card class="order-5 border-border/80 shadow-none">
                         <CardHeader>
-                            <CardTitle class="text-base">Lampiran</CardTitle>
+                            <CardTitle class="text-base">{{ t('meetings.detail.attachments') }}</CardTitle>
                         </CardHeader>
                         <CardContent class="space-y-4">
                             <form
@@ -1453,7 +1462,7 @@ function restoreVersion(version: Version) {
                         <CardHeader class="flex-row items-center justify-between space-y-0 pb-3">
                             <CardTitle class="flex items-center gap-2 text-sm">
                                 <ListChecks class="size-4 text-muted-foreground" aria-hidden="true" />
-                                Tindak lanjut
+                                {{ t('meetings.detail.followUps') }}
                             </CardTitle>
                             <a href="#action-items" class="text-xs font-medium text-primary hover:underline">Lihat semua</a>
                         </CardHeader>
@@ -1488,7 +1497,7 @@ function restoreVersion(version: Version) {
                         <CardHeader class="pb-3">
                             <CardTitle class="flex items-center gap-2 text-sm">
                                 <Info class="size-4 text-muted-foreground" />
-                                Informasi
+                                {{ t('meetings.detail.information') }}
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -1554,7 +1563,7 @@ function restoreVersion(version: Version) {
                         <CardHeader class="pb-3">
                             <CardTitle class="flex items-center gap-2 text-sm">
                                 <PenLine class="size-4 text-muted-foreground" />
-                                Tanda tangan
+                                {{ t('meetings.detail.signatures') }}
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -1573,7 +1582,7 @@ function restoreVersion(version: Version) {
                         <CardHeader class="flex-row items-center justify-between pb-3">
                             <CardTitle class="flex items-center gap-2 text-sm">
                                 <Users class="size-4 text-muted-foreground" />
-                                Peserta
+                                {{ t('meetings.detail.participants') }}
                             </CardTitle>
                             <span class="text-xs text-muted-foreground">{{ presentCount }}/{{ participants.length }} hadir</span>
                         </CardHeader>
@@ -1607,7 +1616,7 @@ function restoreVersion(version: Version) {
                         <CardHeader class="pb-3">
                             <CardTitle class="flex items-center gap-2 text-sm">
                                 <Tags class="size-4 text-muted-foreground" />
-                                Tag & topik
+                                {{ t('meetings.detail.tags') }}
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -1628,7 +1637,7 @@ function restoreVersion(version: Version) {
                         <CardHeader class="pb-3">
                             <CardTitle class="flex items-center gap-2 text-sm">
                                 <History class="size-4 text-muted-foreground" />
-                                Riwayat versi
+                                {{ t('meetings.detail.versions') }}
                             </CardTitle>
                         </CardHeader>
                         <CardContent>

@@ -1,0 +1,335 @@
+{
+    "app":  {
+                "name":  "MoM",
+                "tagline":  "Notulensi \u0026 tindak lanjut"
+            },
+    "nav":  {
+                "workspace":  "Ruang kerja",
+                "administration":  "Administrasi",
+                "dashboard":  "Dashboard",
+                "documents":  "Dokumen",
+                "quickNotes":  "Catatan cepat",
+                "related":  "Terkait saya",
+                "tasks":  "Tindak lanjut",
+                "topics":  "Topik",
+                "notifications":  "Notifikasi",
+                "divisions":  "Divisi",
+                "people":  "Pengguna",
+                "roles":  "Peran \u0026 Akses",
+                "manageTopics":  "Kelola topik",
+                "templates":  "Template",
+                "audit":  "Audit Log",
+                "settings":  "Pengaturan"
+            },
+    "common":  {
+                   "search":  "Cari",
+                   "searchPlaceholder":  "Cari judul atau isi dokumen",
+                   "filter":  "Filter",
+                   "reset":  "Reset",
+                   "save":  "Simpan",
+                   "cancel":  "Batal",
+                   "done":  "Selesai",
+                   "close":  "Tutup",
+                   "loading":  "Memuat…",
+                   "retry":  "Coba lagi",
+                   "back":  "Kembali",
+                   "all":  "Semua",
+                   "viewAll":  "Lihat semua",
+                   "noResults":  "Tidak ada hasil",
+                   "empty":  "Belum ada data",
+                   "showing":  "Menampilkan {from}–{to} dari {total}",
+                   "language":  "Bahasa",
+                   "theme":  "Tema",
+                   "profile":  "Profil",
+                   "logout":  "Keluar",
+                   "globalSearch":  "Buka pencarian global",
+                   "shortcuts":  "Pintasan keyboard"
+               },
+    "theme":  {
+                  "light":  "Terang",
+                  "dark":  "Gelap",
+                  "system":  "Ikuti sistem",
+                  "active":  "Aktif",
+                  "change":  "Pilih tema"
+              },
+    "language":  {
+                     "id":  "Indonesia",
+                     "en":  "English",
+                     "change":  "Pilih bahasa"
+                 },
+    "auth":  {
+                 "kicker":  "Sistem notulensi",
+                 "title":  "Masuk ke ruang kerja",
+                 "description":  "Akses notulen, tindak lanjut, dan topik divisi Anda.",
+                 "email":  "Email",
+                 "password":  "Kata sandi",
+                 "remember":  "Ingat saya",
+                 "forgot":  "Lupa password?",
+                 "submit":  "Masuk",
+                 "or":  "atau",
+                 "google":  "Masuk dengan Google",
+                 "help":  "Butuh bantuan?",
+                 "contactAdmin":  "Hubungi administrator",
+                 "heroKicker":  "Ruang kerja notulen",
+                 "heroTitle":  "Catat. Putuskan. Tindak lanjuti.",
+                 "heroDescription":  "Satu tempat untuk notulen, keputusan, dan tugas lintas divisi.",
+                 "previewLabel":  "Notulen rapat mingguan",
+                 "previewTitle":  "Digitalisasi Arsip",
+                 "previewDecision":  "Keputusan",
+                 "previewDecisionBody":  "Arsip aktif dipindai ke repositori bersama sebelum akhir bulan.",
+                 "previewTask":  "Tindak lanjut",
+                 "previewTaskTitle":  "Migrasi arsip",
+                 "previewDue":  "Tenggat",
+                 "previewDueDate":  "12 Des 2026",
+                 "previewPeople":  "Rina Notulis · 4 peserta",
+                 "noAccount":  "Belum punya akun?",
+                 "register":  "Daftar",
+                 "helpTitle":  "Butuh bantuan masuk?",
+                 "helpBody":  "Hubungi administrator sistem untuk mendapatkan akses atau mengatur ulang kata sandi akun MoM Anda.",
+                 "googleUnavailable":  "Login Google belum dikonfigurasi. Hubungi administrator sistem."
+             },
+    "dashboard":  {
+                      "title":  "Hari ini",
+                      "attention":  "Perlu tindakan",
+                      "attentionCount":  "{n} item",
+                      "stats":  {
+                                    "meetings":  "Rapat bulan ini",
+                                    "openTasks":  "Tindak lanjut terbuka",
+                                    "overdue":  "Terlambat",
+                                    "topics":  "Topik aktif"
+                                },
+                      "upcoming":  "Rapat mendatang",
+                      "myTasks":  "Tindak lanjut saya",
+                      "recent":  "Dokumen terbaru",
+                      "newNote":  "Catatan cepat",
+                      "newMeeting":  "Buat notulen",
+                      "openList":  "Buka daftar",
+                      "allTasks":  "Semua tugas",
+                      "emptyUpcoming":  "Belum ada rapat mendatang",
+                      "emptyUpcomingBody":  "Buat notulen untuk rapat berikutnya agar semua peserta mendapat konteks yang sama.",
+                      "emptyTasks":  "Tidak ada tugas terbuka",
+                      "emptyTasksBody":  "Tugas yang menjadi tanggung jawab Anda akan muncul di sini.",
+                      "emptyDocuments":  "Belum ada dokumen",
+                      "emptyDocumentsBody":  "Mulai dengan membuat dokumen pertama.",
+                      "labels":  {
+                                     "approval":  "Menunggu persetujuan",
+                                     "draft":  "Draf perlu diselesaikan",
+                                     "division":  "Tindak lanjut divisi",
+                                     "due":  "tenggat {date}"
+                                 }
+                  },
+    "meetings":  {
+                     "title":  "Dokumen",
+                     "description":  "Notulen, proposal, laporan, dan brosur yang dapat Anda akses.",
+                     "new":  "Buat notulen",
+                     "listTitle":  "Daftar dokumen",
+                     "count":  "{n} dokumen",
+                     "countFiltered":  "{n} dokumen sesuai filter",
+                     "activeFilters":  "Filter aktif",
+                     "removeAll":  "Hapus semua",
+                     "emptyTitle":  "Tidak ada dokumen yang cocok",
+                     "emptyBody":  "Coba longgarkan filter, atau buat dokumen baru bila Anda memiliki akses notulis.",
+                     "filters":  {
+                                     "division":  "Divisi",
+                                     "topic":  "Topik",
+                                     "documentType":  "Jenis dokumen",
+                                     "meetingType":  "Jenis rapat",
+                                     "status":  "Status",
+                                     "dateRange":  "Rentang tanggal",
+                                     "from":  "Dari tanggal",
+                                     "to":  "Sampai tanggal",
+                                     "last7":  "7 hari terakhir",
+                                     "last30":  "30 hari terakhir",
+                                     "clearDate":  "Hapus tanggal",
+                                     "apply":  "Terapkan filter",
+                                     "preset":  "Preset",
+                                     "allDivisions":  "Semua divisi",
+                                     "allTopics":  "Semua topik",
+                                     "allTypes":  "Semua jenis",
+                                     "allMeetingTypes":  "Semua jenis rapat",
+                                     "allStatuses":  "Semua status"
+                                 },
+                     "detail":  {
+                                    "content":  "Isi dokumen",
+                                    "readMode":  "Mode baca",
+                                    "decisions":  "Keputusan",
+                                    "decisionsEmpty":  "Belum ada keputusan tercatat.",
+                                    "addDecision":  "Tambah keputusan",
+                                    "editDecision":  "Sunting keputusan",
+                                    "decisionPlaceholder":  "Tuliskan keputusan rapat...",
+                                    "followUps":  "Tindak lanjut",
+                                    "followUpsEmpty":  "Belum ada tindak lanjut",
+                                    "followUpsEmptyBody":  "Tambahkan tugas, PIC, dan tenggat agar tindak lanjut tidak terlewat.",
+                                    "open":  "{n} terbuka",
+                                    "done":  "{n} selesai",
+                                    "attachments":  "Lampiran",
+                                    "attachmentsEmpty":  "Belum ada lampiran.",
+                                    "information":  "Informasi",
+                                    "participants":  "Peserta",
+                                    "signatures":  "Tanda tangan",
+                                    "versions":  "Riwayat versi",
+                                    "tags":  "Tag \u0026 topik",
+                                    "finalize":  "Finalkan notulen",
+                                    "share":  "Bagikan",
+                                    "export":  "Ekspor",
+                                    "edit":  "Sunting",
+                                    "modeSingle":  "Mode tunggal",
+                                    "collabActive":  "Kolaborasi aktif",
+                                    "secretOff":  "AI dinonaktifkan untuk notulen rahasia. Tulis ringkasan secara manual."
+                                }
+                 },
+    "tasks":  {
+                  "title":  "Tindak lanjut",
+                  "description":  "Pantau tugas dari seluruh dokumen yang dapat Anda akses.",
+                  "list":  "Daftar",
+                  "board":  "Papan",
+                  "stats":  {
+                                "total":  "Total tugas",
+                                "open":  "Terbuka",
+                                "overdue":  "Terlambat",
+                                "done":  "Selesai"
+                            },
+                  "searchPlaceholder":  "Cari judul tugas",
+                  "emptyTitle":  "Tidak ada tugas",
+                  "emptyBody":  "Ubah filter atau tambahkan tindak lanjut dari halaman notulen.",
+                  "overdue":  "Terlambat {days} hari",
+                  "overdueHours":  "Terlambat {hours} jam",
+                  "due":  "Tenggat",
+                  "pic":  "PIC",
+                  "owner":  "Owner",
+                  "response":  "Respons",
+                  "status":  "Status",
+                  "notulen":  "Notulen",
+                  "selectAll":  "Pilih semua tugas"
+              },
+    "notifications":  {
+                          "title":  "Notifikasi",
+                          "description":  "{n} notifikasi belum dibaca.",
+                          "markAll":  "Tandai semua terbaca",
+                          "emptyTitle":  "Belum ada notifikasi",
+                          "emptyBody":  "Anda akan menerima pemberitahuan saat di-tag, diberi tugas, atau notulen difinalkan.",
+                          "new":  "Baru",
+                          "groups":  {
+                                         "today":  "Hari ini",
+                                         "yesterday":  "Kemarin",
+                                         "week":  "Minggu ini",
+                                         "older":  "Lebih lama"
+                                     },
+                          "ariaUnread":  "Notifikasi, {n} belum dibaca"
+                      },
+    "editor":  {
+                   "autosave":  {
+                                    "saving":  "Menyimpan…",
+                                    "saved":  "Tersimpan {time}",
+                                    "offline":  "Offline — perubahan akan disinkronkan",
+                                    "failed":  "Gagal menyimpan",
+                                    "idle":  "Tersimpan otomatis"
+                                },
+                   "title":  "Sunting notulen",
+                   "titleDocument":  "Sunting dokumen",
+                   "description":  "Perubahan tersimpan otomatis dan tercatat di audit log. Dokumen final hanya dapat diubah oleh admin.",
+                   "titleField":  "Judul",
+                   "agenda":  "Agenda",
+                   "content":  "Isi dokumen",
+                   "autosaveHint":  "Tersimpan otomatis setiap 1,5 detik saat dokumen berstatus draf.",
+                   "viewDocument":  "Lihat dokumen",
+                   "finish":  "Selesai",
+                   "placeholder":  "Tulis pembahasan rapat. Ketik / untuk blok, @ orang/divisi, # topik."
+               },
+    "ai":  {
+               "title":  "Resume AI",
+               "draft":  "Draf AI · perlu diperiksa",
+               "description":  "Ringkasan otomatis dari isi notulen. Periksa kembali sebelum dipakai.",
+               "emptyTitle":  "Belum ada resume",
+               "emptyBody":  "Buat resume untuk merangkum poin penting, keputusan, dan tindak lanjut.",
+               "generate":  "Buat resume",
+               "regenerate":  "Buat ulang",
+               "processing":  "Memproses",
+               "failed":  "Gagal membuat resume: {error}",
+               "approve":  "Setujui",
+               "reject":  "Tolak",
+               "apply":  "Terapkan tindak lanjut",
+               "copy":  "Salin resume",
+               "copied":  "Tersalin",
+               "version":  "Versi {version}"
+           },
+    "settings":  {
+                     "title":  "Pengaturan",
+                     "appearance":  {
+                                        "title":  "Tampilan",
+                                        "description":  "Pilih tema terang, gelap, atau ikuti pengaturan sistem.",
+                                        "systemHint":  "Mode sistem akan mengikuti preferensi perangkat Anda dan berubah otomatis saat tema perangkat berubah.",
+                                        "languageTitle":  "Bahasa antarmuka",
+                                        "languageHint":  "Pilihan bahasa disimpan ke profil dan disinkronkan antar perangkat."
+                                    },
+                     "interface":  {
+                                       "updated":  "Preferensi antarmuka diperbarui."
+                                   },
+                     "nav":  {
+                                 "profile":  "Profil",
+                                 "password":  "Kata sandi",
+                                 "twoFactor":  "Autentikasi dua faktor",
+                                 "notifications":  "Notifikasi",
+                                 "appearance":  "Tampilan"
+                             },
+                     "description":  "Kelola profil, keamanan, dan tampilan akun Anda."
+                 },
+    "errors":  {
+                   "generic":  "Terjadi kesalahan. Coba lagi.",
+                   "offline":  "Anda sedang offline. Perubahan akan disinkronkan saat koneksi kembali.",
+                   "forbidden":  "Anda tidak memiliki akses ke halaman ini.",
+                   "notFound":  "Halaman tidak ditemukan."
+               },
+    "pwa":  {
+                "installTitle":  "Pasang MoM",
+                "installBody":  "Akses lebih cepat dari layar utama, termasuk saat koneksi lemah.",
+                "install":  "Pasang",
+                "later":  "Nanti"
+            },
+    "labels":  {
+                   "meetingTypes":  {
+                                        "daily":  "Rapat Harian",
+                                        "weekly":  "Rapat Mingguan",
+                                        "division":  "Rapat Divisi",
+                                        "cross_division":  "Rapat Lintas Divisi",
+                                        "management":  "Rapat Manajemen",
+                                        "other":  "Lainnya"
+                                    },
+                   "documentTypes":  {
+                                         "meeting":  "Notulen",
+                                         "proposal":  "Proposal",
+                                         "brochure":  "Brosur",
+                                         "report":  "Laporan",
+                                         "other":  "Dokumen Lain"
+                                     },
+                   "statuses":  {
+                                    "draft":  "Draf",
+                                    "final":  "Final",
+                                    "locked":  "Terkunci"
+                                },
+                   "confidentiality":  {
+                                           "open":  "Terbuka",
+                                           "division":  "Divisi",
+                                           "restricted":  "Terbatas",
+                                           "secret":  "Rahasia"
+                                       },
+                   "actionStatuses":  {
+                                          "new":  "Baru",
+                                          "in_progress":  "Berjalan",
+                                          "done":  "Selesai",
+                                          "cancelled":  "Dibatalkan"
+                                      },
+                   "attendance":  {
+                                      "invited":  "Diundang",
+                                      "present":  "Hadir",
+                                      "absent":  "Tidak hadir",
+                                      "excused":  "Izin"
+                                  },
+                   "roles":  {
+                                 "admin":  "Admin",
+                                 "notulis":  "Notulis",
+                                 "member":  "Anggota",
+                                 "reader":  "Pembaca"
+                             }
+               }
+}

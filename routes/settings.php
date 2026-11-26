@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Settings\NotificationPreferencesController;
+use App\Http\Controllers\Settings\InterfacePreferencesController;
 use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\TwoFactorController;
@@ -24,6 +25,9 @@ Route::middleware('auth')->group(function () {
     Route::get('settings/appearance', function () {
         return Inertia::render('settings/Appearance');
     })->name('appearance');
+
+    Route::put('settings/interface', [InterfacePreferencesController::class, 'update'])
+        ->name('interface-preferences.update');
 
     Route::get('settings/notifikasi', [NotificationPreferencesController::class, 'edit'])
         ->name('notification-preferences.edit');

@@ -11,6 +11,7 @@ import { type ActionItem, type BreadcrumbItem, type Meeting, type SharedData } f
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { AlertTriangle, ChevronRight, FileText, Plus, StickyNote } from 'lucide-vue-next';
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 const props = defineProps<{
     stats: {
@@ -29,14 +30,16 @@ const props = defineProps<{
 
 const page = usePage<SharedData>();
 const user = computed(() => page.props.auth.user);
+const { t, locale } = useI18n();
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Dashboard', href: '/dashboard' }];
 
-const today = new Intl.DateTimeFormat('id-ID', {
+const today = new Intl.DateTimeFormat(locale.value, {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
     year: 'numeric',
+    timeZone: page.props.preferences?.timezone ?? 'Asia/Jakarta',
 }).format(new Date());
 
 type AttentionItem = {
@@ -50,36 +53,36 @@ type AttentionItem = {
 const attentionItems = computed<AttentionItem[]>(() => [
     ...props.approvals.map((meeting) => ({
         key: `approval-${meeting.id}`,
-        label: 'Menunggu persetujuan',
+        label: t('dashboard.labels.approval'),
         title: meeting.title,
         meta: meeting.division?.name ?? 'Tanpa divisi',
         href: route('meetings.show', meeting.id),
     })),
     ...props.drafts.map((meeting) => ({
         key: `draft-${meeting.id}`,
-        label: 'Draf perlu diselesaikan',
+        label: t('dashboard.labels.draft'),
         title: meeting.title,
         meta: meeting.division?.name ?? 'Tanpa divisi',
         href: route('meetings.show', meeting.id),
     })),
     ...props.divisionTasks.map((task) => ({
         key: `task-${task.id}`,
-        label: 'Tindak lanjut divisi',
+        label: t('dashboard.labels.division'),
         title: task.title,
-        meta: `${task.pic?.name ?? 'Belum ada PIC'} · ${formatDate(task.due_date)}`,
+        meta: `${task.pic?.name ?? '—'} · ${formatDate(task.due_date)}`,
         href: task.meeting ? route('meetings.show', task.meeting.id) : route('action-items.index'),
     })),
 ].slice(0, 6));
 
 const statItems = computed(() => [
-    { label: 'Rapat bulan ini', value: props.stats.meetings_this_month },
-    { label: 'Tindak lanjut terbuka', value: props.stats.open_tasks },
+    { label: t('dashboard.stats.meetings'), value: props.stats.meetings_this_month },
+    { label: t('dashboard.stats.openTasks'), value: props.stats.open_tasks },
     {
-        label: 'Terlambat',
+        label: t('dashboard.stats.overdue'),
         value: props.stats.overdue_tasks,
         tone: props.stats.overdue_tasks > 0 ? ('danger' as const) : ('default' as const),
     },
-    { label: 'Topik aktif', value: props.stats.active_topics },
+    { label: t('dashboard.stats.topics'), value: props.stats.active_topics },
 ]);
 </script>
 
@@ -87,19 +90,19 @@ const statItems = computed(() => [
     <Head title="Dashboard" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="mx-auto flex w-full max-w-[1440px] flex-col gap-5 px-4 py-5 md:px-8 md:py-7">
-            <PageHeader title="Hari ini" :description="`${today} · ${user.division?.name ?? 'Belum ada divisi'}`">
+        <div class="mx-auto flex w-full max-w-[1440px] flex-col gap-5 px-4 py-5 pb-24 md:px-8 md:py-7 md:pb-7">
+            <PageHeader :title="t('dashboard.title')" :description="`${today} · ${user.division?.name ?? '—'}`">
                 <template #actions>
                     <Button variant="outline" as-child>
                         <Link :href="route('quick-notes.create')">
                             <StickyNote class="size-4" aria-hidden="true" />
-                            Catatan cepat
+                            {{ t('dashboard.newNote') }}
                         </Link>
                     </Button>
                     <Button v-if="user.role === 'admin' || user.role === 'notulis'" as-child>
                         <Link :href="route('meetings.create')">
                             <Plus class="size-4" aria-hidden="true" />
-                            Buat notulen
+                            {{ t('dashboard.newMeeting') }}
                         </Link>
                     </Button>
                 </template>
@@ -109,9 +112,9 @@ const statItems = computed(() => [
                 <CardHeader class="flex-row items-center justify-between space-y-0 pb-3">
                     <CardTitle class="flex items-center gap-2 text-base">
                         <AlertTriangle class="size-4 text-muted-foreground" aria-hidden="true" />
-                        Perlu tindakan
+                        {{ t('dashboard.attention') }}
                     </CardTitle>
-                    <span class="text-xs tabular-nums text-muted-foreground">{{ attentionItems.length }} item</span>
+                    <span class="text-xs tabular-nums text-muted-foreground">{{ t('dashboard.attentionCount', { n: attentionItems.length }) }}</span>
                 </CardHeader>
                 <CardContent class="divide-y divide-border/70 pt-0">
                     <Link
@@ -135,20 +138,20 @@ const statItems = computed(() => [
             <div class="grid gap-4 lg:grid-cols-2">
                 <Card class="border-border/80 shadow-none">
                     <CardHeader class="flex-row items-center justify-between space-y-0 pb-3">
-                        <CardTitle class="text-base">Rapat mendatang</CardTitle>
+                        <CardTitle class="text-base">{{ t('dashboard.upcoming') }}</CardTitle>
                         <Button variant="ghost" size="sm" as-child>
-                            <Link :href="route('meetings.index')">Lihat semua</Link>
+                            <Link :href="route('meetings.index')">{{ t('common.viewAll') }}</Link>
                         </Button>
                     </CardHeader>
                     <CardContent class="space-y-1">
                         <EmptyState
                             v-if="props.upcoming.length === 0"
                             compact
-                            title="Belum ada rapat mendatang"
-                            description="Buat notulen untuk rapat berikutnya agar semua peserta mendapat konteks yang sama."
+                            :title="t('dashboard.emptyUpcoming')"
+                            :description="t('dashboard.emptyUpcomingBody')"
                         >
                             <Button v-if="user.role === 'admin' || user.role === 'notulis'" size="sm" variant="outline" as-child>
-                                <Link :href="route('meetings.create')">Buat notulen</Link>
+                                <Link :href="route('meetings.create')">{{ t('dashboard.newMeeting') }}</Link>
                             </Button>
                         </EmptyState>
                         <Link
@@ -171,17 +174,17 @@ const statItems = computed(() => [
 
                 <Card class="border-border/80 shadow-none">
                     <CardHeader class="flex-row items-center justify-between space-y-0 pb-3">
-                        <CardTitle class="text-base">Tindak lanjut saya</CardTitle>
+                        <CardTitle class="text-base">{{ t('dashboard.myTasks') }}</CardTitle>
                         <Button variant="ghost" size="sm" as-child>
-                            <Link :href="route('action-items.index')">Semua tugas</Link>
+                            <Link :href="route('action-items.index')">{{ t('dashboard.allTasks') }}</Link>
                         </Button>
                     </CardHeader>
                     <CardContent class="space-y-1">
                         <EmptyState
                             v-if="props.myTasks.length === 0"
                             compact
-                            title="Tidak ada tugas terbuka"
-                            description="Tugas yang menjadi tanggung jawab Anda akan muncul di sini."
+                            :title="t('dashboard.emptyTasks')"
+                            :description="t('dashboard.emptyTasksBody')"
                         />
                         <Link
                             v-for="task in props.myTasks"
@@ -191,9 +194,9 @@ const statItems = computed(() => [
                         >
                             <div class="min-w-0 space-y-1">
                                 <p class="truncate text-sm font-medium leading-snug group-hover:text-primary">{{ task.title }}</p>
-                                <p class="text-xs text-muted-foreground">{{ task.meeting?.title }} · tenggat {{ formatDate(task.due_date) }}</p>
+                                <p class="text-xs text-muted-foreground">{{ task.meeting?.title }} · {{ t('dashboard.labels.due', { date: formatDate(task.due_date) }) }}</p>
                             </div>
-                            <span v-if="task.is_overdue" class="shrink-0 text-[11px] font-medium text-destructive-strong">Terlambat</span>
+                            <span v-if="task.is_overdue" class="shrink-0 text-[11px] font-medium text-destructive-strong">{{ t('tasks.stats.overdue') }}</span>
                             <StatusBadge v-else kind="action" :value="task.status" />
                         </Link>
                     </CardContent>
@@ -204,18 +207,18 @@ const statItems = computed(() => [
                 <CardHeader class="flex-row items-center justify-between space-y-0 pb-3">
                     <CardTitle class="flex items-center gap-2 text-base">
                         <FileText class="size-4 text-muted-foreground" aria-hidden="true" />
-                        Dokumen terbaru
+                        {{ t('dashboard.recent') }}
                     </CardTitle>
                     <Button variant="ghost" size="sm" as-child>
-                        <Link :href="route('meetings.index')">Buka daftar</Link>
+                        <Link :href="route('meetings.index')">{{ t('dashboard.openList') }}</Link>
                     </Button>
                 </CardHeader>
                 <CardContent>
                     <EmptyState
                         v-if="props.recent.length === 0"
                         compact
-                        title="Belum ada dokumen"
-                        description="Mulai dengan membuat dokumen pertama."
+                        :title="t('dashboard.emptyDocuments')"
+                        :description="t('dashboard.emptyDocumentsBody')"
                     />
                     <div v-else class="divide-y divide-border/70">
                         <Link

@@ -1,0 +1,335 @@
+{
+    "app":  {
+                "name":  "MoM",
+                "tagline":  "Minutes \u0026 follow-ups"
+            },
+    "nav":  {
+                "workspace":  "Workspace",
+                "administration":  "Administration",
+                "dashboard":  "Dashboard",
+                "documents":  "Documents",
+                "quickNotes":  "Quick notes",
+                "related":  "Related to me",
+                "tasks":  "Follow-ups",
+                "topics":  "Topics",
+                "notifications":  "Notifications",
+                "divisions":  "Divisions",
+                "people":  "People",
+                "roles":  "Roles \u0026 access",
+                "manageTopics":  "Manage topics",
+                "templates":  "Templates",
+                "audit":  "Audit log",
+                "settings":  "Settings"
+            },
+    "common":  {
+                   "search":  "Search",
+                   "searchPlaceholder":  "Search title or document content",
+                   "filter":  "Filter",
+                   "reset":  "Reset",
+                   "save":  "Save",
+                   "cancel":  "Cancel",
+                   "done":  "Done",
+                   "close":  "Close",
+                   "loading":  "Loading…",
+                   "retry":  "Try again",
+                   "back":  "Back",
+                   "all":  "All",
+                   "viewAll":  "View all",
+                   "noResults":  "No results",
+                   "empty":  "Nothing here yet",
+                   "showing":  "Showing {from}–{to} of {total}",
+                   "language":  "Language",
+                   "theme":  "Theme",
+                   "profile":  "Profile",
+                   "logout":  "Sign out",
+                   "globalSearch":  "Open global search",
+                   "shortcuts":  "Keyboard shortcuts"
+               },
+    "theme":  {
+                  "light":  "Light",
+                  "dark":  "Dark",
+                  "system":  "Follow system",
+                  "active":  "Active",
+                  "change":  "Choose theme"
+              },
+    "language":  {
+                     "id":  "Indonesia",
+                     "en":  "English",
+                     "change":  "Choose language"
+                 },
+    "auth":  {
+                 "kicker":  "Meeting minutes",
+                 "title":  "Sign in to your workspace",
+                 "description":  "Access minutes, follow-ups, and your division topics.",
+                 "email":  "Email",
+                 "password":  "Password",
+                 "remember":  "Remember me",
+                 "forgot":  "Forgot password?",
+                 "submit":  "Sign in",
+                 "or":  "or",
+                 "google":  "Sign in with Google",
+                 "help":  "Need help?",
+                 "contactAdmin":  "Contact administrator",
+                 "heroKicker":  "Minutes workspace",
+                 "heroTitle":  "Capture. Decide. Follow up.",
+                 "heroDescription":  "One place for minutes, decisions, and cross-division follow-ups.",
+                 "previewLabel":  "Weekly meeting minutes",
+                 "previewTitle":  "Archive digitalization",
+                 "previewDecision":  "Decision",
+                 "previewDecisionBody":  "Active archives will be scanned into the shared repository before month end.",
+                 "previewTask":  "Follow-up",
+                 "previewTaskTitle":  "Archive migration",
+                 "previewDue":  "Due",
+                 "previewDueDate":  "12 Dec 2026",
+                 "previewPeople":  "Rina Notulis · 4 attendees",
+                 "noAccount":  "Don\u0027t have an account?",
+                 "register":  "Register",
+                 "helpTitle":  "Need help signing in?",
+                 "helpBody":  "Contact your system administrator for access or to reset your MoM account password.",
+                 "googleUnavailable":  "Google sign-in is not configured. Contact your system administrator."
+             },
+    "dashboard":  {
+                      "title":  "Today",
+                      "attention":  "Needs attention",
+                      "attentionCount":  "{n} item",
+                      "stats":  {
+                                    "meetings":  "Meetings this month",
+                                    "openTasks":  "Open follow-ups",
+                                    "overdue":  "Overdue",
+                                    "topics":  "Active topics"
+                                },
+                      "upcoming":  "Upcoming meetings",
+                      "myTasks":  "My follow-ups",
+                      "recent":  "Recent documents",
+                      "newNote":  "Quick note",
+                      "newMeeting":  "New minutes",
+                      "openList":  "Open list",
+                      "allTasks":  "All tasks",
+                      "emptyUpcoming":  "No upcoming meetings",
+                      "emptyUpcomingBody":  "Create minutes for the next meeting so everyone has the same context.",
+                      "emptyTasks":  "No open tasks",
+                      "emptyTasksBody":  "Tasks assigned to you will appear here.",
+                      "emptyDocuments":  "No documents yet",
+                      "emptyDocumentsBody":  "Start by creating your first document.",
+                      "labels":  {
+                                     "approval":  "Waiting for approval",
+                                     "draft":  "Draft needs finishing",
+                                     "division":  "Division follow-up",
+                                     "due":  "due {date}"
+                                 }
+                  },
+    "meetings":  {
+                     "title":  "Documents",
+                     "description":  "Minutes, proposals, reports, and brochures you can access.",
+                     "new":  "New minutes",
+                     "listTitle":  "Document list",
+                     "count":  "{n} documents",
+                     "countFiltered":  "{n} filtered documents",
+                     "activeFilters":  "Active filters",
+                     "removeAll":  "Clear all",
+                     "emptyTitle":  "No matching documents",
+                     "emptyBody":  "Try loosening the filters, or create a new document if you have notetaker access.",
+                     "filters":  {
+                                     "division":  "Division",
+                                     "topic":  "Topic",
+                                     "documentType":  "Document type",
+                                     "meetingType":  "Meeting type",
+                                     "status":  "Status",
+                                     "dateRange":  "Date range",
+                                     "from":  "From date",
+                                     "to":  "To date",
+                                     "last7":  "Last 7 days",
+                                     "last30":  "Last 30 days",
+                                     "clearDate":  "Clear dates",
+                                     "apply":  "Apply filters",
+                                     "preset":  "Preset",
+                                     "allDivisions":  "All divisions",
+                                     "allTopics":  "All topics",
+                                     "allTypes":  "All types",
+                                     "allMeetingTypes":  "All meeting types",
+                                     "allStatuses":  "All statuses"
+                                 },
+                     "detail":  {
+                                    "content":  "Document content",
+                                    "readMode":  "Reading mode",
+                                    "decisions":  "Decisions",
+                                    "decisionsEmpty":  "No decisions recorded yet.",
+                                    "addDecision":  "Add decision",
+                                    "editDecision":  "Edit decision",
+                                    "decisionPlaceholder":  "Write the meeting decision...",
+                                    "followUps":  "Follow-ups",
+                                    "followUpsEmpty":  "No follow-ups yet",
+                                    "followUpsEmptyBody":  "Add a task, owner, and due date so nothing is missed.",
+                                    "open":  "{n} open",
+                                    "done":  "{n} done",
+                                    "attachments":  "Attachments",
+                                    "attachmentsEmpty":  "No attachments yet.",
+                                    "information":  "Information",
+                                    "participants":  "Attendees",
+                                    "signatures":  "Signatures",
+                                    "versions":  "Version history",
+                                    "tags":  "Tags \u0026 topics",
+                                    "finalize":  "Finalize minutes",
+                                    "share":  "Share",
+                                    "export":  "Export",
+                                    "edit":  "Edit",
+                                    "modeSingle":  "Single mode",
+                                    "collabActive":  "Collaboration active",
+                                    "secretOff":  "AI is disabled for secret minutes. Write the summary manually."
+                                }
+                 },
+    "tasks":  {
+                  "title":  "Follow-ups",
+                  "description":  "Track tasks from every document you can access.",
+                  "list":  "List",
+                  "board":  "Board",
+                  "stats":  {
+                                "total":  "Total tasks",
+                                "open":  "Open",
+                                "overdue":  "Overdue",
+                                "done":  "Done"
+                            },
+                  "searchPlaceholder":  "Search task title",
+                  "emptyTitle":  "No tasks",
+                  "emptyBody":  "Adjust the filters or add follow-ups from a meeting document.",
+                  "overdue":  "{days} days overdue",
+                  "overdueHours":  "{hours} hours overdue",
+                  "due":  "Due",
+                  "pic":  "Owner",
+                  "owner":  "Owner",
+                  "response":  "Response",
+                  "status":  "Status",
+                  "notulen":  "Minutes",
+                  "selectAll":  "Select all tasks"
+              },
+    "notifications":  {
+                          "title":  "Notifications",
+                          "description":  "{n} unread notifications.",
+                          "markAll":  "Mark all as read",
+                          "emptyTitle":  "No notifications",
+                          "emptyBody":  "You will be notified when you are tagged, assigned a task, or minutes are finalized.",
+                          "new":  "New",
+                          "groups":  {
+                                         "today":  "Today",
+                                         "yesterday":  "Yesterday",
+                                         "week":  "This week",
+                                         "older":  "Older"
+                                     },
+                          "ariaUnread":  "Notifications, {n} unread"
+                      },
+    "editor":  {
+                   "autosave":  {
+                                    "saving":  "Saving…",
+                                    "saved":  "Saved {time}",
+                                    "offline":  "Offline — changes will sync",
+                                    "failed":  "Could not save",
+                                    "idle":  "Autosaved"
+                                },
+                   "title":  "Edit minutes",
+                   "titleDocument":  "Edit document",
+                   "description":  "Changes are saved automatically and recorded in the audit log. Final documents can only be edited by admins.",
+                   "titleField":  "Title",
+                   "agenda":  "Agenda",
+                   "content":  "Document content",
+                   "autosaveHint":  "Autosaved every 1.5 seconds while the document is a draft.",
+                   "viewDocument":  "View document",
+                   "finish":  "Done",
+                   "placeholder":  "Write the meeting discussion. Type / for blocks, @ people/divisions, # topics."
+               },
+    "ai":  {
+               "title":  "AI summary",
+               "draft":  "AI draft · review required",
+               "description":  "Automatically summarized from the minutes. Review before using.",
+               "emptyTitle":  "No summary yet",
+               "emptyBody":  "Generate a summary of key points, decisions, and follow-ups.",
+               "generate":  "Generate summary",
+               "regenerate":  "Regenerate",
+               "processing":  "Processing",
+               "failed":  "Summary failed: {error}",
+               "approve":  "Approve",
+               "reject":  "Reject",
+               "apply":  "Apply follow-ups",
+               "copy":  "Copy summary",
+               "copied":  "Copied",
+               "version":  "Version {version}"
+           },
+    "settings":  {
+                     "title":  "Settings",
+                     "appearance":  {
+                                        "title":  "Appearance",
+                                        "description":  "Choose light, dark, or follow your system.",
+                                        "systemHint":  "System mode follows your device preference and changes automatically.",
+                                        "languageTitle":  "Interface language",
+                                        "languageHint":  "Your language preference is saved to your profile and synced across devices."
+                                    },
+                     "interface":  {
+                                       "updated":  "Interface preferences updated."
+                                   },
+                     "nav":  {
+                                 "profile":  "Profile",
+                                 "password":  "Password",
+                                 "twoFactor":  "Two-factor authentication",
+                                 "notifications":  "Notifications",
+                                 "appearance":  "Appearance"
+                             },
+                     "description":  "Manage your profile, security, and account appearance."
+                 },
+    "errors":  {
+                   "generic":  "Something went wrong. Try again.",
+                   "offline":  "You are offline. Changes will sync when the connection returns.",
+                   "forbidden":  "You do not have access to this page.",
+                   "notFound":  "Page not found."
+               },
+    "pwa":  {
+                "installTitle":  "Install MoM",
+                "installBody":  "Open faster from your home screen, even on weak connections.",
+                "install":  "Install",
+                "later":  "Later"
+            },
+    "labels":  {
+                   "meetingTypes":  {
+                                        "daily":  "Daily meeting",
+                                        "weekly":  "Weekly meeting",
+                                        "division":  "Division meeting",
+                                        "cross_division":  "Cross-division meeting",
+                                        "management":  "Management meeting",
+                                        "other":  "Other"
+                                    },
+                   "documentTypes":  {
+                                         "meeting":  "Minutes",
+                                         "proposal":  "Proposal",
+                                         "brochure":  "Brochure",
+                                         "report":  "Report",
+                                         "other":  "Other document"
+                                     },
+                   "statuses":  {
+                                    "draft":  "Draft",
+                                    "final":  "Final",
+                                    "locked":  "Locked"
+                                },
+                   "confidentiality":  {
+                                           "open":  "Open",
+                                           "division":  "Division",
+                                           "restricted":  "Restricted",
+                                           "secret":  "Secret"
+                                       },
+                   "actionStatuses":  {
+                                          "new":  "New",
+                                          "in_progress":  "In progress",
+                                          "done":  "Done",
+                                          "cancelled":  "Cancelled"
+                                      },
+                   "attendance":  {
+                                      "invited":  "Invited",
+                                      "present":  "Present",
+                                      "absent":  "Absent",
+                                      "excused":  "Excused"
+                                  },
+                   "roles":  {
+                                 "admin":  "Admin",
+                                 "notulis":  "Notetaker",
+                                 "member":  "Member",
+                                 "reader":  "Reader"
+                             }
+               }
+}
