@@ -15,6 +15,10 @@ const sidebarNavItems: NavItem[] = [
         url: '/settings/password',
     },
     {
+        title: 'Autentikasi Dua Faktor',
+        url: '/settings/two-factor',
+    },
+    {
         title: 'Tampilan',
         url: '/settings/appearance',
     },

@@ -107,6 +107,10 @@ COLLAB_TOKEN_TTL=3600
 
 Jika service kolaborasi tidak tersedia, editor tetap dapat dipakai dalam mode tunggal.
 
+## Autentikasi Dua Faktor
+
+Buka **Pengaturan > Autentikasi Dua Faktor** untuk mengaktifkan TOTP (Google Authenticator/Microsoft Authenticator). Setelah aktif, login memerlukan kode 6 digit; recovery code dapat dipakai satu kali.
+
 ## Pencarian Notulen
 
 Pencarian daftar notulen memakai generated `tsvector` PostgreSQL (`title` A, `agenda` B, `content_text` C), GIN index, prefix query, dan ranking `ts_rank`. Trigram GIN tetap tersedia untuk fallback pencarian substring di modul lain.

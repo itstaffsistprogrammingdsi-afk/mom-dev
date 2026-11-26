@@ -13,6 +13,7 @@
         "laravel/tinker": "^3.0",
         "mpdf/mpdf": "8.3",
         "phpoffice/phpword": "1.4",
+        "pragmarx/google2fa": "8.0",
         "tightenco/ziggy": "2.6"
     },
     "require-dev": {
