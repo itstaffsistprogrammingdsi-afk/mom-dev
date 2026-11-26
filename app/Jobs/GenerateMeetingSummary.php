@@ -3,7 +3,9 @@
 namespace App\Jobs;
 
 use App\Models\AiSummary;
+use App\Models\User;
 use App\Notifications\AiSummaryReadyNotification;
+use App\Notifications\SystemAlertNotification;
 use App\Services\Ai\AiSummaryService;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -66,10 +68,27 @@ class GenerateMeetingSummary implements ShouldBeUnique, ShouldQueue
 
     public function failed(?\Throwable $exception): void
     {
+        $message = 'Resume AI untuk meeting #'.$this->summary->meeting_id.' gagal setelah seluruh percobaan: '.($exception?->getMessage() ?? 'unknown error');
+
         Log::critical('Resume AI gagal setelah seluruh percobaan', [
             'summary_id' => $this->summary->id,
             'meeting_id' => $this->summary->meeting_id,
             'error' => $exception?->getMessage(),
         ]);
+
+        User::query()
+            ->where('role', 'admin')
+            ->where('is_active', true)
+            ->get()
+            ->each(function (User $admin) use ($message) {
+                try {
+                    $admin->notify(new SystemAlertNotification('Resume AI gagal', $message));
+                } catch (\Throwable $notificationException) {
+                    Log::error('Notifikasi kegagalan AI tidak terkirim', [
+                        'admin_id' => $admin->id,
+                        'error' => $notificationException->getMessage(),
+                    ]);
+                }
+            });
     }
 }

@@ -13,3 +13,8 @@ Schedule::command('mom:remind-action-items')
     ->timezone('Asia/Jakarta')
     ->onOneServer()
     ->withoutOverlapping();
+
+Schedule::command('mom:check-failed-jobs')
+    ->everyFifteenMinutes()
+    ->onOneServer()
+    ->withoutOverlapping();
