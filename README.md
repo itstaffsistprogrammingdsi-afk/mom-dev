@@ -70,7 +70,7 @@ npm run dev
 | Staf IT | staff@mom.test | password |
 | Direksi | direksi@mom.test | password |
 
-Registrasi publik aktif di lingkungan lokal/demo; pengguna baru otomatis mendapat peran Anggota. Untuk production, nonaktifkan registrasi publik atau batasi ke domain/invite, lalu gunakan admin untuk mengelola akun.
+Registrasi publik aktif secara default hanya saat `APP_ENV=local`; pengguna baru otomatis mendapat peran Anggota. Untuk production, set `REGISTRATION_ENABLED=false` atau batasi ke domain/invite, lalu gunakan admin untuk mengelola akun.
 
 ## AI
 
@@ -175,9 +175,10 @@ Login Google memakai OAuth 2.0 langsung tanpa dependency tambahan. Isi `.env`:
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
 GOOGLE_REDIRECT_URI=http://localhost:8100/auth/google/callback
+GOOGLE_ALLOWED_DOMAINS=perusahaan.com
 ```
 
-Daftarkan redirect URI yang sama di Google Cloud Console. Jika kredensial kosong, tombol Google tampil nonaktif dengan label “belum aktif”.
+Daftarkan redirect URI yang sama di Google Cloud Console. Jika kredensial kosong, tombol Google tampil nonaktif dengan label “belum aktif”. Auto-provision akun Google baru **mati secara default**; hanya user yang sudah terdaftar yang dapat masuk. Set `GOOGLE_AUTO_PROVISION=true` hanya jika kebijakan perusahaan mengizinkan.
 
 ## Tema
 

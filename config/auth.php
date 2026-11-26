@@ -20,6 +20,8 @@ return [
         'passwords' => env('AUTH_PASSWORD_BROKER', 'users'),
     ],
 
+    'registration_enabled' => env('REGISTRATION_ENABLED', env('APP_ENV') === 'local'),
+
     /*
     |--------------------------------------------------------------------------
     | Authentication Guards

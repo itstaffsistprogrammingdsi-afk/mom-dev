@@ -9,6 +9,7 @@ const props = withDefaults(
     defineProps<{
         status?: string;
         canResetPassword: boolean;
+        canRegister?: boolean;
         googleEnabled?: boolean;
     }>(),
     {
@@ -147,7 +148,7 @@ onBeforeUnmount(() => {
 
         <p class="signup-note">
             Belum punya akun?
-            <Link :href="route('register')" class="text-link">Daftar</Link>
+            <Link v-if="props.canRegister" :href="route('register')" class="text-link">Daftar</Link>
         </p>
         <p class="signup-note mt-2">
             Butuh bantuan?

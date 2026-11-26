@@ -149,14 +149,20 @@ class MeetingShareTest extends TestCase
         Mail::fake();
 
         $creator = User::factory()->create(['role' => 'notulis']);
+        $recipient = User::factory()->create(['role' => 'member']);
         $meeting = Meeting::factory()->create([
             'created_by' => $creator->id,
             'confidentiality' => Confidentiality::Secret->value,
         ]);
+        $meeting->participants()->create([
+            'user_id' => $recipient->id,
+            'name' => $recipient->name,
+            'email' => $recipient->email,
+        ]);
 
         $this->actingAs($creator)
             ->post(route('meetings.share', $meeting), [
-                'recipients' => 'satu@example.com',
+                'recipients' => $recipient->email,
                 'include_pdf' => false,
                 'confirm_share' => true,
             ])
@@ -164,5 +170,27 @@ class MeetingShareTest extends TestCase
             ->assertSessionHas('success');
 
         Mail::assertSent(MeetingSharedMail::class, 1);
+    }
+
+    public function test_restricted_meeting_rejects_recipient_without_access(): void
+    {
+        Mail::fake();
+
+        $creator = User::factory()->create(['role' => 'notulis']);
+        $outsider = User::factory()->create(['role' => 'member']);
+        $meeting = Meeting::factory()->create([
+            'created_by' => $creator->id,
+            'confidentiality' => Confidentiality::Restricted->value,
+        ]);
+
+        $this->actingAs($creator)
+            ->post(route('meetings.share', $meeting), [
+                'recipients' => $outsider->email,
+                'include_pdf' => false,
+                'confirm_share' => true,
+            ])
+            ->assertSessionHasErrors('recipients');
+
+        Mail::assertNothingSent();
     }
 }

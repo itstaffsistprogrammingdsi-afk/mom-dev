@@ -1490,7 +1490,7 @@ function restoreVersion(version: Version) {
                     >
                         <p>
                             Dokumen ini berlabel <strong>{{ confidentialityLabels[props.meeting.confidentiality] }}</strong
-                            >. Pastikan seluruh penerima berhak menerima dokumen.
+                            >. Penerima harus user terdaftar yang memiliki akses ke dokumen ini; email eksternal akan ditolak server.
                         </p>
                         <label class="flex items-center gap-2">
                             <input v-model="shareForm.confirm_share" type="checkbox" class="size-4 rounded border-input accent-primary" />

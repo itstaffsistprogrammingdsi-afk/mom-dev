@@ -86,6 +86,17 @@ class GoogleAuthController extends Controller
             return redirect()->route('login')->with('error', 'Akun Google tidak memiliki email.');
         }
 
+        if (($profile['verified_email'] ?? true) === false) {
+            return redirect()->route('login')->with('error', 'Email Google belum terverifikasi.');
+        }
+
+        $domain = strtolower((string) substr(strrchr($email, '@') ?: '', 1));
+        $allowedDomains = array_map('strtolower', (array) config('services.google.allowed_domains', []));
+
+        if ($allowedDomains !== [] && ! in_array($domain, $allowedDomains, true)) {
+            return redirect()->route('login')->with('error', 'Domain email Anda tidak diizinkan untuk masuk.');
+        }
+
         $user = User::query()
             ->where('google_id', $profile['id'] ?? null)
             ->orWhere('email', $email)
@@ -96,6 +107,10 @@ class GoogleAuthController extends Controller
         }
 
         if (! $user) {
+            if (! config('services.google.auto_provision')) {
+                return redirect()->route('login')->with('error', 'Akun Google Anda belum terdaftar. Hubungi administrator.');
+            }
+
             $user = User::create([
                 'name' => $profile['name'] ?? $email,
                 'email' => $email,
