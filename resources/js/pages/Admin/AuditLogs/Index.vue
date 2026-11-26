@@ -42,7 +42,7 @@ const breadcrumbs: BreadcrumbItem[] = [{ title: 'Audit Log', href: '/admin/audit
 
             <EmptyState v-if="props.logs.data.length === 0" :icon="ScrollText" title="Belum ada aktivitas" />
 
-            <div v-else class="min-w-0 overflow-x-auto rounded-lg border border-border/80 bg-card shadow-soft-sm">
+            <div v-else class="min-w-0 overflow-x-auto rounded-lg border border-border/80 bg-card">
                 <table class="w-full min-w-[720px] text-sm">
                     <thead class="border-b border-border/60 text-left">
                         <tr class="text-xs font-medium text-subtle-foreground">

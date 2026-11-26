@@ -11,6 +11,7 @@ const emit = defineEmits<{
 }>();
 
 const shortcuts = [
+    { keys: ['Ctrl', 'K'], label: 'Buka pencarian global' },
     { keys: ['Ctrl', 'Shift', 'F'], label: 'Aktifkan atau keluar dari mode fokus editor' },
     { keys: ['Esc'], label: 'Tutup dialog, popover, atau mode fokus' },
     { keys: ['@'], label: 'Sisipkan mention orang atau divisi' },

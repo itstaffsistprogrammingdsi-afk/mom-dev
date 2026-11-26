@@ -1,14 +1,27 @@
 # PRD — Sistem Notulensi (MoM) Terintegrasi AI
 
 **Kode dokumen:** DOC-PRD-MOM-001  
-**Versi:** 1.0  
-**Tanggal:** 26 Oktober 2026  
+**Versi:** 1.1  
+**Tanggal:** 26 November 2026  
 **Status:** Final draft untuk persetujuan  
 **Pemilik produk:** Wafiq Lana Pradana  
 **Reviewer:** Manager IT, Kepala Divisi Pilot  
 **Approver:** Manajemen
 
-> Dokumen ini adalah acuan produk untuk pembangunan Sistem Notulensi (Minutes of Meeting/MoM). Aspek komersial dan pembiayaan tidak dibahas dalam dokumen ini. Data model dijelaskan pada `02-ERD-Sistem-Notulensi.md`; alur kerja dijelaskan pada `03-Bisnis-Proses-Sistem-Notulensi.md`.
+> Dokumen ini adalah acuan produk untuk pembangunan Sistem Notulensi (Minutes of Meeting/MoM). Aspek komersial dan pembiayaan tidak dibahas dalam dokumen ini. Data model dijelaskan pada `02-ERD-Sistem-Notulensi.md`; alur kerja dijelaskan pada `03-Bisnis-Proses-Sistem-Notulensi.md`. Untuk kondisi implementasi terkini, lihat `docs/IMPLEMENTATION-STATUS.md`.
+
+## Catatan Implementasi Aktual (26 November 2026)
+
+Bagian ini mengoreksi bagian historis yang sudah tidak sesuai dengan kode berjalan:
+
+- Stack aktual: Laravel 13, PHP 8.4, Inertia 3, Vue 3 + TypeScript, Tiptap 2, PostgreSQL 18.
+- Pencarian memakai generated `tsvector` + GIN + prefix query + `ts_rank`; Meilisearch/Scout tidak dipakai untuk daftar notulen.
+- Queue memakai driver database (Redis opsional); worker dipisah untuk `ai`, `notifications`, dan `default`.
+- Kolaborasi memakai Hocuspocus/Yjs dengan token HMAC ber-TTL dan penyimpanan file, bukan tabel `collab_documents`.
+- Autentikasi lokal dilengkapi TOTP 2FA + recovery code. SSO perusahaan belum diimplementasikan.
+- Fitur yang sudah berjalan: decision CRUD, approver terpisah, signature lock, Quick Note, dokumen Proposal/Laporan/Brosur, dashboard per peran, health check, alert admin, retensi data, dan audit login/logout.
+- Aturan kerahasiaan aktual: `open` untuk semua user; `division` untuk peserta/pembuat + divisi yang di-tag; `restricted` untuk peserta/pembuat + orang yang di-tag; `secret` untuk peserta/pembuat + admin dokumen yang ditunjuk.
+- AI diblokir untuk notulen `secret` secara default (`AI_ALLOW_SECRET=false`), memakai kuota harian, cache 6 jam, sitasi sumber, dan unique version di database.
 
 ## Riwayat Versi
 
@@ -17,6 +30,7 @@
 | 0.1 | 26 Okt 2026 | Draf awal kebutuhan produk | Wafiq Lana Pradana |
 | 0.2 | 26 Okt 2026 | Penambahan rekomendasi tech stack | Wafiq Lana Pradana |
 | 1.0 | 26 Okt 2026 | Konsolidasi PRD, ERD, bisnis proses, dan keputusan arsitektur | Wafiq Lana Pradana |
+| 1.1 | 26 Nov 2026 | Penyelarasan stack, 2FA, akses secret, AI guardrail, dan fitur yang sudah berjalan | Wafiq Lana Pradana |
 
 ## 1. Ringkasan Eksekutif
 
@@ -334,10 +348,10 @@ Aplikasi dibangun sebagai monolit modular Laravel dengan frontend Vue 3 melalui 
 
 ```mermaid
 flowchart TB
-    U[Browser desktop / mobile] <--> L[Laravel 12 + Inertia]
+    U[Browser desktop / mobile] <--> L[Laravel 13 + Inertia 3]
     U <--> C[Hocuspocus / Yjs]
     L --> D[(PostgreSQL)]
-    L --> S[Layanan pendukung<br/>Redis · Meilisearch · Object Storage]
+    L --> S[Layanan pendukung<br/>PostgreSQL FTS · Queue Database · Object Storage]
     L --> I[Integrasi<br/>SSO · Email · LLM]
     L --> Q[Queue Worker / Scheduler]
     Q --> I
@@ -347,20 +361,20 @@ flowchart TB
 
 | Lapisan | Teknologi | Alasan |
 | --- | --- | --- |
-| Backend | PHP 8.4 + Laravel 12 | Ekosistem auth, policy, queue, scheduler, notifikasi |
+| Backend | PHP 8.4 + Laravel 13 | Ekosistem auth, policy, queue, scheduler, notifikasi |
 | Frontend | Vue 3 + TypeScript | Kurva belajar landai untuk tim PHP, tipe aman |
-| Jembatan | Inertia.js 2 | Render dari controller tanpa API terpisah |
+| Jembatan | Inertia.js 3 | Render dari controller tanpa API terpisah |
 | Styling | Tailwind CSS | Konsisten dan mudah dikustom |
 | Komponen UI | shadcn-vue | Aksesibel, dapat dimodifikasi |
 | Editor | Tiptap 2 | Mention, tabel, ekstensi kaya |
 | Kolaborasi | Yjs + Hocuspocus | Sinkronisasi real-time dan presence |
-| Database | PostgreSQL 16+ | JSONB untuk dokumen, pgvector untuk AI |
-| Pencarian | Meilisearch + Scout | Toleran salah ketik, filter facet |
-| Queue | Laravel Queue + Redis | AI/notifikasi asinkron |
-| Scheduler | Laravel Scheduler | Pengingat dan rekap |
+| Database | PostgreSQL 18 | JSONB untuk dokumen, FTS untuk pencarian |
+| Pencarian | PostgreSQL `tsvector` + GIN | Prefix, ranking, tanpa layanan eksternal |
+| Queue | Laravel Queue + database | AI/notifikasi asinkron; Redis opsional |
+| Scheduler | Laravel Scheduler | Pengingat, retensi, alert queue |
 | AI | LLM API provider-agnostik | Mudah mengganti penyedia |
-| Auth | Fortify + SSO + MFA | Sesuai kebijakan perusahaan |
-| Storage | S3-compatible | Lampiran dan rekaman |
+| Auth | Login lokal + TOTP 2FA | Sesuai kebijakan perusahaan; SSO menyusul |
+| Storage | Local / S3-compatible | Lampiran dan tanda tangan |
 | Deployment | Docker Compose + Nginx | Konsisten lokal dan produksi |
 
 ### 14.3 Lingkungan
@@ -393,7 +407,7 @@ flowchart TB
 | Topik duplikat | Pencarian tidak akurat | Topik terkelola, saran AI, review berkala | Admin |
 | Adopsi rendah | Sistem tidak dipakai | Pilot, pelatihan, champion divisi | Product Owner |
 | Scope creep | Rilis mundur | Scope P0 dikunci, change request formal | Manager IT |
-| Ketergantungan layanan Node/Meilisearch | Fitur terganggu | Health check, fallback pencarian, runbook | Tech Lead |
+| Ketergantungan layanan Node/Hocuspocus | Fitur kolaborasi terganggu | Health check, fallback mode tunggal, runbook | Tech Lead |
 | SSO belum siap | Login terhambat | Fallback login lokal + MFA, jadwal integrasi | Manager IT |
 | Kehilangan data | Operasional terganggu | Backup harian, uji restore, retensi | Manager IT |
 
@@ -430,6 +444,6 @@ flowchart TB
 | Action item | Tugas tindak lanjut dari rapat |
 | PIC | Person in Charge |
 | Resume AI | Ringkasan yang dihasilkan model bahasa |
-| Scout | Lapisan pencarian Laravel |
+| FTS | Full-text search PostgreSQL berbasis `tsvector` dan GIN |
 | Hocuspocus | Layanan sinkronisasi Yjs untuk kolaborasi |
 | SSO | Single Sign-On |

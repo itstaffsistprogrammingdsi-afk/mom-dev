@@ -1,32 +1,63 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
-
-import AppearanceTabs from '@/components/AppearanceTabs.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
-import { type BreadcrumbItem } from '@/types';
-
+import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
+import { setLocale, supportedLocales, type Locale } from '@/i18n';
+import { type BreadcrumbItem, type SharedData } from '@/types';
+import { Head, router, usePage } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
+
+const { t, locale } = useI18n();
+const page = usePage<SharedData>();
 
 const breadcrumbItems: BreadcrumbItem[] = [
     {
-        title: 'Tampilan',
+        title: t('settings.appearance.title'),
         href: '/settings/appearance',
     },
 ];
+
+function changeLocale(value: Locale) {
+    setLocale(value);
+
+    if (page.props.auth?.user) {
+        router.put(route('interface-preferences.update'), { locale: value }, { preserveScroll: true, preserveState: false, onSuccess: () => window.location.reload() });
+
+        return;
+    }
+
+    window.location.reload();
+}
 </script>
 
 <template>
     <AppLayout :breadcrumbs="breadcrumbItems">
-        <Head title="Tampilan" />
+        <Head :title="t('settings.appearance.title')" />
 
         <SettingsLayout>
             <div class="space-y-6">
-                <HeadingSmall title="Tampilan" description="Pilih tema terang, gelap, atau ikuti pengaturan sistem." />
+                <HeadingSmall :title="t('settings.appearance.title')" :description="t('settings.appearance.description')" />
                 <AppearanceTabs />
                 <p class="text-sm text-muted-foreground">
-                    Mode sistem akan mengikuti preferensi perangkat Anda dan berubah otomatis saat tema perangkat berubah.
+                    {{ t('settings.appearance.systemHint') }}
                 </p>
+
+                <div class="space-y-2 border-t border-border/70 pt-6">
+                    <HeadingSmall :title="t('settings.appearance.languageTitle')" :description="t('settings.appearance.languageHint')" />
+                    <div class="flex flex-wrap gap-2" role="group" :aria-label="t('language.change')">
+                        <Button
+                            v-for="option in supportedLocales"
+                            :key="option"
+                            type="button"
+                            :variant="locale === option ? 'default' : 'outline'"
+                            size="sm"
+                            @click="changeLocale(option)"
+                        >
+                            {{ t(`language.${option}`) }}
+                        </Button>
+                    </div>
+                </div>
             </div>
         </SettingsLayout>
     </AppLayout>

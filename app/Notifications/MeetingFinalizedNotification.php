@@ -18,13 +18,19 @@ class MeetingFinalizedNotification extends Notification implements ShouldQueueAf
     public function __construct(
         public Meeting $meeting,
         public array $tasks = [],
-    ) {}
+    ) {
+        $this->onQueue('notifications');
+    }
 
     public function via(object $notifiable): array
     {
-        $channels = ['database'];
+        $channels = [];
 
-        if (method_exists($notifiable, 'wantsEmailNotifications') && $notifiable->wantsEmailNotifications()) {
+        if (! method_exists($notifiable, 'wantsInAppNotifications') || $notifiable->wantsInAppNotifications('meeting')) {
+            $channels[] = 'database';
+        }
+
+        if (method_exists($notifiable, 'wantsEmailNotifications') && $notifiable->wantsEmailNotifications('meeting')) {
             $channels[] = 'mail';
         }
 

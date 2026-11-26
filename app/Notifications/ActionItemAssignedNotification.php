@@ -12,13 +12,20 @@ class ActionItemAssignedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(public ActionItem $actionItem) {}
+    public function __construct(public ActionItem $actionItem)
+    {
+        $this->onQueue('notifications');
+    }
 
     public function via(object $notifiable): array
     {
-        $channels = ['database'];
+        $channels = [];
 
-        if (method_exists($notifiable, 'wantsEmailNotifications') && $notifiable->wantsEmailNotifications()) {
+        if (! method_exists($notifiable, 'wantsInAppNotifications') || $notifiable->wantsInAppNotifications('action_item')) {
+            $channels[] = 'database';
+        }
+
+        if (method_exists($notifiable, 'wantsEmailNotifications') && $notifiable->wantsEmailNotifications('action_item')) {
             $channels[] = 'mail';
         }
 

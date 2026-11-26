@@ -10,7 +10,11 @@ use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\CollabTokenController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DecisionController;
 use App\Http\Controllers\DivisionController;
+use App\Http\Controllers\GlobalSearchController;
+use App\Http\Controllers\HealthController;
+use App\Http\Controllers\MeetingAdminController;
 use App\Http\Controllers\MeetingAiController;
 use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\MeetingExportController;
@@ -23,12 +27,18 @@ use App\Http\Controllers\RelatedController;
 use App\Http\Controllers\TopicController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/health', HealthController::class)->name('health');
+
 Route::get('/', function () {
     return redirect()->route(auth()->check() ? 'dashboard' : 'login');
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
+
+    Route::get('pencarian-global', GlobalSearchController::class)
+        ->middleware('throttle:60,1')
+        ->name('global-search');
 
     Route::get('notulen', [MeetingController::class, 'index'])->name('meetings.index');
     Route::get('notulen/buat', [MeetingController::class, 'create'])->name('meetings.create');
@@ -48,20 +58,35 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('notulen/{meeting}/tanda-tangan/{role}', [MeetingSignatureController::class, 'destroy'])
         ->whereIn('role', ['creator', 'approver'])
         ->name('meeting-signatures.destroy');
+
+    Route::patch('notulen/{meeting}/admin-dokumen', [MeetingAdminController::class, 'update'])
+        ->name('meeting-admins.update');
     Route::get('tanda-tangan/{signature}', [MeetingSignatureController::class, 'show'])->name('meeting-signatures.show');
 
-    Route::post('notulen/{meeting}/lampiran', [AttachmentController::class, 'store'])->name('attachments.store');
-    Route::get('lampiran/{attachment}', [AttachmentController::class, 'download'])->name('attachments.download');
+    Route::post('notulen/{meeting}/lampiran', [AttachmentController::class, 'store'])
+        ->middleware('throttle:30,1')
+        ->name('attachments.store');
+    Route::get('lampiran/{attachment}', [AttachmentController::class, 'download'])
+        ->middleware('throttle:120,1')
+        ->name('attachments.download');
     Route::delete('lampiran/{attachment}', [AttachmentController::class, 'destroy'])->name('attachments.destroy');
 
-    Route::get('notulen/{meeting}/ekspor/pdf', [MeetingExportController::class, 'pdf'])->name('meetings.export.pdf');
-    Route::get('notulen/{meeting}/ekspor/word', [MeetingExportController::class, 'docx'])->name('meetings.export.word');
+    Route::get('notulen/{meeting}/ekspor/pdf', [MeetingExportController::class, 'pdf'])
+        ->middleware('throttle:30,1')
+        ->name('meetings.export.pdf');
+    Route::get('notulen/{meeting}/ekspor/word', [MeetingExportController::class, 'docx'])
+        ->middleware('throttle:30,1')
+        ->name('meetings.export.word');
     Route::post('notulen/{meeting}/bagikan', [MeetingShareController::class, 'send'])
         ->middleware('throttle:20,1')
         ->name('meetings.share');
 
-    Route::post('notulen/{meeting}/ai/resume', [MeetingAiController::class, 'generate'])->name('meetings.ai.generate');
-    Route::get('notulen/{meeting}/ai/resume/status', [MeetingAiController::class, 'status'])->name('meetings.ai.status');
+    Route::post('notulen/{meeting}/ai/resume', [MeetingAiController::class, 'generate'])
+        ->middleware('throttle:10,1')
+        ->name('meetings.ai.generate');
+    Route::get('notulen/{meeting}/ai/resume/status', [MeetingAiController::class, 'status'])
+        ->middleware('throttle:120,1')
+        ->name('meetings.ai.status');
     Route::post('ai-summaries/{aiSummary}/approve', [MeetingAiController::class, 'approve'])->name('ai-summaries.approve');
     Route::post('ai-summaries/{aiSummary}/reject', [MeetingAiController::class, 'reject'])->name('ai-summaries.reject');
     Route::patch('ai-summaries/{aiSummary}', [MeetingAiController::class, 'update'])->name('ai-summaries.update');
@@ -90,6 +115,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('orang/{user}', [PeopleController::class, 'show'])->name('people.show');
 
     Route::get('tugas', [ActionItemController::class, 'index'])->name('action-items.index');
+    Route::post('notulen/{meeting}/keputusan', [DecisionController::class, 'store'])->name('decisions.store');
+    Route::patch('keputusan/{decision}', [DecisionController::class, 'update'])->name('decisions.update');
+    Route::delete('keputusan/{decision}', [DecisionController::class, 'destroy'])->name('decisions.destroy');
+
     Route::post('notulen/{meeting}/tugas', [ActionItemController::class, 'store'])->name('action-items.store');
     Route::patch('tugas/{actionItem}', [ActionItemController::class, 'update'])->name('action-items.update');
     Route::delete('tugas/{actionItem}', [ActionItemController::class, 'destroy'])->name('action-items.destroy');
@@ -101,7 +130,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('notifikasi/baca-semua', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
     Route::post('notifikasi/{notification}/baca', [NotificationController::class, 'markRead'])->name('notifications.read');
 
-    Route::post('collab/token/{meeting}', CollabTokenController::class)->name('collab.token');
+    Route::post('collab/token/{meeting}', CollabTokenController::class)
+        ->middleware('throttle:30,1')
+        ->name('collab.token');
 
     Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
         Route::get('divisi', [AdminDivisionController::class, 'index'])->name('divisions.index');

@@ -12,6 +12,7 @@ use App\Models\Topic;
 use App\Models\User;
 use App\Services\MeetingTagSynchronizer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -36,10 +37,32 @@ class MeetingAccessTest extends TestCase
     {
         $admin = $this->userWithRole('admin');
         $meeting = $this->meeting(['confidentiality' => Confidentiality::Secret->value]);
+        $meeting->admins()->attach($admin->id);
 
         $this->actingAs($admin)
             ->get(route('meetings.show', $meeting))
             ->assertOk();
+
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'meeting.viewed',
+            'meeting_id' => $meeting->id,
+        ]);
+    }
+
+    public function test_admin_must_be_designated_to_view_a_secret_meeting(): void
+    {
+        $designated = $this->userWithRole('admin');
+        $otherAdmin = $this->userWithRole('admin');
+        $meeting = $this->meeting(['confidentiality' => Confidentiality::Secret->value]);
+        $meeting->admins()->attach($designated->id);
+
+        $this->actingAs($designated)
+            ->get(route('meetings.show', $meeting))
+            ->assertOk();
+
+        $this->actingAs($otherAdmin)
+            ->get(route('meetings.show', $meeting))
+            ->assertForbidden();
     }
 
     public function test_participant_can_view_restricted_meeting(): void
@@ -67,6 +90,131 @@ class MeetingAccessTest extends TestCase
         $this->actingAs($outsider)
             ->get(route('meetings.show', $meeting))
             ->assertForbidden();
+    }
+
+    public function test_division_meeting_requires_a_division_tag_not_a_person_tag(): void
+    {
+        $division = Division::factory()->create();
+        $member = $this->userWithRole('member', $division);
+
+        $divisionTagged = $this->meeting([
+            'confidentiality' => Confidentiality::Division->value,
+            'division_id' => $division->id,
+        ]);
+        $divisionTagged->tags()->create([
+            'type' => 'division',
+            'target_id' => $division->id,
+            'target_name' => $division->name,
+        ]);
+
+        $this->actingAs($member)
+            ->get(route('meetings.show', $divisionTagged))
+            ->assertOk();
+
+        $personTagged = $this->meeting([
+            'confidentiality' => Confidentiality::Division->value,
+            'division_id' => $division->id,
+        ]);
+        $personTagged->tags()->create([
+            'type' => 'person',
+            'target_id' => $member->id,
+            'target_name' => $member->name,
+        ]);
+
+        $this->actingAs($member)
+            ->get(route('meetings.show', $personTagged))
+            ->assertForbidden();
+    }
+
+    public function test_restricted_meeting_requires_a_person_tag_not_a_division_tag(): void
+    {
+        $division = Division::factory()->create();
+        $member = $this->userWithRole('member', $division);
+
+        $personTagged = $this->meeting([
+            'confidentiality' => Confidentiality::Restricted->value,
+            'division_id' => $division->id,
+        ]);
+        $personTagged->tags()->create([
+            'type' => 'person',
+            'target_id' => $member->id,
+            'target_name' => $member->name,
+        ]);
+
+        $this->actingAs($member)
+            ->get(route('meetings.show', $personTagged))
+            ->assertOk();
+
+        $divisionTagged = $this->meeting([
+            'confidentiality' => Confidentiality::Restricted->value,
+            'division_id' => $division->id,
+        ]);
+        $divisionTagged->tags()->create([
+            'type' => 'division',
+            'target_id' => $division->id,
+            'target_name' => $division->name,
+        ]);
+
+        $this->actingAs($member)
+            ->get(route('meetings.show', $divisionTagged))
+            ->assertForbidden();
+    }
+
+    public function test_user_division_change_updates_projected_access(): void
+    {
+        $divisionA = Division::factory()->create();
+        $divisionB = Division::factory()->create();
+        $user = $this->userWithRole('member', $divisionA);
+        $meeting = $this->meeting([
+            'confidentiality' => Confidentiality::Division->value,
+            'division_id' => $divisionA->id,
+        ]);
+        $meeting->tags()->create([
+            'type' => 'division',
+            'target_id' => $divisionA->id,
+            'target_name' => $divisionA->name,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('meetings.show', $meeting))
+            ->assertOk();
+
+        $user->update(['division_id' => $divisionB->id]);
+
+        $this->actingAs($user->fresh())
+            ->get(route('meetings.show', $meeting))
+            ->assertForbidden();
+
+        $user->update(['division_id' => $divisionA->id]);
+
+        $this->actingAs($user->fresh())
+            ->get(route('meetings.show', $meeting))
+            ->assertOk();
+    }
+
+    public function test_rebuild_command_restores_access_projection(): void
+    {
+        $division = Division::factory()->create();
+        $user = $this->userWithRole('member', $division);
+        $meeting = $this->meeting([
+            'confidentiality' => Confidentiality::Division->value,
+            'division_id' => $division->id,
+        ]);
+        $meeting->tags()->create([
+            'type' => 'division',
+            'target_id' => $division->id,
+            'target_name' => $division->name,
+        ]);
+
+        DB::table('meeting_access')->delete();
+
+        $this->artisan('mom:rebuild-meeting-access')->assertSuccessful();
+
+        $this->assertDatabaseHas('meeting_access', [
+            'meeting_id' => $meeting->id,
+            'user_id' => $user->id,
+            'source' => 'division',
+        ]);
     }
 
     public function test_open_meeting_is_visible_to_every_authenticated_user(): void

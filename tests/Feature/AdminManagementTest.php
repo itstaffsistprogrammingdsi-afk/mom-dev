@@ -6,6 +6,7 @@ use App\Enums\Confidentiality;
 use App\Enums\MeetingStatus;
 use App\Models\Division;
 use App\Models\Meeting;
+use App\Models\Topic;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -68,5 +69,31 @@ class AdminManagementTest extends TestCase
         $this->actingAs($admin)
             ->get(route('people.show', $member))
             ->assertOk();
+    }
+
+    public function test_division_and_topic_changes_are_audited(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)
+            ->post(route('admin.divisions.store'), ['name' => 'Divisi Audit'])
+            ->assertRedirect();
+
+        $this->actingAs($admin)
+            ->post(route('admin.topics.store'), ['name' => 'Topik Audit'])
+            ->assertRedirect();
+
+        $topic = Topic::query()->where('name', 'Topik Audit')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->patch(route('admin.topics.toggle', $topic))
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('audit_logs', ['action' => 'division.created']);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'topic.created']);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'topic.status_updated',
+            'auditable_id' => $topic->id,
+        ]);
     }
 }

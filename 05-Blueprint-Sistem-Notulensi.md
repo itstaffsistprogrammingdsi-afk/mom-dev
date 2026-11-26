@@ -1,13 +1,15 @@
 # Blueprint Sistem Notulensi (MoM) Terintegrasi AI
 
 **Kode dokumen:** DOC-BLP-MOM-001  
-**Versi:** 1.0  
-**Tanggal:** 9 November 2026  
+**Versi:** 1.1  
+**Tanggal:** 26 November 2026  
 **Status:** Draft untuk persetujuan klien  
 **Pemilik:** Wafiq Lana Pradana  
 **Audiens:** Manajemen, Product Owner, Kepala Divisi, IT, QA
 
 > Dokumen ini adalah ringkasan presentasi untuk klien. Isi teknis mendalam tetap mengacu pada PRD (01), ERD (02), Bisnis Proses (03), dan Matriks Traceability (04). Aspek komersial dan pembiayaan tidak dibahas dalam dokumen ini.
+
+> **Catatan implementasi (26 November 2026):** blueprint ini sudah diselaraskan untuk stack aktual: Laravel 13, Inertia 3, Tiptap 2, PostgreSQL FTS, queue database, TOTP 2FA, Quick Note, decision CRUD, approver terpisah, signature lock, admin dokumen `secret`, proyeksi akses `meeting_access`, dan retensi data. SSO masih roadmap. Rincian perbedaan historis ada di `docs/IMPLEMENTATION-STATUS.md`.
 
 ## 1. Ringkasan Eksekutif
 
@@ -144,7 +146,7 @@ Keterangan rilis:
 | F-45 | Resume per peran | P2 | R3 |
 | F-46 | Transkripsi rekaman | P2 | R3 |
 | F-47 | Penerjemahan resume | P2 | R3 |
-| F-50 | Manajemen pengguna, divisi, dan peran | P0 | R1 |
+| F-49 | Manajemen pengguna, divisi, dan peran | P0 | R1 |
 | F-50 | SSO perusahaan | P0 | R3 |
 | F-51 | Manajemen topik | P1 | R1 |
 | F-52 | Audit log | P1 | R1 |
@@ -209,7 +211,7 @@ Catatan: SSO ditempatkan di R3 karena bergantung pada kesiapan Identity Provider
 | `audit_logs` | Jejak akses dan perubahan | Pengguna 1 ke N Audit |
 | `notifications` | Notifikasi in-app per pengguna | Pengguna 1 ke N Notifikasi |
 | `meeting_versions` | Riwayat versi dokumen | Notulen 1 ke N Versi |
-| `collab_documents` | State kolaborasi Yjs | Notulen 1 ke 1 Dokumen kolaborasi |
+| `collab_documents` | Tidak dipakai | State kolaborasi Yjs disimpan sebagai file oleh service Hocuspocus, bukan tabel database |
 
 ## 10. Blueprint Arsitektur dan Teknologi
 
@@ -219,7 +221,7 @@ Catatan: SSO ditempatkan di R3 karena bergantung pada kesiapan Identity Provider
 | Frontend | Vue 3.5, TypeScript, Inertia 3 | Antarmuka SPA tanpa API terpisah |
 | Build | Vite 8 | Kompilasi asset |
 | UI | Tailwind 4 dan shadcn-vue | Komponen konsisten dan aksesibel |
-| Editor | Tiptap 3 | Teks kaya, tabel, mention, lampiran |
+| Editor | Tiptap 2 | Teks kaya, tabel, mention, lampiran |
 | Kolaborasi | Yjs dan Hocuspocus 4 | Sinkronisasi real-time dan presence |
 | Database | PostgreSQL 18 | JSONB, full-text search, trigram |
 | Queue | Laravel Queue | AI, email, dan notifikasi asinkron |

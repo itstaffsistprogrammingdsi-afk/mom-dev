@@ -79,6 +79,91 @@ class MeetingFinalizationTest extends TestCase
         Notification::assertSentTo($participant, MeetingFinalizedNotification::class);
     }
 
+    public function test_finalize_assigns_a_separate_approver_and_rejects_self_approval(): void
+    {
+        Notification::fake();
+
+        $notulis = User::factory()->create(['role' => 'notulis']);
+        $approver = User::factory()->create(['role' => 'member']);
+        $meeting = Meeting::factory()->create([
+            'created_by' => $notulis->id,
+            'status' => MeetingStatus::Draft->value,
+            'confidentiality' => Confidentiality::Open->value,
+        ]);
+
+        ActionItem::factory()->create([
+            'meeting_id' => $meeting->id,
+            'pic_id' => $notulis->id,
+            'due_date' => now()->addDays(2)->toDateString(),
+        ]);
+
+        $this->actingAs($notulis)
+            ->post(route('meetings.finalize', $meeting), ['approver_id' => $approver->id])
+            ->assertRedirect(route('meetings.show', $meeting));
+
+        $meeting->refresh();
+        $this->assertSame(MeetingStatus::Final, $meeting->status);
+        $this->assertSame($approver->id, $meeting->approver_id);
+        $this->assertSame($notulis->id, $meeting->approved_by);
+
+        $second = Meeting::factory()->create([
+            'created_by' => $notulis->id,
+            'status' => MeetingStatus::Draft->value,
+            'confidentiality' => Confidentiality::Open->value,
+        ]);
+
+        ActionItem::factory()->create([
+            'meeting_id' => $second->id,
+            'pic_id' => $notulis->id,
+            'due_date' => now()->addDays(2)->toDateString(),
+        ]);
+
+        $this->actingAs($notulis)
+            ->post(route('meetings.finalize', $second), ['approver_id' => $notulis->id])
+            ->assertSessionHasErrors('approver_id');
+
+        $this->assertSame(MeetingStatus::Draft, $second->fresh()->status);
+    }
+
+    public function test_secret_finalization_does_not_notify_tagged_non_participant(): void
+    {
+        Notification::fake();
+
+        $notulis = User::factory()->create(['role' => 'notulis']);
+        $participant = User::factory()->create(['role' => 'member']);
+        $taggedOutsider = User::factory()->create(['role' => 'member']);
+
+        $meeting = Meeting::factory()->create([
+            'created_by' => $notulis->id,
+            'status' => MeetingStatus::Draft->value,
+            'confidentiality' => Confidentiality::Secret->value,
+        ]);
+
+        $meeting->participants()->create([
+            'user_id' => $participant->id,
+            'name' => $participant->name,
+        ]);
+
+        $meeting->tags()->create([
+            'type' => 'person',
+            'target_id' => $taggedOutsider->id,
+            'target_name' => $taggedOutsider->name,
+        ]);
+
+        ActionItem::factory()->create([
+            'meeting_id' => $meeting->id,
+            'pic_id' => $participant->id,
+            'due_date' => now()->addDays(2)->toDateString(),
+        ]);
+
+        $this->actingAs($notulis)
+            ->post(route('meetings.finalize', $meeting))
+            ->assertRedirect(route('meetings.show', $meeting));
+
+        Notification::assertSentTo($participant, MeetingFinalizedNotification::class);
+        Notification::assertNotSentTo($taggedOutsider, MeetingFinalizedNotification::class);
+    }
+
     public function test_admin_can_restore_meeting_version(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);

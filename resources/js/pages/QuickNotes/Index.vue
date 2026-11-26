@@ -28,7 +28,7 @@ const props = defineProps<{
     stats: { visible: number; mine: number; pending: number; overdue: number };
 }>();
 
-const breadcrumbs: BreadcrumbItem[] = [{ title: 'Quick Note', href: '/quick-notes' }];
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Catatan cepat', href: '/quick-notes' }];
 
 const scope = ref(props.filters.scope ?? 'all');
 const search = ref(props.filters.search ?? '');
@@ -74,12 +74,12 @@ function overdueMentions(note: QuickNote) {
 </script>
 
 <template>
-    <Head title="Quick Note" />
+    <Head title="Catatan cepat" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
             <PageHeader
-                title="Quick Note"
+                title="Catatan cepat"
                 description="Catat inspirasi atau temuan cepat, lalu tag orang yang perlu merespons dengan batas waktu yang jelas."
             >
                 <template #actions>
@@ -92,7 +92,7 @@ function overdueMentions(note: QuickNote) {
                 </template>
             </PageHeader>
 
-            <section class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="Ringkasan Quick Note">
+            <section class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="Ringkasan Catatan cepat">
                 <div class="rounded-lg border border-border bg-card p-4">
                     <p class="text-xs text-muted-foreground">Catatan terlihat</p>
                     <p class="mt-1 text-xl font-semibold tabular-nums">{{ props.stats.visible }}</p>
@@ -114,7 +114,7 @@ function overdueMentions(note: QuickNote) {
             </section>
 
             <section class="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 md:flex-row md:items-center md:justify-between">
-                <div class="flex flex-wrap gap-1" role="tablist" aria-label="Filter Quick Note">
+                <div class="flex flex-wrap gap-1" role="tablist" aria-label="Filter Catatan cepat">
                     <button
                         v-for="tab in tabs"
                         :key="tab.value"
@@ -185,13 +185,13 @@ function overdueMentions(note: QuickNote) {
             <EmptyState
                 v-if="props.notes.data.length === 0"
                 :icon="StickyNote"
-                title="Belum ada Quick Note"
+                title="Belum ada Catatan cepat"
                 description="Catatan cepat yang Anda buat atau yang menyebut Anda akan muncul di sini."
             >
                 <Button as-child class="mt-3">
                     <Link :href="route('quick-notes.create')">
                         <Plus class="size-4" />
-                        Buat Quick Note
+                        Buat Catatan cepat
                     </Link>
                 </Button>
             </EmptyState>

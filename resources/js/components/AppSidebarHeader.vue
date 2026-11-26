@@ -1,12 +1,15 @@
 <script setup lang="ts">
+import CommandPalette from '@/components/CommandPalette.vue';
 import KeyboardShortcutsDialog from '@/components/KeyboardShortcutsDialog.vue';
+import LocaleSwitcher from '@/components/LocaleSwitcher.vue';
 import ThemeToggle from '@/components/ThemeToggle.vue';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import type { BreadcrumbItemType, SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { Bell, Keyboard } from 'lucide-vue-next';
+import { Bell, Keyboard, Search } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 withDefaults(
     defineProps<{
@@ -18,8 +21,10 @@ withDefaults(
 );
 
 const page = usePage<SharedData>();
+const { t } = useI18n();
 const unread = computed(() => page.props.notifications?.unread ?? 0);
 const shortcutsOpen = ref(false);
+const paletteOpen = ref(false);
 </script>
 
 <template>
@@ -54,8 +59,28 @@ const shortcutsOpen = ref(false);
         <div class="ml-auto flex items-center gap-1">
             <button
                 type="button"
-                class="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors duration-fast ease-ui hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 max-sm:size-11"
-                aria-label="Pintasan keyboard"
+                class="hidden h-9 items-center gap-2 rounded-md border border-border/70 bg-card/60 px-3 text-xs text-muted-foreground transition-colors duration-fast ease-ui hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 md:inline-flex"
+                :aria-label="t('common.globalSearch')"
+                @click="paletteOpen = true"
+            >
+                <Search class="size-3.5" aria-hidden="true" />
+                <span>{{ t('common.search') }}</span>
+                <kbd class="rounded border border-border bg-muted px-1 font-mono text-[10px]">Ctrl K</kbd>
+            </button>
+
+            <button
+                type="button"
+                class="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors duration-fast ease-ui hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 md:hidden max-sm:size-11"
+                :aria-label="t('common.globalSearch')"
+                @click="paletteOpen = true"
+            >
+                <Search class="size-4" aria-hidden="true" />
+            </button>
+
+            <button
+                type="button"
+                class="hidden size-9 items-center justify-center rounded-md text-muted-foreground transition-colors duration-fast ease-ui hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 md:inline-flex"
+                :aria-label="t('common.shortcuts')"
                 @click="shortcutsOpen = true"
             >
                 <Keyboard class="size-4" aria-hidden="true" />
@@ -63,16 +88,19 @@ const shortcutsOpen = ref(false);
 
             <Link
                 :href="route('notifications.index')"
-                class="relative inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors duration-fast ease-ui hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 max-sm:size-11"
-                :aria-label="unread > 0 ? `Notifikasi, ${unread} belum dibaca` : 'Notifikasi'"
+                class="relative hidden size-9 items-center justify-center rounded-md text-muted-foreground transition-colors duration-fast ease-ui hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 md:inline-flex"
+                :aria-label="unread > 0 ? t('notifications.ariaUnread', { n: unread }) : t('nav.notifications')"
             >
                 <Bell class="size-4" aria-hidden="true" />
                 <span v-if="unread > 0" class="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-primary ring-2 ring-background" />
             </Link>
 
+            <LocaleSwitcher />
+
             <ThemeToggle />
         </div>
 
         <KeyboardShortcutsDialog v-model:open="shortcutsOpen" />
+        <CommandPalette v-model:open="paletteOpen" />
     </header>
 </template>

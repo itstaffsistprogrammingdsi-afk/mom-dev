@@ -63,6 +63,10 @@ class QuickNoteTest extends TestCase
         ]);
 
         $this->actingAs($creator)->get(route('quick-notes.show', $note))->assertOk();
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'quick_note.viewed',
+            'auditable_id' => $note->id,
+        ]);
         $this->actingAs($mentioned)->get(route('quick-notes.show', $note))->assertOk();
         $this->actingAs($admin)->get(route('quick-notes.show', $note))->assertOk();
         $this->actingAs($stranger)->get(route('quick-notes.show', $note))->assertForbidden();

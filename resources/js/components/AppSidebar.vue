@@ -19,19 +19,21 @@ import {
     Users,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import AppLogo from './AppLogo.vue';
 
 const page = usePage<SharedData>();
+const { t } = useI18n();
 
 const mainNavItems = computed<NavItem[]>(() => [
-    { title: 'Dashboard', url: '/dashboard', icon: LayoutGrid },
-    { title: 'Dokumen', url: '/notulen', icon: FileText },
-    { title: 'Quick Note', url: '/quick-notes', icon: StickyNote },
-    { title: 'Terkait Saya', url: '/terkait-saya', icon: Inbox },
-    { title: 'Action Item', url: '/tugas', icon: ListChecks },
-    { title: 'Topik', url: '/topik', icon: Hash },
+    { title: t('nav.dashboard'), url: '/dashboard', icon: LayoutGrid },
+    { title: t('nav.documents'), url: '/notulen', icon: FileText },
+    { title: t('nav.quickNotes'), url: '/quick-notes', icon: StickyNote },
+    { title: t('nav.related'), url: '/terkait-saya', icon: Inbox },
+    { title: t('nav.tasks'), url: '/tugas', icon: ListChecks },
+    { title: t('nav.topics'), url: '/topik', icon: Hash },
     {
-        title: 'Notifikasi',
+        title: t('nav.notifications'),
         url: '/notifikasi',
         icon: Bell,
         badge: page.props.notifications?.unread || undefined,
@@ -39,12 +41,12 @@ const mainNavItems = computed<NavItem[]>(() => [
 ]);
 
 const adminNavItems = computed<NavItem[]>(() => [
-    { title: 'Divisi', url: '/admin/divisi', icon: Building2 },
-    { title: 'Pengguna', url: '/admin/pengguna', icon: Users },
-    { title: 'Peran & Akses', url: '/admin/peran', icon: ShieldCheck },
-    { title: 'Topik', url: '/admin/topik', icon: Hash },
-    { title: 'Template', url: '/admin/template', icon: FileStack },
-    { title: 'Audit Log', url: '/admin/audit', icon: ScrollText },
+    { title: t('nav.divisions'), url: '/admin/divisi', icon: Building2 },
+    { title: t('nav.people'), url: '/admin/pengguna', icon: Users },
+    { title: t('nav.roles'), url: '/admin/peran', icon: ShieldCheck },
+    { title: t('nav.manageTopics'), url: '/admin/topik', icon: Hash },
+    { title: t('nav.templates'), url: '/admin/template', icon: FileStack },
+    { title: t('nav.audit'), url: '/admin/audit', icon: ScrollText },
 ]);
 
 const isAdmin = computed(() => page.props.auth.user?.role === 'admin');
@@ -64,9 +66,9 @@ const isAdmin = computed(() => page.props.auth.user?.role === 'admin');
             </SidebarMenu>
         </SidebarHeader>
 
-        <SidebarContent role="navigation" aria-label="Navigasi utama" class="gap-4 px-1 py-4">
-            <NavMain :items="mainNavItems" label="Ruang Kerja" />
-            <NavMain v-if="isAdmin" :items="adminNavItems" label="Administrasi" />
+        <SidebarContent role="navigation" :aria-label="t('nav.workspace')" class="gap-4 px-1 py-4">
+            <NavMain :items="mainNavItems" :label="t('nav.workspace')" />
+            <NavMain v-if="isAdmin" :items="adminNavItems" :label="t('nav.administration')" />
         </SidebarContent>
 
         <SidebarFooter class="border-t border-sidebar-border/70 p-3">

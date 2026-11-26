@@ -7,29 +7,29 @@
     color-scheme: light;
 
     /* Surfaces ------------------------------------------------------------- */
-    --background: 216 33% 97%;
-    --foreground: 221 38% 15%;
+    --background: 38 26% 97%;
+    --foreground: 30 10% 13%;
     --surface: 0 0% 100%;
-    --surface-foreground: 221 38% 15%;
+    --surface-foreground: 30 10% 13%;
     --card: 0 0% 100%;
-    --card-foreground: 221 38% 15%;
+    --card-foreground: 30 10% 13%;
     --popover: 0 0% 100%;
-    --popover-foreground: 221 38% 15%;
+    --popover-foreground: 30 10% 13%;
 
     /* Text roles: primary, secondary, tertiary ---------------------------- */
-    --muted-foreground: 219 19% 40%;
-    --faint-foreground: 219 15% 45%;
+    --muted-foreground: 30 7% 38%;
+    --faint-foreground: 30 6% 46%;
 
     /* Brand --------------------------------------------------------------- */
-    --primary: 222 69% 46%;
+    --primary: 222 65% 42%;
     --primary-foreground: 0 0% 100%;
 
     /* Neutral controls ---------------------------------------------------- */
-    --secondary: 216 38% 95%;
-    --secondary-foreground: 219 30% 22%;
-    --muted: 217 40% 96%;
-    --accent: 218 76% 95%;
-    --accent-foreground: 221 63% 32%;
+    --secondary: 36 18% 94%;
+    --secondary-foreground: 30 8% 22%;
+    --muted: 36 18% 94%;
+    --accent: 222 40% 94%;
+    --accent-foreground: 222 55% 28%;
 
     /* Feedback ------------------------------------------------------------ */
     --destructive: 355 65% 47%;
@@ -46,37 +46,37 @@
     --info-soft: 207 75% 95%;
     --info-strong: 208 75% 34%;
 
-    /* AI summary: satu aksen khas, tanpa gradien --------------------------- */
-    --ai: 249 47% 56%;
-    --ai-foreground: 250 42% 40%;
-    --ai-soft: 253 64% 96%;
-    --ai-border: 254 68% 90%;
+    /* AI summary: netral, bukan aksen ungu ------------------------------- */
+    --ai: 218 28% 35%;
+    --ai-foreground: 218 28% 28%;
+    --ai-soft: 216 25% 96%;
+    --ai-border: 216 18% 87%;
 
     /* Tag types ----------------------------------------------------------- */
-    --tag-person: 219 69% 39%;
-    --tag-person-soft: 218 92% 95%;
-    --tag-person-border: 218 85% 90%;
-    --tag-division: 175 80% 22%;
-    --tag-division-soft: 167 47% 93%;
-    --tag-division-border: 167 47% 85%;
-    --tag-topic: 36 100% 24%;
-    --tag-topic-soft: 39 100% 93%;
-    --tag-topic-border: 40 74% 83%;
+    --tag-person: 219 60% 39%;
+    --tag-person-soft: 218 55% 95%;
+    --tag-person-border: 218 45% 88%;
+    --tag-division: 176 55% 24%;
+    --tag-division-soft: 170 38% 94%;
+    --tag-division-border: 170 30% 84%;
+    --tag-topic: 36 75% 28%;
+    --tag-topic-soft: 39 70% 94%;
+    --tag-topic-border: 40 55% 82%;
 
     /* Borders and focus --------------------------------------------------- */
-    --border: 219 32% 91%;
-    --input: 216 31% 87%;
-    --ring: 222 69% 46%;
+    --border: 34 14% 88%;
+    --input: 32 12% 84%;
+    --ring: 222 65% 42%;
 
     /* Sidebar ------------------------------------------------------------- */
-    --sidebar-background: 217 44% 96%;
-    --sidebar-foreground: 218 22% 31%;
-    --sidebar-primary: 222 69% 46%;
+    --sidebar-background: 36 24% 95%;
+    --sidebar-foreground: 30 8% 30%;
+    --sidebar-primary: 222 65% 42%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 218 47% 93%;
-    --sidebar-accent-foreground: 218 43% 19%;
-    --sidebar-border: 216 33% 91%;
-    --sidebar-ring: 222 69% 46%;
+    --sidebar-accent: 36 22% 91%;
+    --sidebar-accent-foreground: 30 10% 17%;
+    --sidebar-border: 34 14% 88%;
+    --sidebar-ring: 222 65% 42%;
 
     /* Charts -------------------------------------------------------------- */
     --chart-1: 222 69% 46%;
@@ -85,19 +85,19 @@
     --chart-4: 355 65% 47%;
     --chart-5: 249 47% 56%;
 
-    /* Radius: 8 / 12 / 16 / 24 / pill ------------------------------------- */
-    --radius: 0.75rem;
-    --radius-xs: 0.5rem;
+    /* Radius: kontrol 10, kartu 14, panel 16 ------------------------------ */
+    --radius: 0.875rem;
+    --radius-xs: 0.375rem;
     --radius-sm: 0.5rem;
-    --radius-md: 0.75rem;
-    --radius-lg: 1rem;
+    --radius-md: 0.625rem;
+    --radius-lg: 0.875rem;
     --radius-xl: 1rem;
     --radius-2xl: 1.5rem;
     --radius-3xl: 2rem;
     --radius-pill: 9999px;
 
     /* Layout rhythm ------------------------------------------------------- */
-    --page-gutter: 1.5rem;
+    --page-gutter: 1rem;
     --page-gutter-lg: 2rem;
     --section-gap: 1.5rem;
     --card-padding: 1.25rem;
@@ -105,12 +105,13 @@
     --reading-measure: 68ch;
 
     /* Typography ---------------------------------------------------------- */
-    --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    --text-display: 2.25rem;
-    --text-title: 1.875rem;
-    --text-heading: 1.5rem;
-    --text-subheading: 1.25rem;
-    --text-body: 1rem;
+    --font-sans: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --text-display: 2.5rem;
+    --text-title: 1.75rem;
+    --text-heading: 1.125rem;
+    --text-subheading: 1rem;
+    --text-body: 0.9375rem;
+    --text-document: 1rem;
     --text-small: 0.875rem;
     --text-meta: 0.75rem;
     --leading-tight: 1.2;
@@ -132,29 +133,29 @@
     color-scheme: dark;
 
     /* Surfaces ------------------------------------------------------------ */
-    --background: 215 35% 7%;
-    --foreground: 217 39% 94%;
-    --surface: 217 35% 10%;
-    --surface-foreground: 217 39% 94%;
-    --card: 217 35% 10%;
-    --card-foreground: 217 39% 94%;
-    --popover: 215 35% 12%;
-    --popover-foreground: 217 39% 94%;
+    --background: 30 8% 7%;
+    --foreground: 40 18% 94%;
+    --surface: 30 7% 10%;
+    --surface-foreground: 40 18% 94%;
+    --card: 30 7% 10%;
+    --card-foreground: 40 18% 94%;
+    --popover: 30 6% 12%;
+    --popover-foreground: 40 18% 94%;
 
     /* Text roles ---------------------------------------------------------- */
-    --muted-foreground: 215 20% 67%;
-    --faint-foreground: 216 18% 61%;
+    --muted-foreground: 35 10% 66%;
+    --faint-foreground: 35 8% 58%;
 
     /* Brand --------------------------------------------------------------- */
-    --primary: 220 81% 69%;
+    --primary: 220 80% 70%;
     --primary-foreground: 219 51% 9%;
 
     /* Neutral controls ---------------------------------------------------- */
-    --secondary: 215 32% 15%;
-    --secondary-foreground: 217 43% 90%;
-    --muted: 214 33% 12%;
-    --accent: 216 43% 18%;
-    --accent-foreground: 219 100% 91%;
+    --secondary: 30 7% 15%;
+    --secondary-foreground: 40 14% 90%;
+    --muted: 30 7% 13%;
+    --accent: 30 7% 17%;
+    --accent-foreground: 220 60% 88%;
 
     /* Feedback ------------------------------------------------------------ */
     --destructive: 355 80% 71%;
@@ -172,36 +173,36 @@
     --info-strong: 207 81% 79%;
 
     /* AI summary ---------------------------------------------------------- */
-    --ai: 251 100% 83%;
-    --ai-foreground: 251 100% 91%;
-    --ai-soft: 252 35% 14%;
-    --ai-border: 251 34% 30%;
+    --ai: 216 60% 78%;
+    --ai-foreground: 216 55% 86%;
+    --ai-soft: 216 20% 13%;
+    --ai-border: 216 18% 24%;
 
     /* Tag types ----------------------------------------------------------- */
-    --tag-person: 220 100% 83%;
-    --tag-person-soft: 220 48% 17%;
-    --tag-person-border: 220 45% 28%;
-    --tag-division: 169 58% 68%;
-    --tag-division-soft: 176 47% 11%;
-    --tag-division-border: 173 38% 23%;
-    --tag-topic: 39 82% 71%;
-    --tag-topic-soft: 38 46% 12%;
-    --tag-topic-border: 37 47% 24%;
+    --tag-person: 220 85% 78%;
+    --tag-person-soft: 220 35% 16%;
+    --tag-person-border: 220 30% 28%;
+    --tag-division: 169 55% 68%;
+    --tag-division-soft: 176 35% 12%;
+    --tag-division-border: 173 30% 23%;
+    --tag-topic: 39 75% 70%;
+    --tag-topic-soft: 38 35% 13%;
+    --tag-topic-border: 37 35% 24%;
 
     /* Borders and focus --------------------------------------------------- */
-    --border: 215 33% 20%;
-    --input: 215 30% 24%;
-    --ring: 222 100% 78%;
+    --border: 30 7% 19%;
+    --input: 30 6% 24%;
+    --ring: 220 80% 70%;
 
     /* Sidebar ------------------------------------------------------------- */
-    --sidebar-background: 215 40% 6%;
-    --sidebar-foreground: 214 23% 74%;
-    --sidebar-primary: 220 81% 69%;
+    --sidebar-background: 30 8% 6%;
+    --sidebar-foreground: 35 12% 72%;
+    --sidebar-primary: 220 80% 70%;
     --sidebar-primary-foreground: 219 51% 9%;
-    --sidebar-accent: 215 35% 13%;
-    --sidebar-accent-foreground: 215 61% 94%;
-    --sidebar-border: 215 33% 15%;
-    --sidebar-ring: 222 100% 78%;
+    --sidebar-accent: 30 7% 13%;
+    --sidebar-accent-foreground: 40 16% 93%;
+    --sidebar-border: 30 7% 15%;
+    --sidebar-ring: 220 80% 70%;
 
     /* Charts -------------------------------------------------------------- */
     --chart-1: 220 81% 69%;

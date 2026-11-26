@@ -56,9 +56,11 @@ Untuk pengembangan frontend:
 npm run dev
 ```
 
-## Akun Demo
+## Akun Demo (khusus lokal/testing)
 
-| Peran | Email | Password |
+> **Jangan jalankan `php artisan migrate --seed` di production.** Akun demo memakai password default dan hanya untuk pengembangan. Untuk production, buat admin melalui prosedur aman dan gunakan password acak/forced reset.
+
+| Peran | Email | Password (lokal) |
 |---|---|---|
 | Admin | admin@mom.test | password |
 | Notulis | notulis@mom.test | password |
@@ -68,7 +70,7 @@ npm run dev
 | Staf IT | staff@mom.test | password |
 | Direksi | direksi@mom.test | password |
 
-Registrasi publik aktif; pengguna baru otomatis mendapat peran Anggota. Admin dapat mengubah peran dan menonaktifkan akun dari menu Admin > Pengguna.
+Registrasi publik aktif secara default hanya saat `APP_ENV=local`; pengguna baru otomatis mendapat peran Anggota. Untuk production, set `REGISTRATION_ENABLED=false` atau batasi ke domain/invite, lalu gunakan admin untuk mengelola akun.
 
 ## AI
 
@@ -84,6 +86,14 @@ AI_MODEL=gpt-4o-mini
 ```
 
 Provider yang kompatibel dengan Chat Completions (OpenAI, OpenRouter, DeepSeek, Ollama, dan lainnya) dapat digunakan dengan mengubah `AI_BASE_URL` dan `AI_MODEL`.
+
+Batas dan efisiensi:
+
+- `AI_DAILY_GENERATIONS=20` — kuota permintaan resume AI per pengguna per hari. Set `0` untuk tanpa batas.
+- `AI_MAX_INPUT_CHARS=12000` — isi notulen dipotong sebelum dikirim ke provider agar prompt tidak membengkak.
+- Respons dengan isi notulen identik dan tier/model sama memakai cache 6 jam, sehingga permintaan ulang tidak menagih provider lagi.
+- Setiap resume menyimpan `sources` (judul + URL notulen) dan `usage` (hash isi, jumlah karakter, estimasi token) untuk audit dan sitasi.
+- Versi resume unik per `(meeting_id, scope, version)` di database; permintaan bersamaan diserialisasi dengan row lock.
 
 ## Kolaborasi Real-time
 
@@ -105,19 +115,127 @@ COLLAB_TOKEN_TTL=3600
 
 Jika service kolaborasi tidak tersedia, editor tetap dapat dipakai dalam mode tunggal.
 
+## Retensi Data
+
+Retensi default: audit log 365 hari, notifikasi terbaca 90 hari, versi meeting lama 90 hari (versi terbaru selalu disimpan).
+
+```bash
+# dry-run
+php artisan mom:prune-data
+
+# eksekusi
+php artisan mom:prune-data --force
+```
+
+Scheduler menjalankan `mom:prune-data --force` setiap pukul 03.00 Asia/Jakarta.
+
+## Autentikasi Dua Faktor
+
+Buka **Pengaturan > Autentikasi Dua Faktor** untuk mengaktifkan TOTP (Google Authenticator/Microsoft Authenticator). Setelah aktif, login memerlukan kode 6 digit; recovery code dapat dipakai satu kali.
+
+## Proyeksi Akses Meeting
+
+Tabel `meeting_access` menyimpan grant hasil tag divisi/orang untuk notulen `division` dan `restricted`. Grant diperbarui otomatis oleh observer saat tag, divisi pengguna, status aktif, atau tingkat kerahasiaan berubah. Notulen `open` memakai aturan langsung, `secret` hanya peserta/pembuat/admin yang ditunjuk, dan akses langsung lewat peserta/admin tetap dicek tanpa proyeksi.
+
+Setelah deploy atau jika proyeksi dicurigai tidak sinkron:
+
+```bash
+php artisan mom:rebuild-meeting-access
+```
+
+Perintah ini membangun ulang seluruh proyeksi dan aman dijalankan berulang. Cache statistik dashboard disimpan 30 detik per pengguna; cache jumlah notifikasi belum dibaca disimpan 15 detik dan dibersihkan saat pengguna menandai notifikasi terbaca.
+
+## Pencarian Notulen
+
+Pencarian daftar notulen memakai generated `tsvector` PostgreSQL (`title` A, `agenda` B, `content_text` C), GIN index, prefix query, dan ranking `ts_rank`. Trigram GIN tetap tersedia untuk fallback pencarian substring di modul lain.
+
+Benchmark lokal 100.000 notulen (`scripts/benchmark-search.php 100000`, hasil di `docs/benchmarks/search-100000.json`):
+
+| Jalur | Median | Catatan |
+|---|---|---|
+| FTS + ranking | 19,7 ms | `Bitmap Index Scan on meetings_search_vector_gin`, 10.001 hasil |
+| LIKE substring | 3,7 ms | Memakai trigram GIN, tanpa ranking |
+
+FTS lebih mahal karena menghitung `ts_rank` untuk seluruh hasil, tetapi tetap jauh di bawah target 3 detik dan skalanya lebih stabil untuk kata kunci jarang. LIKE tetap dipertahankan untuk pencarian substring cepat pada modul lain.
+
+## Pencarian Global dan Notifikasi
+
+- Tekan `Ctrl+K` (atau `Cmd+K`) untuk membuka command palette: cari notulen, topik, orang, dan navigasi dari satu tempat.
+- Preferensi notifikasi ada di **Pengaturan > Notifikasi**: aktif/nonaktifkan kanal in-app, salinan email, serta kategori notulen, action item, dan Quick Note. Peringatan sistem untuk admin tetap tampil di aplikasi.
+- `MeetingEditor` dimuat secara async di halaman buat/sunting dan mode dokumen; mode sheet tidak memuat editor Tiptap.
+
+## Bahasa, Tema, dan PWA
+
+- Bahasa antarmuka: **Indonesia** dan **English**, dapat diganti dari header atau **Pengaturan > Tampilan**. Pilihan disimpan di profil pengguna dan cookie/localStorage untuk halaman login.
+- Berkas terjemahan frontend: `resources/js/i18n/locales/id.json` dan `en.json`; backend: `lang/id` dan `lang/en`.
+- Tema: **Terang / Gelap / Ikuti sistem**. Preferensi disinkronkan ke kolom `appearance` pengguna dan diterapkan sebelum render untuk mencegah flash.
+- PWA: `public/manifest.webmanifest`, `public/sw.js`, `public/offline.html`, ikon di `public/icons`. Service worker hanya menyimpan aset statis dan halaman offline; HTML/API terautentikasi tidak di-cache.
+- Tombol **Pasang MoM** muncul jika browser mendukung `beforeinstallprompt`.
+
+## Aplikasi Android (Capacitor)
+
+Proyek Android ada di `android/` dengan package `id.mom.notulensi`. APK debug terakhir:
+
+```text
+storage/app/builds/mom-debug-2026-11-26.apk
+```
+
+Build ulang (ganti URL dengan domain HTTPS produksi):
+
+```bash
+export CAPACITOR_SERVER_URL=https://mom.perusahaan.com
+npm run mobile:sync
+cd android
+./gradlew assembleDebug
+# release: ./gradlew bundleRelease
+```
+
+APK debug saat ini memakai `http://192.168.10.145:8100` untuk pengujian LAN. HP harus berada di jaringan yang sama dan server harus berjalan dengan `php artisan serve --host=0.0.0.0 --port=8100`. Untuk produksi wajib HTTPS dan build ulang dengan `CAPACITOR_SERVER_URL` HTTPS.
+
+Fitur native yang sudah disiapkan: deep link `mom://notulen/{id}`, tombol back Android, status bar, share sheet, dan splash screen. **Push FCM belum aktif** karena belum ada project Firebase/`google-services.json`; lihat `docs/MOBILE-ANDROID.md`.
+
+## Health Check & Runbook Singkat
+
+Endpoint publik `GET /health` memeriksa database, cache, konfigurasi queue, konfigurasi AI, dan status Hocuspocus. Status `503` diberikan jika komponen inti gagal; status Hocuspocus dilaporkan terpisah sebagai `collab`.
+
+- **Queue macet / email tidak terkirim:** cek `php artisan queue:work --queue=ai,notifications,default`, lalu `failed_jobs`; restart worker setelah deploy.
+- **AI down:** cek `AI_BASE_URL`, `AI_API_KEY`, dan `failed_jobs`; job AI akan retry dengan backoff, lalu masuk `failed_jobs` setelah habis percobaan.
+- **Hocuspocus down:** editor tetap dapat dipakai mode tunggal; cek `COLLAB_URL` dan log `collab/server.js`.
+- **Rollback:** revert commit aplikasi, lalu jalankan `php artisan migrate:rollback --step=1` hanya untuk migrasi index baru.
+
+## Pemeriksaan Integritas
+
+Jalankan dry-run sebelum migrasi integritas:
+
+```bash
+php artisan mom:check-integrity
+```
+
+Untuk membersihkan duplikat peserta setelah laporan ditinjau:
+
+```bash
+php artisan mom:check-integrity --fix-participants
+```
+
+Di production, jalankan dry-run ini **sebelum** migrasi integritas (`2026_11_26_000006` sampai `000008`). Migrasi unique peserta dan konversi `notifications.data` ke `jsonb` akan gagal bila masih ada duplikat/JSON tidak valid; perbaiki datanya lebih dulu. Pemeriksaan yang sama melaporkan duplikat resume AI (`meeting_id` + `version`) sebelum migrasi index unik `000012`. Setelah migrasi `000013`, jalankan `php artisan mom:rebuild-meeting-access` sekali untuk mengisi proyeksi akses.
+
 ## Queue dan Scheduler
 
 Default `.env.example` memakai `QUEUE_CONNECTION=database`, sehingga worker wajib berjalan agar job (termasuk resume AI) diproses. Untuk produksi gunakan `database` atau Redis lalu jalankan worker:
 
 ```bash
-php artisan queue:work
+php artisan queue:work --queue=ai,notifications,default
 ```
+
+Untuk produksi, jalankan worker terpisah untuk `ai` dan `notifications` agar job AI panjang tidak memblokir email/notifikasi.
 
 Pengingat action item dijadwalkan setiap pukul 09.00:
 
 ```bash
 php artisan mom:remind-action-items
 ```
+
+Perintah ini memakai catch-up window: pengingat H-3 dikirim selama tenggat masih 2–3 hari lagi, H-1 dikirim saat tenggat tinggal 0–1 hari, dan keterlambatan dicek ulang setiap hari. Jika scheduler sempat mati, pengingat yang terlewat tetap dikirim saat scheduler hidup lagi, tanpa duplikasi.
 
 Jalankan scheduler produksi:
 
@@ -150,6 +268,8 @@ Penjelasan peran dan matriks hak akses tersedia di `/admin/peran`.
 
 Kepala divisi tidak memakai peran terpisah; ia memakai peran Notulis atau Anggota dan ditetapkan sebagai kepala divisi pada data divisi.
 
+Audit log mencatat login/logout, pembukaan Quick Note, perubahan divisi/topik, perubahan pengguna/template, permintaan AI, dan aksi dokumen penting.
+
 Dikte suara memerlukan Chrome/Edge, izin mikrofon, dan HTTPS (atau `localhost`). Audio tidak disimpan oleh aplikasi.
 
 ## Ekspor dan Bagikan
@@ -171,9 +291,10 @@ Login Google memakai OAuth 2.0 langsung tanpa dependency tambahan. Isi `.env`:
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
 GOOGLE_REDIRECT_URI=http://localhost:8100/auth/google/callback
+GOOGLE_ALLOWED_DOMAINS=perusahaan.com
 ```
 
-Daftarkan redirect URI yang sama di Google Cloud Console. Jika kredensial kosong, tombol Google tampil nonaktif dengan label “belum aktif”.
+Daftarkan redirect URI yang sama di Google Cloud Console. Jika kredensial kosong, tombol Google tampil nonaktif dengan label “belum aktif”. Auto-provision akun Google baru **mati secara default**; hanya user yang sudah terdaftar yang dapat masuk. Set `GOOGLE_AUTO_PROVISION=true` hanya jika kebijakan perusahaan mengizinkan.
 
 ## Tema
 

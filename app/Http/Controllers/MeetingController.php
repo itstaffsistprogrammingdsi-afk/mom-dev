@@ -40,12 +40,20 @@ class MeetingController extends Controller
         $user = $request->user();
         $filters = $request->only(['search', 'division', 'topic', 'status', 'type', 'document_type', 'from', 'to']);
 
-        if (filled($filters['search'] ?? null)) {
-            $meetings = Meeting::search($filters['search'])
-                ->query(fn (Builder $query) => $query
-                    ->visibleTo($user)
-                    ->filter(collect($filters)->except('search')->all())
-                )
+        $search = trim((string) ($filters['search'] ?? ''));
+
+        if ($search !== '') {
+            $meetings = Meeting::query()
+                ->visibleTo($user)
+                ->filter(collect($filters)->except('search')->all())
+                ->searchText($search)
+                ->select([
+                    'id', 'title', 'document_type', 'meeting_type', 'division_id', 'created_by',
+                    'scheduled_at', 'status', 'confidentiality',
+                ])
+                ->with(['division:id,name', 'creator:id,name'])
+                ->orderByRaw("ts_rank(search_vector, websearch_to_tsquery('simple', ?)) DESC", [$search])
+                ->orderByDesc('scheduled_at')
                 ->paginate(12)
                 ->withQueryString();
         } else {
@@ -62,7 +70,7 @@ class MeetingController extends Controller
                 ->withQueryString();
         }
 
-        $meetings->load(['division:id,name', 'creator:id,name']);
+        $meetings->loadMissing(['division:id,name', 'creator:id,name']);
 
         return Inertia::render('Meetings/Index', [
             'meetings' => $meetings,
@@ -180,14 +188,20 @@ class MeetingController extends Controller
             ->with('success', 'Notulen berhasil dibuat.');
     }
 
-    public function show(Request $request, Meeting $meeting): Response
+    public function show(Request $request, Meeting $meeting, AuditLogger $audit, \App\Services\Exports\TiptapHtmlRenderer $renderer): Response
     {
         $this->authorize('view', $meeting);
+
+        if ($meeting->confidentiality === Confidentiality::Secret) {
+            $audit->log('meeting.viewed', $meeting, 'Melihat notulen rahasia', meetingId: $meeting->id);
+        }
 
         $meeting->load([
             'division:id,name',
             'creator:id,name',
             'approvedBy:id,name',
+            'approver:id,name',
+            'admins:id,name',
             'template:id,name,document_type',
             'participants.user:id,name,email',
             'tags',
@@ -197,28 +211,43 @@ class MeetingController extends Controller
             'actionItems.feedback.user:id,name',
             'summaries' => fn ($query) => $query->latest('version')->limit(5),
             'attachments',
-            'versions' => fn ($query) => $query->latest('version')->limit(10),
+            'versions' => fn ($query) => $query
+                ->select(['id', 'meeting_id', 'version', 'reason', 'created_at'])
+                ->latest('version')
+                ->limit(10),
             'signatures',
         ]);
 
         $signatures = $this->signaturePayload($meeting);
         $meeting->makeHidden('signatures');
 
+        $user = $request->user();
+        $canManage = ! $meeting->isLocked()
+            && ($user->isAdmin() || (! $meeting->isFinal() && ($meeting->created_by === $user->id || $user->canWriteMinutes())));
+        $canShare = in_array($meeting->confidentiality, [Confidentiality::Restricted, Confidentiality::Secret], true)
+            ? ($user->isAdmin() || $meeting->created_by === $user->id)
+            : ($user->isAdmin() || $meeting->created_by === $user->id || $user->canWriteMinutes());
+
         return Inertia::render('Meetings/Show', [
             'meeting' => $meeting,
+            'contentHtml' => $renderer->render($meeting->content),
             'signatures' => $signatures,
             'can' => [
-                'update' => $request->user()->can('update', $meeting),
-                'finalize' => $request->user()->can('finalize', $meeting),
-                'generateAi' => $request->user()->can('update', $meeting),
-                'manage' => $request->user()->can('update', $meeting),
-                'share' => $request->user()->can('share', $meeting),
-                'signCreator' => $request->user()->can('signCreator', $meeting),
-                'signApprover' => $request->user()->can('signApprover', $meeting),
-                'changeConfidentiality' => $request->user()->can('changeConfidentiality', $meeting),
+                'update' => $canManage,
+                'finalize' => ! $meeting->isLocked()
+                    && ($user->isAdmin() || $meeting->created_by === $user->id || $user->canWriteMinutes()),
+                'generateAi' => $canManage
+                    && ($meeting->confidentiality !== Confidentiality::Secret || config('ai.allow_secret')),
+                'manage' => $canManage,
+                'share' => $canShare,
+                'signCreator' => $user->isAdmin() || $meeting->created_by === $user->id,
+                'signApprover' => $user->isAdmin() || $meeting->approver_id === $user->id,
+                'changeConfidentiality' => $user->isAdmin() || $meeting->created_by === $user->id,
             ],
             'users' => User::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'divisions' => Division::query()->orderBy('name')->get(['id', 'name']),
+            'topics' => Topic::query()->where('status', 'active')->orderBy('name')->get(['id', 'name']),
+            'adminUsers' => User::query()->where('role', 'admin')->where('is_active', true)->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -398,6 +427,32 @@ class MeetingController extends Controller
             ]);
         }
 
+        $validated = $request->validate([
+            'approver_id' => ['nullable', 'integer', 'exists:users,id'],
+        ]);
+
+        $approverId = $validated['approver_id'] ?? null;
+
+        if ($approverId) {
+            $approver = User::query()->find($approverId);
+
+            if (
+                ! $approver
+                || ! $approver->is_active
+                || ! Meeting::query()->visibleTo($approver)->whereKey($meeting->id)->exists()
+            ) {
+                throw ValidationException::withMessages([
+                    'approver_id' => 'Approver yang dipilih tidak memiliki akses ke notulen ini.',
+                ]);
+            }
+
+            if ($approverId === $request->user()->id) {
+                throw ValidationException::withMessages([
+                    'approver_id' => 'Approver harus berbeda dari user yang memfinalkan notulen.',
+                ]);
+            }
+        }
+
         $meeting->loadMissing('actionItems');
 
         $incomplete = $meeting->actionItems->filter(
@@ -410,11 +465,12 @@ class MeetingController extends Controller
             ]);
         }
 
-        DB::transaction(function () use ($request, $meeting, $audit, $versions) {
+        DB::transaction(function () use ($request, $meeting, $audit, $versions, $approverId) {
             $meeting->update([
                 'status' => 'final',
                 'finalized_at' => now(),
                 'approved_by' => $request->user()->id,
+                'approver_id' => $approverId,
             ]);
 
             $versions->snapshot($meeting, 'finalized', $request->user()->id);

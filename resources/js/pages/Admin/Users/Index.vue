@@ -169,7 +169,7 @@ function updateUser(user: AdminUser, field: 'role' | 'division_id' | 'is_active'
                 description="Ubah kata kunci atau tambahkan pengguna baru."
             />
 
-            <div v-else class="min-w-0 overflow-x-auto rounded-lg border border-border/80 bg-card shadow-soft-sm">
+            <div v-else class="min-w-0 overflow-x-auto rounded-lg border border-border/80 bg-card">
                 <table class="w-full min-w-[820px] text-sm">
                     <thead class="border-b border-border/60 text-left">
                         <tr class="text-xs font-medium text-subtle-foreground">
@@ -213,7 +213,7 @@ function updateUser(user: AdminUser, field: 'role' | 'division_id' | 'is_active'
                                     type="button"
                                     class="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2"
                                     :aria-pressed="user.is_active"
-                                    :aria-label="`Ubah status ${user.name}`"
+                                    :title="`Ubah status ${user.name}`"
                                     @click="updateUser(user, 'is_active', !user.is_active)"
                                 >
                                     <Badge :variant="user.is_active ? 'success' : 'neutral'">

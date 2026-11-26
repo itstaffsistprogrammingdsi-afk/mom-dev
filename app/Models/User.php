@@ -20,10 +20,16 @@ class User extends Authenticatable
         'google_id',
         'avatar',
         'password',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
+        'two_factor_confirmed_at',
         'role',
         'job_title',
         'is_active',
         'notification_preferences',
+        'locale',
+        'appearance',
+        'timezone',
         'email_verified_at',
         'last_login_at',
     ];
@@ -31,6 +37,9 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
+        'two_factor_confirmed_at',
     ];
 
     protected function casts(): array
@@ -38,6 +47,9 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'two_factor_secret' => 'encrypted',
+            'two_factor_recovery_codes' => 'encrypted:array',
+            'two_factor_confirmed_at' => 'datetime',
             'role' => UserRole::class,
             'is_active' => 'boolean',
             'notification_preferences' => 'array',
@@ -85,8 +97,31 @@ class User extends Authenticatable
         return in_array($this->role, [UserRole::Admin, UserRole::Notulis], true);
     }
 
-    public function wantsEmailNotifications(): bool
+    public function wantsEmailNotifications(?string $category = null): bool
     {
-        return $this->notification_preferences['email'] ?? true;
+        if (($this->notification_preferences['email'] ?? true) === false) {
+            return false;
+        }
+
+        return $category === null || $this->wantsNotificationCategory($category);
+    }
+
+    public function wantsInAppNotifications(?string $category = null): bool
+    {
+        if (($this->notification_preferences['in_app'] ?? true) === false) {
+            return false;
+        }
+
+        return $category === null || $this->wantsNotificationCategory($category);
+    }
+
+    public function wantsNotificationCategory(string $category): bool
+    {
+        return (bool) ($this->notification_preferences['categories'][$category] ?? true);
+    }
+
+    public function hasTwoFactorEnabled(): bool
+    {
+        return filled($this->two_factor_secret) && $this->two_factor_confirmed_at !== null;
     }
 }

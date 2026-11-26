@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import AvatarGroup from '@/components/AvatarGroup.vue';
-import MeetingEditor from '@/components/MeetingEditor.vue';
 import MinutesCanvas from '@/components/minutes/MinutesCanvas.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import TagChip from '@/components/TagChip.vue';
@@ -14,7 +13,10 @@ import { type BreadcrumbItem, type Division, type Meeting, type MeetingSignature
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import type { JSONContent } from '@tiptap/core';
 import { AlertCircle, CheckCircle2, CircleDashed, Loader2, Users, Wifi } from 'lucide-vue-next';
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const MeetingEditor = defineAsyncComponent(() => import('@/components/MeetingEditor.vue'));
 
 interface EditableMeeting extends Meeting {
     participants: Participant[];
@@ -36,6 +38,7 @@ const props = defineProps<{
 
 const page = usePage<SharedData>();
 const user = computed(() => page.props.auth.user);
+const { t, locale } = useI18n();
 const collabUrl = props.collab?.url ?? null;
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -62,37 +65,47 @@ const form = useForm<EditForm>({
     content: (props.meeting.content ?? { type: 'doc', content: [{ type: 'paragraph' }] }) as JSONContent,
 });
 
-const autosaveState = ref<'idle' | 'saving' | 'saved' | 'error'>('idle');
+const autosaveState = ref<'idle' | 'saving' | 'saved' | 'error' | 'offline'>('idle');
 const lastSavedAt = ref<string | null>(null);
+const isDirty = ref(false);
+const isOffline = ref(false);
 let autosaveTimer: ReturnType<typeof setTimeout> | null = null;
 let autosaveReady = false;
 
 const autosaveLabel = computed(() => {
     if (autosaveState.value === 'saving') {
-        return 'Menyimpan…';
+        return t('editor.autosave.saving');
     }
 
     if (autosaveState.value === 'saved') {
-        return `Tersimpan ${lastSavedAt.value ?? ''}`.trim();
+        return t('editor.autosave.saved', { time: lastSavedAt.value ?? '' }).trim();
     }
 
     if (autosaveState.value === 'error') {
-        return 'Gagal menyimpan otomatis';
+        return t('editor.autosave.failed');
     }
 
-    return 'Autosave aktif';
+    if (autosaveState.value === 'offline') {
+        return t('editor.autosave.offline');
+    }
+
+    return t('editor.autosave.idle');
 });
 
 const autosaveTone = computed(() => {
     if (autosaveState.value === 'error') {
-        return 'border-destructive/30 bg-destructive/10 text-destructive';
+        return 'text-destructive';
+    }
+
+    if (autosaveState.value === 'offline') {
+        return 'text-warning-strong';
     }
 
     if (autosaveState.value === 'saved') {
-        return 'border-success/30 bg-success/10 text-success';
+        return 'text-success-strong';
     }
 
-    return 'border-border bg-muted/40 text-muted-foreground';
+    return 'text-muted-foreground';
 });
 
 const collabActive = computed(() => Boolean(props.collab));
@@ -130,7 +143,55 @@ function tagHref(tag: Tag): string | undefined {
     return route('topics.show-id', tag.target_id);
 }
 
+function handleOnline() {
+    isOffline.value = false;
+
+    if (isDirty.value) {
+        scheduleAutosave();
+    }
+}
+
+function handleOffline() {
+    isOffline.value = true;
+
+    if (autosaveTimer) {
+        clearTimeout(autosaveTimer);
+        autosaveTimer = null;
+    }
+
+    if (isDirty.value) {
+        autosaveState.value = 'offline';
+    }
+}
+
+function handleBeforeUnload(event: BeforeUnloadEvent) {
+    if (!isDirty.value) {
+        return;
+    }
+
+    event.preventDefault();
+    event.returnValue = '';
+}
+
+function scheduleAutosave() {
+    if (autosaveTimer) {
+        clearTimeout(autosaveTimer);
+    }
+
+    autosaveTimer = setTimeout(runAutosave, 1500);
+}
+
 onMounted(() => {
+    isOffline.value = !navigator.onLine;
+
+    if (isOffline.value) {
+        autosaveState.value = 'offline';
+    }
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
     window.setTimeout(() => {
         autosaveReady = true;
     }, 800);
@@ -143,17 +204,27 @@ watch(
             return;
         }
 
-        if (autosaveTimer) {
-            clearTimeout(autosaveTimer);
+        isDirty.value = true;
+
+        if (isOffline.value) {
+            autosaveState.value = 'offline';
+
+            return;
         }
 
-        autosaveTimer = setTimeout(runAutosave, 1500);
+        scheduleAutosave();
     },
     { deep: true },
 );
 
 async function runAutosave() {
     if (form.processing || props.meeting.status !== 'draft') {
+        return;
+    }
+
+    if (isOffline.value) {
+        autosaveState.value = 'offline';
+
         return;
     }
 
@@ -185,13 +256,14 @@ async function runAutosave() {
         }
 
         const data = await response.json();
-        lastSavedAt.value = new Date(data.saved_at).toLocaleTimeString('id-ID', {
+        lastSavedAt.value = new Date(data.saved_at).toLocaleTimeString(locale.value, {
             hour: '2-digit',
             minute: '2-digit',
         });
+        isDirty.value = false;
         autosaveState.value = 'saved';
     } catch {
-        autosaveState.value = 'error';
+        autosaveState.value = isOffline.value ? 'offline' : 'error';
     }
 }
 
@@ -199,6 +271,10 @@ onBeforeUnmount(() => {
     if (autosaveTimer) {
         clearTimeout(autosaveTimer);
     }
+
+    window.removeEventListener('online', handleOnline);
+    window.removeEventListener('offline', handleOffline);
+    window.removeEventListener('beforeunload', handleBeforeUnload);
 });
 
 function submit() {
@@ -206,7 +282,11 @@ function submit() {
         clearTimeout(autosaveTimer);
     }
 
-    form.patch(route('meetings.update', props.meeting.id));
+    form.patch(route('meetings.update', props.meeting.id), {
+        onSuccess: () => {
+            isDirty.value = false;
+        },
+    });
 }
 </script>
 
@@ -216,13 +296,13 @@ function submit() {
     <AppLayout :breadcrumbs="breadcrumbs">
         <form class="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-4 py-6 md:px-8 md:py-8" @submit.prevent="submit">
             <PageHeader
-                :title="props.meeting.document_type === 'meeting' ? 'Sunting notulen' : 'Sunting dokumen'"
-                description="Perubahan tercatat di audit log. Dokumen final hanya dapat diubah oleh admin."
+                :title="props.meeting.document_type === 'meeting' ? t('editor.title') : t('editor.titleDocument')"
+                :description="t('editor.description')"
             >
                 <template #actions>
                     <div class="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
                         <span
-                            class="inline-flex basis-full items-center justify-center gap-2 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors duration-fast sm:basis-auto sm:justify-start"
+                            class="inline-flex basis-full items-center justify-center gap-2 text-xs font-medium transition-colors duration-fast sm:basis-auto sm:justify-start"
                             :class="autosaveTone"
                             role="status"
                             aria-live="polite"
@@ -230,13 +310,14 @@ function submit() {
                             <Loader2 v-if="autosaveState === 'saving'" class="size-3.5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
                             <CheckCircle2 v-else-if="autosaveState === 'saved'" class="size-3.5" aria-hidden="true" />
                             <AlertCircle v-else-if="autosaveState === 'error'" class="size-3.5" aria-hidden="true" />
+                            <Wifi v-else-if="autosaveState === 'offline'" class="size-3.5" aria-hidden="true" />
                             <CircleDashed v-else class="size-3.5" aria-hidden="true" />
                             {{ autosaveLabel }}
                         </span>
                         <Button variant="outline" as-child class="flex-1 sm:flex-none">
-                            <Link :href="route('meetings.show', props.meeting.id)">Batal</Link>
+                            <Link :href="route('meetings.show', props.meeting.id)">{{ t('editor.viewDocument') }}</Link>
                         </Button>
-                        <Button type="submit" :loading="form.processing" class="flex-1 sm:flex-none">Simpan perubahan</Button>
+                        <Button type="submit" :loading="form.processing" class="flex-1 sm:flex-none">{{ t('editor.finish') }}</Button>
                     </div>
                 </template>
             </PageHeader>
@@ -245,7 +326,7 @@ function submit() {
                 <div class="min-w-0 space-y-6">
                     <section class="rounded-lg border border-border bg-card p-5 md:p-6">
                         <div class="space-y-1.5">
-                            <Label for="title">Judul</Label>
+                            <Label for="title">{{ t('editor.titleField') }}</Label>
                             <Input
                                 id="title"
                                 v-model="form.title"
@@ -257,7 +338,7 @@ function submit() {
                         </div>
 
                         <div class="mt-4 space-y-1.5">
-                            <Label for="agenda">Agenda</Label>
+                            <Label for="agenda">{{ t('editor.agenda') }}</Label>
                             <textarea
                                 id="agenda"
                                 v-model="form.agenda"
@@ -270,8 +351,8 @@ function submit() {
 
                     <section class="space-y-2">
                         <div class="flex flex-wrap items-end justify-between gap-2">
-                            <Label>Isi dokumen</Label>
-                            <p class="text-xs text-muted-foreground">Autosave berjalan setiap 1,5 detik saat dokumen berstatus draf.</p>
+                            <Label>{{ t('editor.content') }}</Label>
+                            <p class="text-xs text-muted-foreground">{{ t('editor.autosaveHint') }}</p>
                         </div>
                         <MinutesCanvas
                             v-if="props.meeting.document_type === 'meeting'"

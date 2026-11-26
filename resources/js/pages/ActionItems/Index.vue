@@ -3,7 +3,7 @@ import ActionItemFeedbackDialog from '@/components/ActionItemFeedbackDialog.vue'
 import EmptyState from '@/components/EmptyState.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import Pagination from '@/components/Pagination.vue';
-import StatCard from '@/components/StatCard.vue';
+import StatStrip from '@/components/StatStrip.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,8 +15,9 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { actionStatusLabels, formatDate, formatDateTime } from '@/lib/labels';
 import { type ActionItem, type BreadcrumbItem, type Division, type SharedData } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { AlertTriangle, CheckCircle2, ListChecks, MessageSquare, RotateCcw, Search } from 'lucide-vue-next';
+import { AlertTriangle, ListChecks, MessageSquare, RotateCcw, Search, SlidersHorizontal } from 'lucide-vue-next';
 import { computed, reactive, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 interface Paginated<T> {
     data: T[];
@@ -38,7 +39,8 @@ const props = defineProps<{
 }>();
 
 const page = usePage<SharedData>();
-const breadcrumbs: BreadcrumbItem[] = [{ title: 'Action Item', href: '/tugas' }];
+const breadcrumbs = computed<BreadcrumbItem[]>(() => [{ title: t('nav.tasks'), href: '/tugas' }]);
+const { t } = useI18n();
 
 const filters = reactive({
     search: props.filters.search ?? '',
@@ -50,6 +52,10 @@ const filters = reactive({
 });
 
 const feedbackTaskId = ref<number | null>(null);
+const showFilters = ref(false);
+const activeFilterCount = computed(
+    () => ['status', 'pic', 'division', 'overdue', 'owner'].filter((key) => filters[key as keyof typeof filters]).length,
+);
 const feedbackPendingStatus = ref<string | null>(null);
 const selectedFeedbackTask = computed(() => {
     const direct = props.items.data.find((task) => task.id === feedbackTaskId.value);
@@ -130,7 +136,11 @@ async function applyBulkStatus() {
 
 function applyFilters() {
     selectedIds.value = [];
-    router.get(route('action-items.index'), { ...filters, view: props.view }, { preserveState: true, replace: true });
+    router.get(route('action-items.index'), { ...filters, view: props.view }, {
+        preserveState: true,
+        replace: true,
+        only: ['items', 'board', 'view', 'filters', 'stats'],
+    });
 }
 
 function resetFilters() {
@@ -141,7 +151,11 @@ function resetFilters() {
 
 function switchView(view: 'list' | 'board') {
     selectedIds.value = [];
-    router.get(route('action-items.index'), { ...filters, view }, { preserveState: true, replace: true });
+    router.get(route('action-items.index'), { ...filters, view }, {
+        preserveState: true,
+        replace: true,
+        only: ['items', 'board', 'view', 'filters', 'stats'],
+    });
 }
 
 const boardColumns = [
@@ -164,23 +178,37 @@ function updateStatus(task: ActionItem, status: string | number) {
 function canEdit(task: ActionItem) {
     return props.canUpdate || task.pic?.id === page.props.auth.user.id;
 }
+
+function overdueText(hours?: number | null): string {
+    if (!hours) {
+        return 'Terlambat';
+    }
+
+    const days = Math.floor(hours / 24);
+
+    if (days >= 1) {
+        return `${days} hari`;
+    }
+
+    return `${Math.max(1, Math.round(hours))} jam`;
+}
 </script>
 
 <template>
-    <Head title="Action Item" />
+    <Head :title="t('tasks.title')" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex flex-col gap-section p-page lg:p-page-lg">
-            <PageHeader title="Action Item" description="Pantau tugas dari seluruh notulen yang dapat Anda akses.">
+        <div class="flex flex-col gap-section p-page pb-24 lg:p-page-lg">
+            <PageHeader :title="t('tasks.title')" :description="t('tasks.description')">
                 <template #actions>
-                    <div class="inline-flex rounded-md border border-border bg-surface p-1 shadow-soft-xs">
+                    <div class="inline-flex rounded-lg border border-border bg-surface p-1">
                         <Button
                             :variant="props.view === 'list' ? 'secondary' : 'ghost'"
                             size="sm"
                             :aria-pressed="props.view === 'list'"
                             @click="switchView('list')"
                         >
-                            Daftar
+                            {{ t('tasks.list') }}
                         </Button>
                         <Button
                             :variant="props.view === 'board' ? 'secondary' : 'ghost'"
@@ -188,88 +216,98 @@ function canEdit(task: ActionItem) {
                             :aria-pressed="props.view === 'board'"
                             @click="switchView('board')"
                         >
-                            Board
+                            {{ t('tasks.board') }}
                         </Button>
                     </div>
                 </template>
             </PageHeader>
 
-            <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <StatCard label="Total tugas" :value="props.stats.total" :icon="ListChecks" />
-                <StatCard label="Terbuka" :value="props.stats.open" :icon="ListChecks" />
-                <StatCard
-                    label="Terlambat"
-                    :value="props.stats.overdue"
-                    :icon="AlertTriangle"
-                    :tone="props.stats.overdue > 0 ? 'danger' : 'success'"
-                />
-                <StatCard label="Selesai" :value="props.stats.done" :icon="CheckCircle2" tone="success" />
-            </div>
+            <StatStrip
+                :items="[
+                    { label: t('tasks.stats.total'), value: props.stats.total },
+                    { label: t('tasks.stats.open'), value: props.stats.open },
+                    { label: t('tasks.stats.overdue'), value: props.stats.overdue, tone: props.stats.overdue > 0 ? 'danger' : 'default' },
+                    { label: t('tasks.stats.done'), value: props.stats.done, tone: 'success' },
+                ]"
+            />
 
-            <form class="rounded-lg border border-border/80 bg-card p-card shadow-soft-sm" @submit.prevent="applyFilters">
-                <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                    <div class="space-y-1.5 sm:col-span-2">
-                        <Label for="task-search">Cari</Label>
-                        <div class="relative">
-                            <Search
-                                class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-subtle-foreground"
-                                aria-hidden="true"
-                            />
-                            <Input id="task-search" v-model="filters.search" placeholder="Judul tugas" class="pl-9" />
-                        </div>
+            <form class="space-y-3" @submit.prevent="applyFilters">
+                <div class="flex flex-col gap-2 sm:flex-row">
+                    <div class="relative min-w-0 flex-1">
+                        <Search
+                            class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                            aria-hidden="true"
+                        />
+                        <Input id="task-search" v-model="filters.search" placeholder="Cari judul tugas" class="h-10 pl-9" />
                     </div>
 
-                    <div class="space-y-1.5">
-                        <Label for="task-status">Status</Label>
-                        <Select id="task-status" v-model="filters.status">
-                            <option value="">Semua status</option>
-                            <option v-for="(label, value) in actionStatusLabels" :key="value" :value="value">{{ label }}</option>
-                        </Select>
-                    </div>
-
-                    <div class="space-y-1.5">
-                        <Label for="task-pic">PIC</Label>
-                        <Select id="task-pic" v-model="filters.pic">
-                            <option value="">Semua PIC</option>
-                            <option v-for="user in props.users" :key="user.id" :value="String(user.id)">{{ user.name }}</option>
-                        </Select>
-                    </div>
-
-                    <div class="space-y-1.5">
-                        <Label for="task-division">Divisi</Label>
-                        <Select id="task-division" v-model="filters.division">
-                            <option value="">Semua divisi</option>
-                            <option v-for="division in props.divisions" :key="division.id" :value="String(division.id)">{{ division.name }}</option>
-                        </Select>
-                    </div>
-
-                    <div class="space-y-1.5">
-                        <Label for="task-overdue">Tenggat</Label>
-                        <Select id="task-overdue" v-model="filters.overdue">
-                            <option value="">Semua tenggat</option>
-                            <option value="1">Hanya terlambat</option>
-                        </Select>
-                    </div>
-
-                    <div class="space-y-1.5">
-                        <Label for="task-owner">Owner</Label>
-                        <Select id="task-owner" v-model="filters.owner">
-                            <option value="">Semua owner</option>
-                            <option value="1">Sudah ada owner</option>
-                            <option value="0">Belum ada owner</option>
-                        </Select>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <Button type="button" variant="outline" class="flex-1 sm:flex-none" :aria-expanded="showFilters" @click="showFilters = !showFilters">
+                            <SlidersHorizontal class="size-4" aria-hidden="true" />
+                            Filter
+                            <span v-if="activeFilterCount" class="rounded-md bg-primary/10 px-1.5 text-[11px] font-semibold text-primary">{{ activeFilterCount }}</span>
+                        </Button>
+                        <Button type="submit" class="flex-1 sm:flex-none">
+                            <Search class="size-4" aria-hidden="true" />
+                            Cari
+                        </Button>
                     </div>
                 </div>
 
-                <div class="mt-4 flex flex-wrap items-center justify-end gap-2 border-t border-border/60 pt-4">
-                    <Button type="button" variant="outline" @click="resetFilters">
-                        <RotateCcw class="size-4" aria-hidden="true" />
-                        Reset
-                    </Button>
-                    <Button type="submit">
-                        <Search class="size-4" aria-hidden="true" />
-                        Terapkan filter
-                    </Button>
+                <div v-show="showFilters" class="rounded-xl border border-border/80 bg-surface p-4">
+                    <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                        <div class="space-y-1.5">
+                            <Label for="task-status">Status</Label>
+                            <Select id="task-status" v-model="filters.status">
+                                <option value="">Semua status</option>
+                                <option v-for="(label, value) in actionStatusLabels" :key="value" :value="value">{{ label }}</option>
+                            </Select>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <Label for="task-pic">PIC</Label>
+                            <Select id="task-pic" v-model="filters.pic">
+                                <option value="">Semua PIC</option>
+                                <option v-for="user in props.users" :key="user.id" :value="String(user.id)">{{ user.name }}</option>
+                            </Select>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <Label for="task-division">Divisi</Label>
+                            <Select id="task-division" v-model="filters.division">
+                                <option value="">Semua divisi</option>
+                                <option v-for="division in props.divisions" :key="division.id" :value="String(division.id)">{{ division.name }}</option>
+                            </Select>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <Label for="task-overdue">Tenggat</Label>
+                            <Select id="task-overdue" v-model="filters.overdue">
+                                <option value="">Semua tenggat</option>
+                                <option value="1">Hanya terlambat</option>
+                            </Select>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <Label for="task-owner">Owner</Label>
+                            <Select id="task-owner" v-model="filters.owner">
+                                <option value="">Semua owner</option>
+                                <option value="1">Sudah ada owner</option>
+                                <option value="0">Belum ada owner</option>
+                            </Select>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 flex flex-wrap items-center justify-end gap-2 border-t border-border/60 pt-4">
+                        <Button type="button" variant="outline" @click="resetFilters">
+                            <RotateCcw class="size-4" aria-hidden="true" />
+                            Reset
+                        </Button>
+                        <Button type="submit">
+                            <Search class="size-4" aria-hidden="true" />
+                            Terapkan filter
+                        </Button>
+                    </div>
                 </div>
             </form>
 
@@ -278,7 +316,7 @@ function canEdit(task: ActionItem) {
                     v-if="props.items.data.length === 0"
                     :icon="ListChecks"
                     title="Tidak ada tugas"
-                    description="Ubah filter atau tambahkan action item dari halaman notulen."
+                    description="Ubah filter atau tambahkan Tindak lanjut dari halaman notulen."
                 >
                     <div class="flex flex-wrap justify-center gap-2">
                         <Button variant="outline" @click="resetFilters">Reset filter</Button>
@@ -291,7 +329,7 @@ function canEdit(task: ActionItem) {
                 <template v-else>
                     <div
                         v-if="selectedIds.length > 0"
-                        class="flex flex-wrap items-center gap-2 rounded-md border border-border/80 bg-surface p-3 shadow-soft-xs"
+                        class="flex flex-wrap items-center gap-2 rounded-md border border-border/80 bg-surface p-3"
                     >
                         <p class="mr-auto text-sm font-medium">{{ selectedIds.length }} tugas dipilih</p>
                         <Select v-model="bulkStatus" class="h-9 w-40 text-xs" aria-label="Status massal">
@@ -305,7 +343,7 @@ function canEdit(task: ActionItem) {
                         <Button type="button" variant="ghost" @click="selectedIds = []">Bersihkan</Button>
                     </div>
 
-                    <div class="hidden overflow-x-auto rounded-lg border border-border/80 bg-card shadow-soft-sm md:block">
+                    <div class="hidden overflow-x-auto rounded-lg border border-border/80 bg-card md:block">
                         <table class="w-full min-w-[900px] text-sm">
                             <thead class="border-b border-border/60 text-left">
                                 <tr class="text-xs font-medium text-subtle-foreground">
@@ -363,7 +401,7 @@ function canEdit(task: ActionItem) {
                                             }}</span>
                                             <Badge v-if="task.is_overdue" variant="danger" class="gap-1">
                                                 <AlertTriangle class="size-3" aria-hidden="true" />
-                                                Terlambat {{ task.overdue_hours ?? 0 }} jam
+                                                Terlambat {{ overdueText(task.overdue_hours) }}
                                             </Badge>
                                         </div>
                                     </td>
@@ -406,7 +444,7 @@ function canEdit(task: ActionItem) {
                     </div>
 
                     <div class="space-y-2 md:hidden">
-                        <div v-for="task in props.items.data" :key="task.id" class="rounded-lg border border-border/80 bg-card p-3 shadow-soft-sm">
+                        <div v-for="task in props.items.data" :key="task.id" class="rounded-lg border border-border/80 bg-card p-3">
                             <div class="flex items-start gap-3">
                                 <input
                                     v-model="selectedIds"
@@ -421,7 +459,7 @@ function canEdit(task: ActionItem) {
                                 </div>
                                 <Badge v-if="task.is_overdue" variant="danger" class="gap-1">
                                     <AlertTriangle class="size-3" aria-hidden="true" />
-                                    Terlambat {{ task.overdue_hours ?? 0 }} jam
+                                    Terlambat {{ overdueText(task.overdue_hours) }}
                                 </Badge>
                             </div>
 
@@ -504,7 +542,7 @@ function canEdit(task: ActionItem) {
                         <div
                             v-for="task in props.board?.[column.key] ?? []"
                             :key="task.id"
-                            class="rounded-md border border-border/80 bg-card p-3 text-sm shadow-soft-xs"
+                            class="rounded-md border border-border/80 bg-card p-3 text-sm"
                         >
                             <div class="flex items-start justify-between gap-2">
                                 <p class="font-medium leading-snug">{{ task.title }}</p>
@@ -531,7 +569,7 @@ function canEdit(task: ActionItem) {
                                     {{ task.response_due_at ? formatDateTime(task.response_due_at) : `${task.response_hours ?? 24} jam` }}
                                 </span>
                                 <span v-if="task.is_overdue" class="font-medium text-destructive-strong"
-                                    >Terlambat {{ task.overdue_hours ?? 0 }} jam</span
+                                    >Terlambat {{ overdueText(task.overdue_hours) }}</span
                                 >
                             </div>
                             <Button size="sm" variant="ghost" class="mt-2 h-7 px-2 text-xs" @click="openFeedback(task)">

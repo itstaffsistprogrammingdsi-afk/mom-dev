@@ -1,5 +1,3 @@
-import defaultTheme from 'tailwindcss/defaultTheme';
-
 /** @type {import('tailwindcss').Config} */
 export default {
     darkMode: ['class'],
@@ -12,7 +10,7 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Inter', ...defaultTheme.fontFamily.sans],
+                sans: ['var(--font-sans)'],
             },
             fontSize: {
                 display: ['var(--text-display)', { lineHeight: 'var(--leading-tight)', letterSpacing: '-0.02em' }],

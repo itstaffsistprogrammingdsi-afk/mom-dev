@@ -6,7 +6,10 @@ use App\Models\Meeting;
 
 class MeetingTagSynchronizer
 {
-    public function __construct(private readonly MeetingContentParser $parser) {}
+    public function __construct(
+        private readonly MeetingContentParser $parser,
+        private readonly MeetingAccessProjector $projector,
+    ) {}
 
     public function sync(Meeting $meeting, ?array $content, ?int $userId = null): void
     {
@@ -22,5 +25,7 @@ class MeetingTagSynchronizer
                 'created_by' => $userId,
             ]);
         }
+
+        $this->projector->sync($meeting);
     }
 }

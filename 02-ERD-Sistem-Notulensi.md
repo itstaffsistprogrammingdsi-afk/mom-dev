@@ -1,19 +1,51 @@
 # ERD & Kamus Data — Sistem Notulensi (MoM)
 
 **Kode dokumen:** DOC-ERD-MOM-001  
-**Versi:** 1.0  
-**Tanggal:** 26 Oktober 2026  
+**Versi:** 1.1  
+**Tanggal:** 26 November 2026  
 **Status:** Final draft  
 **Acuan:** `01-PRD-Sistem-Notulensi.md`  
 **Implementasi:** migrasi Laravel pada `database/migrations`
+
+> **Catatan implementasi (26 November 2026):** ERD dan kamus data di bawah adalah baseline logis. Perubahan skema terbaru yang belum digambar ulang dirangkum pada bagian "Addendum Skema" setelah bagian ini. Jika berbeda, migrasi dan `docs/IMPLEMENTATION-STATUS.md` adalah sumber kebenaran.
+
+## Addendum Skema (26 November 2026)
+
+Tabel domain aktual berjumlah 20:
+
+`users`, `divisions`, `topics`, `meeting_templates`, `meetings`, `meeting_participants`, `meeting_admins`, `meeting_access`, `tags`, `decisions`, `action_items`, `ai_summaries`, `attachments`, `audit_logs`, `notifications`, `meeting_versions`, `meeting_signatures`, `quick_notes`, `quick_note_mentions`, `action_item_feedback`.
+
+Perubahan kolom dan objek database:
+
+| Objek | Perubahan |
+| --- | --- |
+| `users` | `two_factor_secret`, `two_factor_recovery_codes`, `two_factor_confirmed_at`, `notification_preferences` (jsonb), `last_login_at` |
+| `meetings` | `nomor_notulensi`, `editor_mode`, `approver_id`, `content_updated_at`, `search_vector` (generated `tsvector`, GIN) |
+| `meeting_participants` | Unique `(meeting_id, user_id)` untuk peserta terdaftar |
+| `meeting_admins` | Admin khusus dokumen `secret`, unique `(meeting_id, user_id)` |
+| `meeting_access` | Proyeksi grant tag divisi/orang, unique `(meeting_id, user_id)`, indeks `(user_id, meeting_id)` |
+| `notifications` | `data` bertipe jsonb |
+| `ai_summaries` | Unique parsial `(meeting_id, scope, version)` untuk scope `meeting`; indeks `(generated_by, created_at)` |
+| `meeting_versions` | Snapshot versi notulen untuk pemulihan |
+| `meeting_signatures` | Tanda tangan creator/approver |
+| `quick_notes`, `quick_note_mentions` | Catatan cepat, mention, tenggat respons |
+| `action_item_feedback` | Riwayat respons PIC dan lampiran foto |
+
+Aturan akses data aktual:
+
+- `open`: semua user terautentikasi.
+- `division`: peserta/pembuat + user yang divisinya di-tag (diproksikan ke `meeting_access`).
+- `restricted`: peserta/pembuat + user yang di-tag sebagai person (diproksikan ke `meeting_access`).
+- `secret`: peserta/pembuat + admin dokumen pada `meeting_admins`; tag tidak membuka akses.
+
 
 ## 1. Tujuan & Ruang Lingkup
 
 Dokumen ini menjelaskan model data Sistem Notulensi secara lengkap: entitas, relasi, kardinalitas, kamus data, indeks, enum, siklus hidup data, dan aturan akses di level data. Diagram menggunakan notasi crow's foot. Kamus data mengikuti skema PostgreSQL yang berjalan.
 
-Ruang lingkup mencakup 13 tabel domain:
+Ruang lingkup mencakup 20 tabel domain:
 
-`users`, `divisions`, `topics`, `meeting_templates`, `meetings`, `meeting_participants`, `tags`, `decisions`, `action_items`, `ai_summaries`, `attachments`, `audit_logs`, `notifications`.
+`users`, `divisions`, `topics`, `meeting_templates`, `meetings`, `meeting_participants`, `meeting_admins`, `meeting_access`, `tags`, `decisions`, `action_items`, `ai_summaries`, `attachments`, `audit_logs`, `notifications`, `meeting_versions`, `meeting_signatures`, `quick_notes`, `quick_note_mentions`, `action_item_feedback`.
 
 Tabel infrastruktur Laravel (`sessions`, `cache`, `jobs`, `failed_jobs`, `password_reset_tokens`) tidak dibahas karena bukan domain produk.
 

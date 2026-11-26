@@ -38,7 +38,6 @@ class ActionItemController extends Controller
 
         $items = $query->paginate(20)->withQueryString();
 
-        $base = ActionItem::query()->visibleTo($user);
         $view = $request->string('view')->toString() === 'board' ? 'board' : 'list';
 
         $board = null;
@@ -57,16 +56,26 @@ class ActionItemController extends Controller
                 ->all();
         }
 
+        $done = ActionItemStatus::Done->value;
+        $cancelled = ActionItemStatus::Cancelled->value;
+        $stats = ActionItem::query()
+            ->visibleTo($user)
+            ->selectRaw('COUNT(*) AS total')
+            ->selectRaw('COUNT(*) FILTER (WHERE status NOT IN (?, ?)) AS open', [$done, $cancelled])
+            ->selectRaw('COUNT(*) FILTER (WHERE status NOT IN (?, ?) AND due_date < ?) AS overdue', [$done, $cancelled, today()->toDateString()])
+            ->selectRaw('COUNT(*) FILTER (WHERE status = ?) AS done', [$done])
+            ->first();
+
         return Inertia::render('ActionItems/Index', [
             'items' => $items,
             'board' => $board,
             'view' => $view,
             'filters' => $filters,
             'stats' => [
-                'total' => (clone $base)->count(),
-                'open' => (clone $base)->open()->count(),
-                'overdue' => (clone $base)->open()->whereDate('due_date', '<', today())->count(),
-                'done' => (clone $base)->where('status', ActionItemStatus::Done->value)->count(),
+                'total' => (int) ($stats?->total ?? 0),
+                'open' => (int) ($stats?->open ?? 0),
+                'overdue' => (int) ($stats?->overdue ?? 0),
+                'done' => (int) ($stats?->done ?? 0),
             ],
             'users' => User::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'divisions' => Division::query()->orderBy('name')->get(['id', 'name']),
@@ -110,6 +119,9 @@ class ActionItemController extends Controller
             : $actionItem->status;
         $responseHours = (int) ($validated['response_hours'] ?? $actionItem->response_hours ?? 24);
 
+        $dueDateChanged = array_key_exists('due_date', $validated)
+            && (string) ($validated['due_date'] ?? '') !== (string) ($actionItem->due_date?->toDateString() ?? '');
+
         $attributes = [
             ...$validated,
             'response_hours' => $responseHours,
@@ -118,6 +130,12 @@ class ActionItemController extends Controller
 
         if ($status === ActionItemStatus::InProgress && $actionItem->response_due_at === null) {
             $attributes['response_due_at'] = now()->addHours($responseHours);
+        }
+
+        if ($dueDateChanged) {
+            $attributes['reminder_h3_sent_at'] = null;
+            $attributes['reminder_h1_sent_at'] = null;
+            $attributes['overdue_notified_at'] = null;
         }
 
         $actionItem->update($attributes);

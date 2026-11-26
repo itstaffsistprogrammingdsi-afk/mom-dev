@@ -15,8 +15,7 @@ class MeetingPolicy
 
     public function view(User $user, Meeting $meeting): bool
     {
-        return $user->isAdmin()
-            || Meeting::query()->visibleTo($user)->whereKey($meeting->id)->exists();
+        return Meeting::query()->visibleTo($user)->whereKey($meeting->id)->exists();
     }
 
     public function create(User $user): bool
@@ -73,7 +72,7 @@ class MeetingPolicy
     public function signApprover(User $user, Meeting $meeting): bool
     {
         return $this->view($user, $meeting)
-            && ($user->isAdmin() || $meeting->approved_by === $user->id);
+            && ($user->isAdmin() || $meeting->approver_id === $user->id);
     }
 
     public function lock(User $user, Meeting $meeting): bool

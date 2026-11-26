@@ -1,9 +1,9 @@
 .mom-auth {
-    --navy: #10264f;
-    --muted: #6f7f9d;
-    --blue: #2877f7;
-    --blue-dark: #1761e8;
-    --line: #e1e8f4;
+    --navy: #221f1b;
+    --muted: #6b625a;
+    --blue: #2552b1;
+    --blue-dark: #1c4192;
+    --line: #e7e0d8;
     --surface: #ffffff;
     position: relative;
     display: grid;
@@ -13,6 +13,8 @@
     padding: 42px 28px;
     color: var(--navy);
     font-family:
+        'Plus Jakarta Sans Variable',
+        'Plus Jakarta Sans',
         Inter,
         ui-sans-serif,
         system-ui,
@@ -20,7 +22,7 @@
         BlinkMacSystemFont,
         'Segoe UI',
         sans-serif;
-    background: linear-gradient(125deg, #cce8fa 0%, #a6d3f6 40%, #d9efff 100%);
+    background: hsl(var(--background));
     color-scheme: light;
 }
 
@@ -31,11 +33,11 @@
 }
 
 .dark .mom-auth {
-    --navy: #e6eefb;
-    --muted: #94a3b8;
-    --line: #233246;
-    --surface: #0d1727;
-    background: linear-gradient(125deg, #07111f 0%, #0b1b2e 45%, #08131f 100%);
+    --navy: #f2ede6;
+    --muted: #a69d93;
+    --line: #2e2a25;
+    --surface: #1a1815;
+    background: hsl(var(--background));
     color-scheme: dark;
 }
 
@@ -175,20 +177,16 @@
     min-height: 690px;
     grid-template-columns: minmax(0, 1.08fr) minmax(470px, 0.84fr);
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.88);
-    border-radius: 36px;
-    background: rgba(255, 255, 255, 0.42);
-    box-shadow:
-        0 28px 90px rgba(53, 113, 166, 0.2),
-        0 5px 18px rgba(255, 255, 255, 0.45) inset;
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid hsl(var(--border));
+    border-radius: 24px;
+    background: hsl(var(--surface));
+    box-shadow: 0 16px 40px -20px hsl(var(--shadow-color) / 0.22);
 }
 
 .dark .mom-auth .login-card {
-    border-color: rgba(255, 255, 255, 0.08);
-    background: rgba(13, 23, 39, 0.62);
-    box-shadow: 0 28px 90px rgba(0, 0, 0, 0.45);
+    border-color: hsl(var(--border));
+    background: hsl(var(--surface));
+    box-shadow: 0 16px 40px -20px rgb(0 0 0 / 0.45);
 }
 
 .mom-auth .visual-panel {
@@ -244,7 +242,7 @@
     justify-content: center;
     margin-left: -1px;
     padding: 54px clamp(42px, 6vw, 88px);
-    border-radius: 38px 0 0 38px;
+    border-radius: 24px 0 0 24px;
     background: rgba(255, 255, 255, 0.94);
 }
 
@@ -818,13 +816,13 @@
         width: min(100%, 520px);
         min-height: auto;
         flex-direction: column;
-        border-radius: 27px;
+        border-radius: 20px;
     }
 
     .mom-auth .visual-panel {
         height: auto;
         min-height: 0;
-        aspect-ratio: 1 / 1;
+        aspect-ratio: auto;
     }
 
     .mom-auth .visual-art {

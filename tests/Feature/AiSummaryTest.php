@@ -8,7 +8,9 @@ use App\Enums\MeetingStatus;
 use App\Models\AiSummary;
 use App\Models\Meeting;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class AiSummaryTest extends TestCase
@@ -122,8 +124,29 @@ class AiSummaryTest extends TestCase
         $this->assertDatabaseCount('ai_summaries', 1);
     }
 
+    public function test_secret_meeting_ai_is_disabled_by_default(): void
+    {
+        config(['ai.allow_secret' => false]);
+
+        $user = User::factory()->create(['role' => 'notulis']);
+        $meeting = Meeting::factory()->create([
+            'created_by' => $user->id,
+            'confidentiality' => Confidentiality::Secret->value,
+            'status' => MeetingStatus::Draft->value,
+            'content_text' => 'Isi rahasia.',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('meetings.ai.generate', $meeting))
+            ->assertSessionHasErrors('meeting');
+
+        $this->assertDatabaseCount('ai_summaries', 0);
+    }
+
     public function test_secret_meeting_requires_explicit_ai_consent(): void
     {
+        config(['ai.allow_secret' => true]);
+
         $user = User::factory()->create(['role' => 'notulis']);
         $meeting = Meeting::factory()->create([
             'created_by' => $user->id,
@@ -186,6 +209,44 @@ class AiSummaryTest extends TestCase
         ]);
     }
 
+    public function test_action_items_cannot_be_applied_before_approval(): void
+    {
+        $user = User::factory()->create(['role' => 'notulis']);
+        $meeting = Meeting::factory()->create([
+            'created_by' => $user->id,
+            'confidentiality' => Confidentiality::Open->value,
+            'status' => MeetingStatus::Draft->value,
+        ]);
+
+        $summary = $meeting->summaries()->create([
+            'scope' => 'meeting',
+            'content' => [
+                'ringkasan' => 'Ringkasan uji.',
+                'action_items' => [[
+                    'title' => 'Belum disetujui',
+                    'description' => null,
+                    'pic_name' => null,
+                    'division_name' => null,
+                    'due_date' => null,
+                ]],
+            ],
+            'version' => 1,
+            'status' => AiSummaryStatus::Draft,
+            'generation_status' => 'completed',
+            'language' => 'id',
+            'generated_by' => $user->id,
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('ai-summaries.apply', $summary))
+            ->assertSessionHas('error');
+
+        $this->assertDatabaseMissing('action_items', [
+            'meeting_id' => $meeting->id,
+            'title' => 'Belum disetujui',
+        ]);
+    }
+
     public function test_unrelated_member_cannot_generate_summary(): void
     {
         $creator = User::factory()->create(['role' => 'notulis']);
@@ -200,5 +261,121 @@ class AiSummaryTest extends TestCase
         $this->actingAs($other)
             ->post(route('meetings.ai.generate', $meeting))
             ->assertForbidden();
+    }
+
+    public function test_daily_generation_quota_blocks_further_requests(): void
+    {
+        config(['ai.driver' => 'mock', 'ai.daily_generations' => 1]);
+
+        $user = User::factory()->create(['role' => 'notulis']);
+        $meeting = Meeting::factory()->create([
+            'created_by' => $user->id,
+            'confidentiality' => Confidentiality::Open->value,
+            'status' => MeetingStatus::Draft->value,
+            'content_text' => 'Rapat membahas anggaran.',
+        ]);
+
+        $meeting->summaries()->create([
+            'scope' => 'meeting',
+            'content' => ['ringkasan' => 'Ringkasan sebelumnya.'],
+            'version' => 1,
+            'status' => AiSummaryStatus::Draft,
+            'generation_status' => 'completed',
+            'language' => 'id',
+            'generated_by' => $user->id,
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('meetings.ai.generate', $meeting))
+            ->assertSessionHasErrors('meeting');
+
+        $this->assertDatabaseCount('ai_summaries', 1);
+    }
+
+    public function test_meeting_scope_versions_are_unique_at_database_level(): void
+    {
+        $user = User::factory()->create(['role' => 'notulis']);
+        $meeting = Meeting::factory()->create([
+            'created_by' => $user->id,
+            'confidentiality' => Confidentiality::Open->value,
+            'status' => MeetingStatus::Draft->value,
+        ]);
+
+        $attributes = [
+            'scope' => 'meeting',
+            'content' => [],
+            'version' => 1,
+            'status' => AiSummaryStatus::Draft,
+            'generation_status' => 'completed',
+            'language' => 'id',
+            'generated_by' => $user->id,
+        ];
+
+        $meeting->summaries()->create($attributes);
+
+        $this->expectException(QueryException::class);
+
+        $meeting->summaries()->create($attributes);
+    }
+
+    public function test_identical_meeting_content_reuses_cached_ai_response(): void
+    {
+        config([
+            'ai.driver' => 'openai',
+            'ai.api_key' => 'test-key',
+            'ai.base_url' => 'https://ai.test/v1',
+            'ai.daily_generations' => 0,
+        ]);
+
+        Http::fake([
+            'ai.test/*' => Http::response([
+                'choices' => [[
+                    'message' => [
+                        'content' => json_encode([
+                            'ringkasan' => 'Ringkasan dari cache.',
+                            'poin' => ['Poin penting.'],
+                            'keputusan' => [],
+                            'action_items' => [],
+                        ]),
+                    ],
+                ]],
+            ]),
+        ]);
+
+        $user = User::factory()->create(['role' => 'notulis']);
+        $meeting = Meeting::factory()->create([
+            'created_by' => $user->id,
+            'confidentiality' => Confidentiality::Open->value,
+            'status' => MeetingStatus::Draft->value,
+            'content_text' => 'Isi rapat yang sama untuk dua versi resume.',
+        ]);
+
+        $service = app(\App\Services\Ai\AiSummaryService::class);
+        $first = $meeting->summaries()->create([
+            'scope' => 'meeting',
+            'content' => [],
+            'version' => 1,
+            'status' => AiSummaryStatus::Draft,
+            'generation_status' => 'queued',
+            'language' => 'id',
+            'generated_by' => $user->id,
+        ]);
+        $second = $meeting->summaries()->create([
+            'scope' => 'meeting',
+            'content' => [],
+            'version' => 2,
+            'status' => AiSummaryStatus::Draft,
+            'generation_status' => 'queued',
+            'language' => 'id',
+            'generated_by' => $user->id,
+        ]);
+
+        $service->generate($first);
+        $service->generate($second);
+
+        Http::assertSentCount(1);
+        $this->assertSame('Ringkasan dari cache.', $second->fresh()->content['ringkasan']);
+        $this->assertSame(route('meetings.show', $meeting->id), $second->fresh()->sources[0]['url']);
+        $this->assertSame(mb_strlen($meeting->content_text), $second->fresh()->usage['input_chars']);
     }
 }

@@ -14,18 +14,18 @@ const props = defineProps<{
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Quick Note', href: '/quick-notes' },
+    { title: 'Catatan cepat', href: '/quick-notes' },
     { title: 'Catatan baru', href: '/quick-notes/buat' },
 ];
 </script>
 
 <template>
-    <Head title="Quick Note baru" />
+    <Head title="Catatan cepat baru" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
             <PageHeader
-                title="Quick Note baru"
+                title="Catatan cepat baru"
                 description="Catat ide atau temuan cepat, lalu tentukan siapa yang perlu merespons dan dalam berapa jam."
             />
 

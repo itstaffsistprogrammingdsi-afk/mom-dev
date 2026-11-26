@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use App\Enums\Confidentiality;
 use App\Mail\MeetingSharedMail;
 use App\Models\Meeting;
+use App\Models\User;
 use App\Services\AuditLogger;
 use App\Services\Exports\MeetingExportService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 
@@ -51,13 +53,30 @@ class MeetingShareController extends Controller
             ]);
         }
 
-        if (
-            in_array($meeting->confidentiality, [Confidentiality::Restricted, Confidentiality::Secret], true)
-            && ! $request->boolean('confirm_share')
-        ) {
-            throw ValidationException::withMessages([
-                'confirm_share' => 'Konfirmasi bahwa penerima berhak menerima dokumen dengan label ini.',
-            ]);
+        if (in_array($meeting->confidentiality, [Confidentiality::Restricted, Confidentiality::Secret], true)) {
+            if (! $request->boolean('confirm_share')) {
+                throw ValidationException::withMessages([
+                    'confirm_share' => 'Konfirmasi bahwa penerima berhak menerima dokumen dengan label ini.',
+                ]);
+            }
+
+            $recipientUsers = User::query()
+                ->whereIn(DB::raw('lower(email)'), $emails->map(fn (string $email) => strtolower($email))->all())
+                ->where('is_active', true)
+                ->get()
+                ->keyBy(fn (User $user) => strtolower($user->email));
+
+            $unauthorized = $emails->filter(function (string $email) use ($meeting, $recipientUsers) {
+                $user = $recipientUsers->get(strtolower($email));
+
+                return ! $user || ! Meeting::query()->visibleTo($user)->whereKey($meeting->id)->exists();
+            });
+
+            if ($unauthorized->isNotEmpty()) {
+                throw ValidationException::withMessages([
+                    'recipients' => 'Penerima berikut tidak terdaftar atau tidak memiliki akses ke dokumen ini: '.$unauthorized->implode(', '),
+                ]);
+            }
         }
 
         $includePdf = $request->boolean('include_pdf');

@@ -65,7 +65,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                 <Card>
                     <CardHeader><CardTitle class="text-base">Action item divisi</CardTitle></CardHeader>
                     <CardContent class="space-y-2">
-                        <EmptyState v-if="props.tasks.length === 0" title="Tidak ada action item" />
+                        <EmptyState v-if="props.tasks.length === 0" title="Tidak ada tindak lanjut" />
                         <Link
                             v-for="task in props.tasks"
                             :key="task.id"

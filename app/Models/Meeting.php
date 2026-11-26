@@ -8,8 +8,10 @@ use App\Enums\MeetingStatus;
 use App\Enums\MeetingType;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Scout\Searchable;
@@ -17,6 +19,8 @@ use Laravel\Scout\Searchable;
 class Meeting extends Model
 {
     use HasFactory, Searchable, SoftDeletes;
+
+    protected $hidden = ['search_vector'];
 
     protected $fillable = [
         'title',
@@ -41,6 +45,7 @@ class Meeting extends Model
         'confidentiality',
         'finalized_at',
         'approved_by',
+        'approver_id',
     ];
 
     protected function casts(): array
@@ -79,9 +84,19 @@ class Meeting extends Model
         return $this->belongsTo(User::class, 'approved_by');
     }
 
+    public function approver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approver_id');
+    }
+
     public function participants(): HasMany
     {
         return $this->hasMany(MeetingParticipant::class);
+    }
+
+    public function admins(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'meeting_admins')->withTimestamps();
     }
 
     public function tags(): HasMany
@@ -137,29 +152,48 @@ class Meeting extends Model
     public function scopeVisibleTo(Builder $query, User $user): Builder
     {
         if ($user->isAdmin()) {
-            return $query;
+            return $query->where(function (Builder $query) use ($user) {
+                $query->where($query->qualifyColumn('confidentiality'), '!=', Confidentiality::Secret->value)
+                    ->orWhere($query->qualifyColumn('created_by'), $user->id)
+                    ->orWhereHas('participants', fn (Builder $q) => $q->where('user_id', $user->id))
+                    ->orWhereHas('admins', fn (Builder $q) => $q->where('user_id', $user->id))
+                    ->orWhereExists(fn ($sub) => $sub->selectRaw('1')
+                        ->from('meeting_access')
+                        ->whereColumn('meeting_access.meeting_id', $query->qualifyColumn('id'))
+                        ->where('meeting_access.user_id', $user->id));
+            });
         }
 
         return $query->where(function (Builder $query) use ($user) {
             $query->where($query->qualifyColumn('confidentiality'), Confidentiality::Open->value)
                 ->orWhere($query->qualifyColumn('created_by'), $user->id)
                 ->orWhereHas('participants', fn (Builder $q) => $q->where('user_id', $user->id))
-                ->orWhere(function (Builder $q) use ($user) {
-                    $q->where($q->qualifyColumn('confidentiality'), '!=', Confidentiality::Secret->value)
-                        ->whereHas('tags', function (Builder $tag) use ($user) {
-                            $tag->where(function (Builder $inner) use ($user) {
-                                $inner->where('type', 'person')->where('target_id', $user->id);
-
-                                if ($user->division_id) {
-                                    $inner->orWhere(function (Builder $division) use ($user) {
-                                        $division->where('type', 'division')
-                                            ->where('target_id', $user->division_id);
-                                    });
-                                }
-                            });
-                        });
-                });
+                ->orWhereHas('admins', fn (Builder $q) => $q->where('user_id', $user->id))
+                ->orWhereExists(fn ($sub) => $sub->selectRaw('1')
+                    ->from('meeting_access')
+                    ->whereColumn('meeting_access.meeting_id', $query->qualifyColumn('id'))
+                    ->where('meeting_access.user_id', $user->id));
         });
+    }
+
+    public function scopeSearchText(Builder $query, string $search): Builder
+    {
+        $search = trim($search);
+
+        if ($search === '') {
+            return $query;
+        }
+
+        $terms = collect(preg_split('/[^\pL\pN]+/u', $search) ?: [])
+            ->filter()
+            ->map(fn (string $term) => mb_strtolower($term).':*')
+            ->implode(' & ');
+
+        if ($terms === '') {
+            return $query;
+        }
+
+        return $query->whereRaw("search_vector @@ to_tsquery('simple', ?)", [$terms]);
     }
 
     public function scopeFilter(Builder $query, array $filters): Builder
@@ -179,8 +213,8 @@ class Meeting extends Model
             ->when($filters['status'] ?? null, fn (Builder $q, $status) => $q->where('status', $status))
             ->when($filters['type'] ?? null, fn (Builder $q, $type) => $q->where('meeting_type', $type))
             ->when($filters['document_type'] ?? null, fn (Builder $q, $type) => $q->where('document_type', $type))
-            ->when($filters['from'] ?? null, fn (Builder $q, $from) => $q->whereDate('scheduled_at', '>=', $from))
-            ->when($filters['to'] ?? null, fn (Builder $q, $to) => $q->whereDate('scheduled_at', '<=', $to));
+            ->when($filters['from'] ?? null, fn (Builder $q, $from) => $q->where('scheduled_at', '>=', Carbon::parse($from)->startOfDay()))
+            ->when($filters['to'] ?? null, fn (Builder $q, $to) => $q->where('scheduled_at', '<', Carbon::parse($to)->addDay()->startOfDay()));
     }
 
     public function toSearchableArray(): array

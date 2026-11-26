@@ -15,7 +15,7 @@ const props = defineProps<{
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Quick Note', href: '/quick-notes' },
+    { title: 'Catatan cepat', href: '/quick-notes' },
     { title: props.note.title, href: `/quick-notes/${props.note.id}` },
     { title: 'Sunting', href: `/quick-notes/${props.note.id}/sunting` },
 ];
@@ -27,7 +27,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
             <PageHeader
-                title="Sunting Quick Note"
+                title="Sunting Catatan cepat"
                 description="Perbarui isi catatan, penerima, atau batas respons. Respons yang sudah masuk tetap tersimpan."
             />
 

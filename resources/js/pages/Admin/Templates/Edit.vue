@@ -127,7 +127,7 @@ function submit() {
                     <Card>
                         <CardHeader><CardTitle class="text-base">Tips struktur</CardTitle></CardHeader>
                         <CardContent class="space-y-2 text-xs text-muted-foreground">
-                            <p>Notulen: Agenda, Pembahasan, Keputusan, Action Item.</p>
+                            <p>Notulen: Agenda, Pembahasan, Keputusan, Tindak lanjut.</p>
                             <p>Proposal: Ringkasan, Latar Belakang, Tujuan, Timeline, Anggaran, Risiko.</p>
                             <p>Laporan: Ringkasan Eksekutif, Temuan, Analisis, Rekomendasi.</p>
                             <p>Brosur: Headline, Target Audiens, Keunggulan, CTA, Kontak.</p>

@@ -78,7 +78,7 @@ const props = withDefaults(defineProps<Props>(), {
     topics: () => [],
     collabUrl: null,
     showTagPicker: true,
-    placeholder: 'Tulis pembahasan rapat di sini…',
+    placeholder: 'Tulis pembahasan rapat. Ketik / untuk blok, @ orang/divisi, # topik.',
     flat: false,
 });
 
@@ -398,6 +398,13 @@ const editor = useEditor({
               ]
             : []),
     ],
+    editorProps: {
+        attributes: {
+            role: 'textbox',
+            'aria-multiline': 'true',
+            'aria-label': 'Isi notulen',
+        },
+    },
     onUpdate: ({ editor: instance }) => {
         emit('update:modelValue', instance.getJSON());
         updateWordCount();
@@ -740,7 +747,7 @@ defineExpose({
                 ? 'fixed inset-0 z-[70] flex flex-col bg-background'
                 : props.flat
                   ? 'group'
-                  : 'group rounded-lg border border-border/80 bg-card shadow-soft-sm transition-[border-color,box-shadow] duration-base ease-out-soft focus-within:border-primary/40 focus-within:shadow-soft-md'
+                  : 'group rounded-lg border border-border/80 bg-card transition-colors duration-base ease-out-soft focus-within:border-primary/40'
         "
     >
         <div

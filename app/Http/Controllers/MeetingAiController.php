@@ -22,7 +22,7 @@ use Illuminate\Validation\ValidationException;
 
 class MeetingAiController extends Controller
 {
-    public function generate(Request $request, Meeting $meeting): RedirectResponse
+    public function generate(Request $request, Meeting $meeting, AuditLogger $audit): RedirectResponse
     {
         $this->authorize('update', $meeting);
 
@@ -32,10 +32,18 @@ class MeetingAiController extends Controller
 
         $tier = $validated['model_tier'] ?? 'auto';
 
-        if ($meeting->confidentiality === Confidentiality::Secret && ! $request->boolean('ai_consent')) {
-            throw ValidationException::withMessages([
-                'ai_consent' => 'Notulen rahasia memerlukan persetujuan eksplisit sebelum diproses AI.',
-            ]);
+        if ($meeting->confidentiality === Confidentiality::Secret) {
+            if (! config('ai.allow_secret')) {
+                throw ValidationException::withMessages([
+                    'meeting' => 'AI dinonaktifkan untuk notulen rahasia. Tulis ringkasan secara manual.',
+                ]);
+            }
+
+            if (! $request->boolean('ai_consent')) {
+                throw ValidationException::withMessages([
+                    'ai_consent' => 'Notulen rahasia memerlukan persetujuan eksplisit sebelum diproses AI.',
+                ]);
+            }
         }
 
         if (blank($meeting->content_text) && filled($meeting->content)) {
@@ -50,25 +58,53 @@ class MeetingAiController extends Controller
 
         $this->failStaleSummaries($meeting);
 
-        $pending = $meeting->summaries()
-            ->whereIn('generation_status', ['queued', 'processing'])
-            ->exists();
+        $dailyLimit = (int) config('ai.daily_generations', 20);
 
-        if ($pending) {
+        if ($dailyLimit > 0) {
+            $usedToday = AiSummary::query()
+                ->where('generated_by', $request->user()->id)
+                ->where('created_at', '>=', now()->startOfDay())
+                ->count();
+
+            if ($usedToday >= $dailyLimit) {
+                throw ValidationException::withMessages([
+                    'meeting' => "Kuota resume AI harian habis ({$usedToday}/{$dailyLimit}). Coba lagi besok atau minta admin menaikkan AI_DAILY_GENERATIONS.",
+                ]);
+            }
+        }
+
+        $summary = DB::transaction(function () use ($meeting, $request) {
+            Meeting::query()->lockForUpdate()->findOrFail($meeting->id);
+
+            $pending = $meeting->summaries()
+                ->whereIn('generation_status', ['queued', 'processing'])
+                ->exists();
+
+            if ($pending) {
+                return null;
+            }
+
+            $version = (int) $meeting->summaries()->max('version') + 1;
+
+            return $meeting->summaries()->create([
+                'scope' => 'meeting',
+                'content' => [],
+                'version' => $version,
+                'status' => AiSummaryStatus::Draft,
+                'generation_status' => 'queued',
+                'language' => 'id',
+                'generated_by' => $request->user()->id,
+            ]);
+        });
+
+        if (! $summary) {
             return back()->with('error', 'Resume AI masih diproses. Tunggu hingga selesai.');
         }
 
-        $version = (int) $meeting->summaries()->max('version') + 1;
-
-        $summary = $meeting->summaries()->create([
-            'scope' => 'meeting',
-            'content' => [],
-            'version' => $version,
-            'status' => AiSummaryStatus::Draft,
-            'generation_status' => 'queued',
-            'language' => 'id',
-            'generated_by' => $request->user()->id,
-        ]);
+        $audit->log('ai_summary.requested', $summary, 'Meminta resume AI', [
+            'tier' => $tier,
+            'ai_consent' => $request->boolean('ai_consent'),
+        ], $meeting->id);
 
         GenerateMeetingSummary::dispatch($summary, $tier);
 
@@ -94,6 +130,8 @@ class MeetingAiController extends Controller
                 'model' => $summary->model,
                 'approved_at' => $summary->approved_at?->toIso8601String(),
                 'content' => $summary->content ?? [],
+                'sources' => $summary->sources ?? [],
+                'usage' => $summary->usage ?? [],
             ])
             ->values();
 
@@ -147,7 +185,12 @@ class MeetingAiController extends Controller
         $content['poin'] = $validated['content']['poin'] ?? ($content['poin'] ?? []);
         $content['keputusan'] = $validated['content']['keputusan'] ?? ($content['keputusan'] ?? []);
 
-        $aiSummary->update(['content' => $content]);
+        $aiSummary->update([
+            'content' => $content,
+            'status' => AiSummaryStatus::Draft,
+            'approved_by' => null,
+            'approved_at' => null,
+        ]);
 
         $audit->log('ai_summary.updated', $aiSummary, 'Menyunting resume AI', meetingId: $aiSummary->meeting_id);
 
@@ -157,6 +200,10 @@ class MeetingAiController extends Controller
     public function applyActionItems(Request $request, AiSummary $aiSummary, AuditLogger $audit): RedirectResponse
     {
         $this->authorize('update', $aiSummary->meeting);
+
+        if ($aiSummary->status !== AiSummaryStatus::Approved) {
+            return back()->with('error', 'Setujui resume AI terlebih dahulu sebelum menerapkan action item.');
+        }
 
         $suggestions = collect($aiSummary->content['action_items'] ?? [])
             ->filter(fn ($item) => is_array($item) && filled($item['title'] ?? null));

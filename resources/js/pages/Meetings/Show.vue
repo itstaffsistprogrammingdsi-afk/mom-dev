@@ -2,7 +2,6 @@
 import ActionItemFeedbackDialog from '@/components/ActionItemFeedbackDialog.vue';
 import AttendanceBadge from '@/components/AttendanceBadge.vue';
 import AvatarGroup from '@/components/AvatarGroup.vue';
-import MeetingEditor from '@/components/MeetingEditor.vue';
 import MeetingSignaturePanel from '@/components/MeetingSignaturePanel.vue';
 import SignatureBlock from '@/components/minutes/SignatureBlock.vue';
 import PageHeader from '@/components/PageHeader.vue';
@@ -17,6 +16,7 @@ import { Select } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { confidentialityLabels, documentTypeClasses, documentTypeLabels, formatDate, formatDateTime, meetingTypeLabels } from '@/lib/labels';
+import { isNativePlatform, shareDocument } from '@/mobile/native';
 import {
     type ActionItem,
     type BreadcrumbItem,
@@ -63,6 +63,7 @@ import {
     X,
 } from 'lucide-vue-next';
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 interface Summary {
     id: number;
@@ -85,6 +86,8 @@ interface Summary {
     error_message: string | null;
     model: string | null;
     approved_at: string | null;
+    sources?: { meeting_id: number; title: string; url?: string }[];
+    usage?: Record<string, unknown>;
 }
 
 type AiTier = 'auto' | 'expert';
@@ -119,12 +122,15 @@ interface FullMeeting extends Meeting {
     attachments: Attachment[];
     versions: Version[];
     approved_by?: { id: number; name: string } | null;
+    approver?: { id: number; name: string } | null;
+    admins?: { id: number; name: string }[];
     template?: { id: number; name: string } | null;
     finalized_at: string | null;
 }
 
 const props = defineProps<{
     meeting: FullMeeting;
+    contentHtml: string;
     signatures: MeetingSignatures;
     can: {
         update: boolean;
@@ -138,16 +144,19 @@ const props = defineProps<{
     };
     users?: { id: number; name: string }[];
     divisions?: Division[];
+    topics?: { id: number; name: string }[];
+    adminUsers?: { id: number; name: string }[];
 }>();
 
 const page = usePage<SharedData>();
 const user = computed(() => page.props.auth.user);
+const { t } = useI18n();
 const errors = computed(() => (page.props.errors ?? {}) as Record<string, string>);
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dokumen', href: '/notulen' },
+const breadcrumbs = computed<BreadcrumbItem[]>(() => [
+    { title: t('nav.documents'), href: '/notulen' },
     { title: props.meeting.title, href: `/notulen/${props.meeting.id}` },
-];
+]);
 
 const aiConsent = ref(false);
 const editingTaskId = ref<number | null>(null);
@@ -156,6 +165,59 @@ const feedbackPendingStatus = ref<string | null>(null);
 const shareOpen = ref(false);
 const copiedSummaryId = ref<number | null>(null);
 let copyTimer: ReturnType<typeof setTimeout> | null = null;
+
+const adminForm = useForm({
+    admin_ids: (props.meeting.admins ?? []).map((admin) => String(admin.id)),
+});
+
+function saveDocumentAdmins() {
+    adminForm.patch(route('meeting-admins.update', props.meeting.id), { preserveScroll: true });
+}
+
+const decisionForm = useForm({
+    content: '',
+    topic_id: '',
+    decided_at: '',
+});
+const editingDecisionId = ref<number | null>(null);
+
+function resetDecisionForm() {
+    editingDecisionId.value = null;
+    decisionForm.reset();
+    decisionForm.clearErrors();
+}
+
+function editDecision(decision: Decision) {
+    editingDecisionId.value = decision.id;
+    decisionForm.content = decision.content;
+    decisionForm.topic_id = decision.topic?.id ? String(decision.topic.id) : '';
+    decisionForm.decided_at = decision.decided_at ?? '';
+}
+
+function submitDecision() {
+    const options = {
+        preserveScroll: true,
+        onSuccess: () => resetDecisionForm(),
+    };
+
+    if (editingDecisionId.value) {
+        decisionForm.patch(route('decisions.update', editingDecisionId.value), options);
+    } else {
+        decisionForm.post(route('decisions.store', props.meeting.id), options);
+    }
+}
+
+function deleteDecision(decision: Decision) {
+    askConfirm(
+        {
+            title: 'Hapus keputusan?',
+            description: `"${decision.content}" akan dihapus dari dokumen ini.`,
+            label: 'Hapus keputusan',
+            tone: 'danger',
+        },
+        () => router.delete(route('decisions.destroy', decision.id), { preserveScroll: true }),
+    );
+}
 
 const shareForm = useForm({
     recipients: '',
@@ -197,6 +259,7 @@ const confirmState = reactive<{
     description: string;
     label: string;
     tone: ConfirmTone;
+    kind: 'default' | 'finalize';
     action: (() => void) | null;
 }>({
     open: false,
@@ -204,14 +267,17 @@ const confirmState = reactive<{
     description: '',
     label: 'Lanjutkan',
     tone: 'default',
+    kind: 'default',
     action: null,
 });
+const finalizeApproverId = ref('');
 
 const canManage = computed(() => props.can.manage ?? props.can.update);
 const selectedFeedbackTask = computed(() => props.meeting.action_items.find((task) => task.id === feedbackTaskId.value) ?? null);
 const requiresShareConfirmation = computed(() => ['restricted', 'secret'].includes(props.meeting.confidentiality));
 const taskUsers = computed(() => props.users ?? []);
 const taskDivisions = computed(() => props.divisions ?? []);
+const finalizeApproverOptions = computed(() => (props.users ?? []).filter((candidate) => candidate.id !== user.value?.id));
 const canGenerate = computed(() => Boolean(props.can.generateAi) && props.meeting.status !== 'locked');
 
 const responseHourOptions = [
@@ -240,6 +306,8 @@ let aiPollTimer: ReturnType<typeof setInterval> | null = null;
 
 const hasPendingAiSummary = computed(() => aiSummaries.value.some((summary) => ['queued', 'processing'].includes(summary.generation_status)));
 const doneTaskCount = computed(() => props.meeting.action_items.filter((task) => task.status === 'done').length);
+const openTaskCount = computed(() => props.meeting.action_items.filter((task) => !['done', 'cancelled'].includes(task.status)).length);
+const previewTasks = computed(() => props.meeting.action_items.slice(0, 3));
 const taskProgress = computed(() => {
     if (props.meeting.action_items.length === 0) {
         return 0;
@@ -358,13 +426,17 @@ function tagHref(tag: Tag): string | undefined {
 
 const attachmentUrl = (attachment: Attachment) => route('attachments.download', attachment.id);
 
-function askConfirm(options: { title: string; description: string; label: string; tone?: ConfirmTone }, action: () => void) {
+function askConfirm(
+    options: { title: string; description: string; label: string; tone?: ConfirmTone; kind?: 'default' | 'finalize' },
+    action: () => void,
+) {
     Object.assign(confirmState, {
         open: true,
         title: options.title,
         description: options.description,
         label: options.label,
         tone: options.tone ?? 'default',
+        kind: options.kind ?? 'default',
         action,
     });
 }
@@ -378,14 +450,21 @@ function runConfirm() {
 
 function finalize() {
     const isMeeting = props.meeting.document_type === 'meeting';
+    finalizeApproverId.value = props.meeting.approver?.id ? String(props.meeting.approver.id) : '';
 
     askConfirm(
         {
             title: isMeeting ? 'Finalkan notulen?' : 'Finalkan dokumen?',
-            description: 'Setelah difinalkan, isi dokumen dikunci untuk perubahan. Pastikan keputusan dan action item sudah lengkap.',
+            description: 'Setelah difinalkan, isi dokumen dikunci untuk perubahan. Pastikan keputusan dan Tindak lanjut sudah lengkap.',
             label: isMeeting ? 'Finalkan notulen' : 'Finalkan dokumen',
+            kind: 'finalize',
         },
-        () => router.post(route('meetings.finalize', props.meeting.id), {}, { preserveScroll: true }),
+        () =>
+            router.post(
+                route('meetings.finalize', props.meeting.id),
+                { approver_id: finalizeApproverId.value || null },
+                { preserveScroll: true },
+            ),
     );
 }
 
@@ -433,7 +512,7 @@ function summaryToText(summary: Summary): string {
     }
 
     if (summary.content.action_items?.length) {
-        lines.push('', 'Action item');
+        lines.push('', 'Tindak lanjut');
 
         for (const item of summary.content.action_items) {
             const owner = item.pic_name ?? item.division_name;
@@ -463,6 +542,12 @@ async function copySummary(summary: Summary) {
 }
 
 function openShare() {
+    if (isNativePlatform()) {
+        void shareDocument(props.meeting.title, route('meetings.show', props.meeting.id));
+
+        return;
+    }
+
     shareForm.clearErrors();
     shareOpen.value = true;
 }
@@ -558,9 +643,9 @@ function saveEditTask(task: ActionItem) {
 function deleteTask(task: ActionItem) {
     askConfirm(
         {
-            title: 'Hapus action item?',
+            title: 'Hapus Tindak lanjut?',
             description: `"${task.title}" akan dihapus dari dokumen ini. Tindakan ini tidak dapat dibatalkan.`,
-            label: 'Hapus action item',
+            label: 'Hapus Tindak lanjut',
             tone: 'danger',
         },
         () => router.delete(route('action-items.destroy', task.id), { preserveScroll: true }),
@@ -634,13 +719,13 @@ function restoreVersion(version: Version) {
                 <template #actions>
                     <Button v-if="props.can.share" variant="outline" @click="openShare">
                         <Share2 class="size-4" />
-                        Bagikan
+                        {{ t('meetings.detail.share') }}
                     </Button>
                     <DropdownMenu>
                         <DropdownMenuTrigger as-child>
                             <Button variant="outline">
                                 <Download class="size-4" />
-                                Ekspor
+                                {{ t('meetings.detail.export') }}
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" class="w-52">
@@ -672,12 +757,12 @@ function restoreVersion(version: Version) {
                     <Button v-if="props.can.update" as-child variant="outline">
                         <Link :href="route('meetings.edit', props.meeting.id)">
                             <Pencil class="size-4" />
-                            Sunting
+                            {{ t('meetings.detail.edit') }}
                         </Link>
                     </Button>
                     <Button v-if="props.can.finalize && props.meeting.status === 'draft'" @click="finalize">
                         <CheckCircle2 class="size-4" />
-                        {{ props.meeting.document_type === 'meeting' ? 'Finalkan notulen' : 'Finalkan dokumen' }}
+                        {{ t('meetings.detail.finalize') }}
                     </Button>
                     <DropdownMenu v-if="user.role === 'admin' && ['final', 'locked'].includes(props.meeting.status)">
                         <DropdownMenuTrigger as-child>
@@ -745,41 +830,65 @@ function restoreVersion(version: Version) {
             </div>
 
             <div class="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-                <div class="min-w-0 space-y-6">
-                    <section class="space-y-2">
+                <div class="flex min-w-0 flex-col gap-6">
+                    <section class="order-1 space-y-2 xl:order-2">
                         <div class="flex flex-wrap items-center justify-between gap-2">
                             <h2 class="flex items-center gap-2 text-base font-semibold">
                                 <FileText class="size-4 text-muted-foreground" />
-                                Isi dokumen
+                                {{ t('meetings.detail.content') }}
                             </h2>
-                            <span class="text-xs text-muted-foreground">Mode baca</span>
+                            <span class="text-xs text-muted-foreground">{{ t('meetings.detail.readMode') }}</span>
                         </div>
-                        <MeetingEditor :model-value="props.meeting.content" :editable="false" />
+                        <div class="meeting-editor" data-readonly="true">
+                            <div class="ProseMirror" v-html="props.contentHtml" />
+                        </div>
                         <div v-if="props.meeting.document_type === 'meeting'" class="mt-4">
                             <SignatureBlock
                                 :creator-name="props.meeting.creator?.name ?? '-'"
-                                :approver-name="props.meeting.approved_by?.name ?? (props.signatures.approver?.name ?? 'Pimpinan Rapat')"
+                                :approver-name="props.meeting.approver?.name ?? (props.signatures.approver?.name ?? 'Pimpinan Rapat')"
                                 :creator-signature="props.signatures.creator ?? null"
                                 :approver-signature="props.signatures.approver ?? null"
                             />
                         </div>
                     </section>
 
-                    <section class="overflow-hidden rounded-lg border border-ai/25 bg-ai-surface/60 shadow-card" aria-labelledby="ai-summary-heading">
-                        <div class="flex flex-col gap-4 border-b border-ai/15 p-5 md:flex-row md:items-start md:justify-between md:p-6">
+                    <Card v-if="props.meeting.confidentiality === 'secret' && props.can.changeConfidentiality">
+                        <CardHeader>
+                            <CardTitle class="text-base">Admin khusus dokumen</CardTitle>
+                            <p class="text-sm text-muted-foreground">
+                                Hanya admin yang dipilih di sini yang dapat membuka notulen secret ini selain peserta dan pembuat.
+                            </p>
+                        </CardHeader>
+                        <CardContent>
+                            <form class="space-y-3" @submit.prevent="saveDocumentAdmins">
+                                <div class="grid gap-2 sm:grid-cols-2">
+                                    <label
+                                        v-for="admin in props.adminUsers ?? []"
+                                        :key="admin.id"
+                                        class="flex items-center gap-2 rounded-md border border-border/70 px-3 py-2 text-sm"
+                                    >
+                                        <input v-model="adminForm.admin_ids" type="checkbox" :value="String(admin.id)" class="size-4 rounded border-input accent-primary" />
+                                        {{ admin.name }}
+                                    </label>
+                                </div>
+                                <Button type="submit" size="sm" :loading="adminForm.processing">Simpan admin dokumen</Button>
+                            </form>
+                        </CardContent>
+                    </Card>
+
+                    <section class="order-2 overflow-hidden rounded-xl border border-ai-border/80 bg-ai-soft/60 xl:order-1" aria-labelledby="ai-summary-heading">
+                        <div class="flex flex-col gap-4 border-b border-ai-border/70 p-4 md:flex-row md:items-start md:justify-between md:p-5">
                             <div class="flex gap-3">
-                                <span class="flex size-10 shrink-0 items-center justify-center rounded-md bg-ai/10 text-ai">
-                                    <ScanText class="size-5" aria-hidden="true" />
-                                </span>
+                                <ScanText class="mt-0.5 size-4 shrink-0 text-ai" aria-hidden="true" />
                                 <div>
                                     <div class="flex flex-wrap items-center gap-2">
-                                        <h2 id="ai-summary-heading" class="text-base font-semibold">Resume AI</h2>
-                                        <span class="rounded-full bg-card/80 px-2.5 py-0.5 text-[11px] font-medium text-ai ring-1 ring-ai/20"
-                                            >Dibuat oleh AI</span
+                                        <h2 id="ai-summary-heading" class="text-base font-semibold">{{ t('ai.title') }}</h2>
+                                        <span class="rounded-md bg-card/80 px-2 py-0.5 text-[11px] font-medium text-muted-foreground ring-1 ring-border/70"
+                                            >{{ t('ai.draft') }}</span
                                         >
                                     </div>
                                     <p class="mt-1 text-sm leading-6 text-muted-foreground">
-                                        Ringkasan otomatis dari isi notulen. Periksa kembali sebelum dipakai.
+                                        {{ t('ai.description') }}
                                     </p>
                                 </div>
                             </div>
@@ -792,7 +901,7 @@ function restoreVersion(version: Version) {
                                     <DropdownMenuTrigger as-child>
                                         <Button variant="outline" size="sm">
                                             <ScanText class="size-4" />
-                                            {{ aiSummaries.length ? 'Buat ulang' : 'Buat resume' }}
+                                            {{ aiSummaries.length ? t('ai.regenerate') : t('ai.generate') }}
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end" class="w-64">
@@ -809,19 +918,21 @@ function restoreVersion(version: Version) {
                             </div>
                         </div>
 
-                        <div class="space-y-4 p-5 md:p-6">
-                            <div v-if="aiSummaries.length === 0" class="rounded-lg border border-dashed border-ai/25 bg-card/60 p-5">
-                                <p class="text-sm font-medium">Belum ada resume</p>
+                        <div class="space-y-4 p-4 md:p-5">
+                            <div v-if="aiSummaries.length === 0" class="rounded-lg bg-card/70 p-4">
+                                <p class="text-sm font-medium">{{ t('ai.emptyTitle') }}</p>
                                 <p class="mt-1 text-sm leading-6 text-muted-foreground">
                                     {{
-                                        canGenerate
-                                            ? 'Buat resume untuk merangkum poin penting, keputusan, dan action item.'
-                                            : 'Resume belum tersedia untuk dokumen ini.'
+                                        props.meeting.confidentiality === 'secret' && !canGenerate
+                                            ? t('meetings.detail.secretOff')
+                                            : canGenerate
+                                              ? t('ai.emptyBody')
+                                              : 'Resume belum tersedia untuk dokumen ini.'
                                     }}
                                 </p>
                             </div>
 
-                            <article v-for="summary in aiSummaries" :key="summary.id" class="rounded-lg border border-ai/15 bg-card/85 p-4">
+                            <article v-for="summary in aiSummaries" :key="summary.id" class="rounded-lg bg-card p-4 ring-1 ring-border/60">
                                 <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
                                     <span class="font-medium text-ai">Versi {{ summary.version }}</span>
                                     <span aria-hidden="true">·</span>
@@ -872,7 +983,7 @@ function restoreVersion(version: Version) {
                                 </div>
 
                                 <div v-if="summary.content.action_items?.length" class="mt-4">
-                                    <p class="text-xs font-semibold text-foreground">Usulan action item</p>
+                                    <p class="text-xs font-semibold text-foreground">Usulan Tindak lanjut</p>
                                     <ul class="mt-2 space-y-1.5">
                                         <li v-for="(item, index) in summary.content.action_items" :key="index" class="flex gap-2 text-sm leading-6">
                                             <span class="mt-2 size-1.5 shrink-0 rounded-full bg-ai" aria-hidden="true"></span>
@@ -881,19 +992,29 @@ function restoreVersion(version: Version) {
                                     </ul>
                                 </div>
 
+                                <p v-if="summary.sources?.length" class="mt-4 flex flex-wrap gap-x-1 text-xs text-muted-foreground">
+                                    <span>Sumber:</span>
+                                    <template v-for="(source, index) in summary.sources" :key="source.meeting_id">
+                                        <a v-if="source.url" :href="source.url" class="font-medium text-primary underline underline-offset-2">{{ source.title }}</a>
+                                        <span v-else>{{ source.title }}</span>
+                                        <span v-if="index < summary.sources.length - 1" aria-hidden="true">,</span>
+                                    </template>
+                                </p>
+
                                 <div
                                     v-if="summary.status === 'draft' && summary.generation_status === 'completed' && canManage"
                                     class="mt-4 flex flex-wrap gap-2"
                                 >
                                     <Button size="sm" @click="approveSummary(summary)">Setujui</Button>
                                     <Button size="sm" variant="outline" @click="rejectSummary(summary)">Tolak</Button>
-                                    <Button
-                                        v-if="summary.content.action_items?.length"
-                                        size="sm"
-                                        variant="outline"
-                                        @click="applySummaryActions(summary)"
-                                    >
-                                        Terapkan action item
+                                </div>
+
+                                <div
+                                    v-if="summary.status === 'approved' && summary.generation_status === 'completed' && canManage && summary.content.action_items?.length"
+                                    class="mt-4"
+                                >
+                                    <Button size="sm" variant="outline" @click="applySummaryActions(summary)">
+                                        Terapkan Tindak lanjut
                                     </Button>
                                 </div>
 
@@ -908,10 +1029,10 @@ function restoreVersion(version: Version) {
                         </div>
                     </section>
 
-                    <Card>
+                    <Card class="order-3 border-border/80 shadow-none">
                         <CardHeader class="flex-row items-start justify-between gap-3">
                             <div>
-                                <CardTitle class="text-base">Keputusan</CardTitle>
+                                <CardTitle class="text-base">{{ t('meetings.detail.decisions') }}</CardTitle>
                                 <p class="text-sm text-muted-foreground">Hasil yang disepakati dalam dokumen ini.</p>
                             </div>
                             <span class="rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">{{
@@ -919,6 +1040,46 @@ function restoreVersion(version: Version) {
                             }}</span>
                         </CardHeader>
                         <CardContent>
+                            <form
+                                v-if="canManage"
+                                class="mb-5 space-y-3 rounded-lg border border-border/80 bg-muted/20 p-3"
+                                @submit.prevent="submitDecision"
+                            >
+                                <div class="space-y-1.5">
+                                    <label for="decision-content" class="text-sm font-medium">
+                                        {{ editingDecisionId ? 'Sunting keputusan' : 'Tambah keputusan' }}
+                                    </label>
+                                    <textarea
+                                        id="decision-content"
+                                        v-model="decisionForm.content"
+                                        rows="2"
+                                        required
+                                        placeholder="Tuliskan keputusan rapat..."
+                                        class="w-full rounded-md border border-input bg-card px-3 py-2 text-sm leading-6 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                    />
+                                    <p v-if="decisionForm.errors.content" class="text-xs font-medium text-destructive">
+                                        {{ decisionForm.errors.content }}
+                                    </p>
+                                </div>
+                                <div class="grid gap-2 sm:grid-cols-[minmax(0,1fr)_160px_auto]">
+                                    <Select id="decision-topic" v-model="decisionForm.topic_id" aria-label="Topik keputusan">
+                                        <option value="">Tanpa topik</option>
+                                        <option v-for="topic in props.topics ?? []" :key="topic.id" :value="String(topic.id)">
+                                            #{{ topic.name }}
+                                        </option>
+                                    </Select>
+                                    <Input v-model="decisionForm.decided_at" type="date" aria-label="Tanggal keputusan" />
+                                    <div class="flex gap-2">
+                                        <Button type="submit" size="sm" :loading="decisionForm.processing">
+                                            {{ editingDecisionId ? 'Simpan' : 'Tambah' }}
+                                        </Button>
+                                        <Button v-if="editingDecisionId" type="button" size="sm" variant="outline" @click="resetDecisionForm">
+                                            Batal
+                                        </Button>
+                                    </div>
+                                </div>
+                            </form>
+
                             <p v-if="props.meeting.decisions.length === 0" class="text-sm text-muted-foreground">Belum ada keputusan tercatat.</p>
                             <ol v-else class="relative space-y-4 border-l border-border pl-5">
                                 <li v-for="decision in props.meeting.decisions" :key="decision.id" class="relative">
@@ -931,16 +1092,38 @@ function restoreVersion(version: Version) {
                                         <span v-if="decision.topic" class="text-topic">#{{ decision.topic.name }}</span>
                                         <span v-if="decision.decided_at">{{ formatDate(decision.decided_at) }}</span>
                                     </div>
+                                    <div v-if="canManage" class="mt-2 flex gap-1">
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            class="h-7 px-2 text-xs"
+                                            :aria-label="`Sunting keputusan: ${decision.content}`"
+                                            @click="editDecision(decision)"
+                                        >
+                                            <Pencil class="size-3.5" />
+                                            Sunting
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            class="h-7 px-2 text-xs text-destructive"
+                                            :aria-label="`Hapus keputusan: ${decision.content}`"
+                                            @click="deleteDecision(decision)"
+                                        >
+                                            <Trash2 class="size-3.5" />
+                                            Hapus
+                                        </Button>
+                                    </div>
                                 </li>
                             </ol>
                         </CardContent>
                     </Card>
 
-                    <Card>
+                    <Card id="action-items" class="order-4 scroll-mt-24 border-border/80 shadow-none">
                         <CardHeader class="gap-3">
                             <div class="flex flex-row items-start justify-between gap-3">
                                 <div>
-                                    <CardTitle class="text-base">Action item</CardTitle>
+                                    <CardTitle class="text-base">{{ t('meetings.detail.followUps') }}</CardTitle>
                                     <p class="text-sm text-muted-foreground">PIC dan tenggat wajib sebelum finalisasi.</p>
                                 </div>
                                 <span class="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">
@@ -954,7 +1137,7 @@ function restoreVersion(version: Version) {
                                     :aria-valuenow="taskProgress"
                                     aria-valuemin="0"
                                     aria-valuemax="100"
-                                    aria-label="Progres action item"
+                                    aria-label="Progres Tindak lanjut"
                                 >
                                     <div
                                         class="h-full origin-left rounded-full bg-success transition-transform duration-popover ease-ui motion-reduce:transition-none"
@@ -1017,7 +1200,7 @@ function restoreVersion(version: Version) {
                                 class="rounded-lg border border-dashed border-border px-4 py-8 text-center"
                             >
                                 <ListChecks class="mx-auto size-6 text-muted-foreground" aria-hidden="true" />
-                                <p class="mt-2 text-sm font-medium">Belum ada action item</p>
+                                <p class="mt-2 text-sm font-medium">Belum ada Tindak lanjut</p>
                                 <p class="mt-1 text-xs text-muted-foreground">Tambahkan tugas, PIC, dan tenggat agar tindak lanjut tidak terlewat.</p>
                             </div>
 
@@ -1174,9 +1357,9 @@ function restoreVersion(version: Version) {
                         </CardContent>
                     </Card>
 
-                    <Card>
+                    <Card class="order-5 border-border/80 shadow-none">
                         <CardHeader>
-                            <CardTitle class="text-base">Lampiran</CardTitle>
+                            <CardTitle class="text-base">{{ t('meetings.detail.attachments') }}</CardTitle>
                         </CardHeader>
                         <CardContent class="space-y-4">
                             <form
@@ -1275,36 +1458,71 @@ function restoreVersion(version: Version) {
                 </div>
 
                 <aside class="min-w-0 space-y-4">
+                    <Card class="border-border/80 shadow-none">
+                        <CardHeader class="flex-row items-center justify-between space-y-0 pb-3">
+                            <CardTitle class="flex items-center gap-2 text-sm">
+                                <ListChecks class="size-4 text-muted-foreground" aria-hidden="true" />
+                                {{ t('meetings.detail.followUps') }}
+                            </CardTitle>
+                            <a href="#action-items" class="text-xs font-medium text-primary hover:underline">Lihat semua</a>
+                        </CardHeader>
+                        <CardContent class="space-y-3">
+                            <div v-if="props.meeting.action_items.length === 0" class="text-sm text-muted-foreground">
+                                Belum ada tindak lanjut.
+                            </div>
+                            <template v-else>
+                                <div class="flex items-center justify-between text-xs text-muted-foreground">
+                                    <span>{{ openTaskCount }} terbuka · {{ doneTaskCount }} selesai</span>
+                                    <span class="tabular-nums">{{ taskProgress }}%</span>
+                                </div>
+                                <div class="h-1.5 overflow-hidden rounded-full bg-muted" role="progressbar" :aria-valuenow="taskProgress" aria-valuemin="0" aria-valuemax="100" aria-label="Progres tindak lanjut">
+                                    <div class="h-full origin-left rounded-full bg-primary transition-transform duration-base" :style="{ transform: `scaleX(${taskProgress / 100})` }"></div>
+                                </div>
+                                <ul class="space-y-2">
+                                    <li v-for="task in previewTasks" :key="task.id" class="flex items-start justify-between gap-2 text-sm">
+                                        <span class="min-w-0">
+                                            <span class="block truncate font-medium">{{ task.title }}</span>
+                                            <span class="block text-xs text-muted-foreground">{{ task.pic?.name ?? task.pic_name ?? 'Belum ada PIC' }}</span>
+                                        </span>
+                                        <span class="shrink-0 text-xs" :class="task.is_overdue ? 'font-medium text-destructive-strong' : 'text-muted-foreground'">
+                                            {{ formatDate(task.due_date) }}
+                                        </span>
+                                    </li>
+                                </ul>
+                            </template>
+                        </CardContent>
+                    </Card>
+
                     <Card>
                         <CardHeader class="pb-3">
                             <CardTitle class="flex items-center gap-2 text-sm">
                                 <Info class="size-4 text-muted-foreground" />
-                                Informasi
+                                {{ t('meetings.detail.information') }}
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <dl class="space-y-3 text-sm">
+                            <div class="space-y-3 text-sm">
                                 <div class="flex gap-3">
                                     <CalendarClock class="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                                     <div class="min-w-0">
-                                        <dt class="text-xs text-muted-foreground">
+                                        <p class="text-xs text-muted-foreground">
                                             {{ props.meeting.document_type === 'meeting' ? 'Jadwal rapat' : 'Tanggal dokumen' }}
-                                        </dt>
-                                        <dd class="mt-0.5">{{ formatDateTime(props.meeting.scheduled_at) }}</dd>
+                                        </p>
+                                        <p class="mt-0.5">{{ formatDateTime(props.meeting.scheduled_at) }}</p>
                                     </div>
                                 </div>
                                 <div v-if="props.meeting.location" class="flex gap-3">
                                     <MapPin class="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                                     <div class="min-w-0">
-                                        <dt class="text-xs text-muted-foreground">Lokasi</dt>
-                                        <dd class="mt-0.5">{{ props.meeting.location }}</dd>
+                                        <p class="text-xs text-muted-foreground">Lokasi</p>
+                                        <p class="mt-0.5">{{ props.meeting.location }}</p>
                                     </div>
                                 </div>
                                 <div v-if="props.meeting.meeting_link" class="flex gap-3">
                                     <ExternalLink class="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                                     <div class="min-w-0">
-                                        <dt class="text-xs text-muted-foreground">Tautan rapat</dt>
-                                        <dd class="mt-0.5">
+                                        <p class="text-xs text-muted-foreground">Tautan rapat</p>
+                                        <p class="mt-0.5">
                                             <a
                                                 :href="props.meeting.meeting_link"
                                                 target="_blank"
@@ -1313,31 +1531,31 @@ function restoreVersion(version: Version) {
                                             >
                                                 Buka tautan
                                             </a>
-                                        </dd>
+                                        </p>
                                     </div>
                                 </div>
                                 <div class="flex gap-3">
                                     <UserRound class="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                                     <div class="min-w-0">
-                                        <dt class="text-xs text-muted-foreground">
+                                        <p class="text-xs text-muted-foreground">
                                             {{ props.meeting.document_type === 'meeting' ? 'Notulis' : 'Pembuat' }}
-                                        </dt>
-                                        <dd class="mt-0.5">{{ props.meeting.creator?.name ?? '-' }}</dd>
+                                        </p>
+                                        <p class="mt-0.5">{{ props.meeting.creator?.name ?? '-' }}</p>
                                     </div>
                                 </div>
                                 <div>
-                                    <dt class="text-xs text-muted-foreground">Divisi</dt>
-                                    <dd class="mt-0.5">{{ props.meeting.division?.name ?? 'Tanpa divisi' }}</dd>
+                                    <p class="text-xs text-muted-foreground">Divisi</p>
+                                    <p class="mt-0.5">{{ props.meeting.division?.name ?? 'Tanpa divisi' }}</p>
                                 </div>
                                 <div v-if="props.meeting.template">
-                                    <dt class="text-xs text-muted-foreground">Template</dt>
-                                    <dd class="mt-0.5">{{ props.meeting.template.name }}</dd>
+                                    <p class="text-xs text-muted-foreground">Template</p>
+                                    <p class="mt-0.5">{{ props.meeting.template.name }}</p>
                                 </div>
                                 <div>
-                                    <dt class="text-xs text-muted-foreground">Kerahasiaan</dt>
-                                    <dd class="mt-0.5">{{ confidentialityLabels[props.meeting.confidentiality] }}</dd>
+                                    <p class="text-xs text-muted-foreground">Kerahasiaan</p>
+                                    <p class="mt-0.5">{{ confidentialityLabels[props.meeting.confidentiality] }}</p>
                                 </div>
-                            </dl>
+                            </div>
                         </CardContent>
                     </Card>
 
@@ -1345,7 +1563,7 @@ function restoreVersion(version: Version) {
                         <CardHeader class="pb-3">
                             <CardTitle class="flex items-center gap-2 text-sm">
                                 <PenLine class="size-4 text-muted-foreground" />
-                                Tanda tangan
+                                {{ t('meetings.detail.signatures') }}
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -1353,7 +1571,7 @@ function restoreVersion(version: Version) {
                                 :meeting-id="props.meeting.id"
                                 :signatures="props.signatures"
                                 :creator-name="props.meeting.creator?.name ?? '-'"
-                                :approver-name="props.meeting.approved_by?.name ?? 'Pimpinan Rapat'"
+                                :approver-name="props.meeting.approver?.name ?? 'Pimpinan Rapat'"
                                 :can-sign-creator="props.can.signCreator ?? false"
                                 :can-sign-approver="props.can.signApprover ?? false"
                             />
@@ -1364,7 +1582,7 @@ function restoreVersion(version: Version) {
                         <CardHeader class="flex-row items-center justify-between pb-3">
                             <CardTitle class="flex items-center gap-2 text-sm">
                                 <Users class="size-4 text-muted-foreground" />
-                                Peserta
+                                {{ t('meetings.detail.participants') }}
                             </CardTitle>
                             <span class="text-xs text-muted-foreground">{{ presentCount }}/{{ participants.length }} hadir</span>
                         </CardHeader>
@@ -1398,7 +1616,7 @@ function restoreVersion(version: Version) {
                         <CardHeader class="pb-3">
                             <CardTitle class="flex items-center gap-2 text-sm">
                                 <Tags class="size-4 text-muted-foreground" />
-                                Tag & topik
+                                {{ t('meetings.detail.tags') }}
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -1419,7 +1637,7 @@ function restoreVersion(version: Version) {
                         <CardHeader class="pb-3">
                             <CardTitle class="flex items-center gap-2 text-sm">
                                 <History class="size-4 text-muted-foreground" />
-                                Riwayat versi
+                                {{ t('meetings.detail.versions') }}
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -1487,7 +1705,7 @@ function restoreVersion(version: Version) {
                     >
                         <p>
                             Dokumen ini berlabel <strong>{{ confidentialityLabels[props.meeting.confidentiality] }}</strong
-                            >. Pastikan seluruh penerima berhak menerima dokumen.
+                            >. Penerima harus user terdaftar yang memiliki akses ke dokumen ini; email eksternal akan ditolak server.
                         </p>
                         <label class="flex items-center gap-2">
                             <input v-model="shareForm.confirm_share" type="checkbox" class="size-4 rounded border-input accent-primary" />
@@ -1528,6 +1746,20 @@ function restoreVersion(version: Version) {
                     <DialogTitle>{{ confirmState.title }}</DialogTitle>
                     <DialogDescription>{{ confirmState.description }}</DialogDescription>
                 </DialogHeader>
+
+                <div v-if="confirmState.kind === 'finalize'" class="space-y-1.5">
+                    <label for="finalize-approver" class="text-sm font-medium">Approver (opsional)</label>
+                    <Select id="finalize-approver" v-model="finalizeApproverId">
+                        <option value="">Tanpa approver</option>
+                        <option v-for="candidate in finalizeApproverOptions" :key="candidate.id" :value="String(candidate.id)">
+                            {{ candidate.name }}
+                        </option>
+                    </Select>
+                    <p class="text-xs text-muted-foreground">
+                        Approver harus berbeda dari user yang memfinalkan. Jika kosong, slot tanda tangan approver hanya dapat diisi admin.
+                    </p>
+                </div>
+
                 <DialogFooter>
                     <Button variant="outline" @click="confirmState.open = false">Batal</Button>
                     <Button :variant="confirmState.tone === 'danger' ? 'destructive' : 'default'" @click="runConfirm">{{

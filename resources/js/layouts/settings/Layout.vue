@@ -4,32 +4,29 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 
-const sidebarNavItems: NavItem[] = [
-    {
-        title: 'Profil',
-        url: '/settings/profile',
-    },
-    {
-        title: 'Kata Sandi',
-        url: '/settings/password',
-    },
-    {
-        title: 'Tampilan',
-        url: '/settings/appearance',
-    },
-];
+const { t } = useI18n();
+
+const sidebarNavItems = computed<NavItem[]>(() => [
+    { title: t('settings.nav.profile'), url: '/settings/profile' },
+    { title: t('settings.nav.password'), url: '/settings/password' },
+    { title: t('settings.nav.twoFactor'), url: '/settings/two-factor' },
+    { title: t('settings.nav.notifications'), url: '/settings/notifikasi' },
+    { title: t('settings.nav.appearance'), url: '/settings/appearance' },
+]);
 
 const currentPath = window.location.pathname;
 </script>
 
 <template>
     <div class="flex flex-col gap-section p-page lg:p-page-lg">
-        <PageHeader title="Pengaturan" description="Kelola profil, keamanan, dan tampilan akun Anda." />
+        <PageHeader :title="t('nav.settings')" :description="t('settings.description')" />
 
         <div class="grid gap-6 lg:grid-cols-[200px_minmax(0,1fr)] lg:items-start">
             <aside class="lg:sticky lg:top-20">
-                <nav class="flex flex-col gap-1" aria-label="Menu pengaturan">
+                <nav class="flex flex-col gap-1" :aria-label="t('nav.settings')">
                     <Link
                         v-for="item in sidebarNavItems"
                         :key="item.url"

@@ -12,13 +12,20 @@ class QuickNoteMentionNotification extends Notification implements ShouldQueueAf
 {
     use Queueable;
 
-    public function __construct(public QuickNote $quickNote) {}
+    public function __construct(public QuickNote $quickNote)
+    {
+        $this->onQueue('notifications');
+    }
 
     public function via(object $notifiable): array
     {
-        $channels = ['database'];
+        $channels = [];
 
-        if (method_exists($notifiable, 'wantsEmailNotifications') && $notifiable->wantsEmailNotifications()) {
+        if (! method_exists($notifiable, 'wantsInAppNotifications') || $notifiable->wantsInAppNotifications('quick_note')) {
+            $channels[] = 'database';
+        }
+
+        if (method_exists($notifiable, 'wantsEmailNotifications') && $notifiable->wantsEmailNotifications('quick_note')) {
             $channels[] = 'mail';
         }
 

@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { currentLocale } from '@/i18n';
 import { formatDateTime } from '@/lib/labels';
 import type { ActionItem, ActionItemFeedback } from '@/types';
 import { useForm } from '@inertiajs/vue3';
@@ -67,7 +68,7 @@ const form = useForm<{
     photo: null,
 });
 
-const numberFormat = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 });
+const numberFormat = new Intl.NumberFormat(currentLocale(), { maximumFractionDigits: 1 });
 
 const showResponseHours = computed(() => props.canRespond && props.task !== null && !props.task.response_due_at);
 const responseDueSoon = computed(() => {
@@ -140,7 +141,7 @@ watch(
         <DialogContent class="sm:max-w-lg">
             <DialogHeader>
                 <DialogTitle>Respons dan feedback</DialogTitle>
-                <DialogDescription>{{ props.task?.title ?? 'Pilih action item untuk melihat respons.' }}</DialogDescription>
+                <DialogDescription>{{ props.task?.title ?? 'Pilih tindak lanjut untuk melihat respons.' }}</DialogDescription>
             </DialogHeader>
 
             <div v-if="props.task" class="space-y-4">

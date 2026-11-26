@@ -32,6 +32,11 @@ return [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI'),
+        'auto_provision' => env('GOOGLE_AUTO_PROVISION', false),
+        'allowed_domains' => array_values(array_filter(array_map(
+            'trim',
+            explode(',', (string) env('GOOGLE_ALLOWED_DOMAINS', '')),
+        ))),
     ],
 
     'slack' => [

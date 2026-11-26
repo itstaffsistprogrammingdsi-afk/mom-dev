@@ -12,11 +12,12 @@ import { Select } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/composables/useToast';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { formatDateTime, meetingTypeLabels, statusLabels } from '@/lib/labels';
+import { documentTypeLabels, formatDateTime, meetingTypeLabels, statusLabels } from '@/lib/labels';
 import { type BreadcrumbItem, type Division, type Meeting } from '@/types';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { Bookmark, FileText, Plus, RotateCcw, Search, SlidersHorizontal, Trash2, X } from 'lucide-vue-next';
 import { computed, reactive, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 interface Paginated<T> {
     data: T[];
@@ -35,7 +36,7 @@ const props = defineProps<{
     canCreate: boolean;
 }>();
 
-const breadcrumbs: BreadcrumbItem[] = [{ title: 'Dokumen', href: '/notulen' }];
+const breadcrumbs = computed<BreadcrumbItem[]>(() => [{ title: t('nav.documents'), href: '/notulen' }]);
 
 function dateParts(value?: string | null): { day: string; month: string } {
     if (!value) {
@@ -45,8 +46,8 @@ function dateParts(value?: string | null): { day: string; month: string } {
     const date = new Date(value);
 
     return {
-        day: new Intl.DateTimeFormat('id-ID', { day: '2-digit' }).format(date),
-        month: new Intl.DateTimeFormat('id-ID', { month: 'short' }).format(date),
+        day: new Intl.DateTimeFormat(locale.value, { day: '2-digit' }).format(date),
+        month: new Intl.DateTimeFormat(locale.value, { month: 'short' }).format(date),
     };
 }
 
@@ -62,7 +63,13 @@ const filters = reactive({
 });
 
 const isLoading = ref(false);
+const showFilters = ref(false);
 const toast = useToast();
+const { t, locale } = useI18n();
+
+const activeFilterCount = computed(() => {
+    return ['division', 'topic', 'status', 'type', 'document_type', 'from', 'to'].filter((key) => filters[key as keyof typeof filters]).length;
+});
 
 function toDateInputValue(date: Date): string {
     const copy = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
@@ -165,38 +172,37 @@ const activeFilterChips = computed<{ key: FilterKey; label: string }[]>(() => {
     const chips: { key: FilterKey; label: string }[] = [];
 
     if (filters.search) {
-        chips.push({ key: 'search', label: `Cari: ${filters.search}` });
+        chips.push({ key: 'search', label: `${t('common.search')}: ${filters.search}` });
     }
 
     if (filters.division) {
         const division = props.divisions.find((item) => String(item.id) === filters.division);
-        chips.push({ key: 'division', label: `Divisi: ${division?.name ?? filters.division}` });
+        chips.push({ key: 'division', label: `${t('meetings.filters.division')}: ${division?.name ?? filters.division}` });
     }
 
     if (filters.topic) {
         const topic = props.topics.find((item) => String(item.id) === filters.topic);
-        chips.push({ key: 'topic', label: `Topik: #${topic?.name ?? filters.topic}` });
+        chips.push({ key: 'topic', label: `${t('meetings.filters.topic')}: #${topic?.name ?? filters.topic}` });
     }
 
     if (filters.document_type) {
-        const type = props.documentTypes.find((item) => item.value === filters.document_type);
-        chips.push({ key: 'document_type', label: `Jenis: ${type?.label ?? filters.document_type}` });
+        chips.push({ key: 'document_type', label: `${t('meetings.filters.documentType')}: ${documentTypeLabels[filters.document_type] ?? filters.document_type}` });
     }
 
     if (filters.type) {
-        chips.push({ key: 'type', label: `Rapat: ${meetingTypeLabels[filters.type] ?? filters.type}` });
+        chips.push({ key: 'type', label: `${t('meetings.filters.meetingType')}: ${meetingTypeLabels[filters.type] ?? filters.type}` });
     }
 
     if (filters.status) {
-        chips.push({ key: 'status', label: `Status: ${statusLabels[filters.status] ?? filters.status}` });
+        chips.push({ key: 'status', label: `${t('meetings.filters.status')}: ${statusLabels[filters.status] ?? filters.status}` });
     }
 
     if (filters.from) {
-        chips.push({ key: 'from', label: `Dari: ${filters.from}` });
+        chips.push({ key: 'from', label: `${t('meetings.filters.from')}: ${filters.from}` });
     }
 
     if (filters.to) {
-        chips.push({ key: 'to', label: `Sampai: ${filters.to}` });
+        chips.push({ key: 'to', label: `${t('meetings.filters.to')}: ${filters.to}` });
     }
 
     return chips;
@@ -209,7 +215,12 @@ function clearFilter(key: FilterKey) {
 
 function applyFilters() {
     isLoading.value = true;
-    router.get(route('meetings.index'), { ...filters }, { preserveState: true, replace: true, onFinish: () => (isLoading.value = false) });
+    router.get(route('meetings.index'), { ...filters }, {
+        preserveState: true,
+        replace: true,
+        only: ['meetings', 'filters'],
+        onFinish: () => (isLoading.value = false),
+    });
 }
 
 function resetFilters() {
@@ -246,162 +257,165 @@ function resetFilters() {
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
-            <PageHeader title="Notulen & Dokumen" description="Seluruh notulen, proposal, laporan, dan brosur yang dapat Anda akses.">
+            <PageHeader :title="t('meetings.title')" :description="t('meetings.description')">
                 <template #actions>
                     <Button v-if="props.canCreate" as-child>
                         <Link :href="route('meetings.create')">
                             <Plus class="size-4" aria-hidden="true" />
-                            Buat dokumen
+                            {{ t('meetings.new') }}
                         </Link>
                     </Button>
                 </template>
             </PageHeader>
 
-            <form class="rounded-lg border border-border bg-card p-4 md:p-5" @submit.prevent="applyFilters">
-                <div class="mb-4 flex items-start gap-3">
-                    <div class="flex size-9 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground">
-                        <SlidersHorizontal class="size-4" aria-hidden="true" />
-                    </div>
-                    <div class="min-w-0">
-                        <p class="text-sm font-medium text-foreground">Cari dan filter dokumen</p>
-                        <p class="text-xs leading-relaxed text-muted-foreground">Kombinasikan kata kunci, divisi, topik, status, dan tanggal.</p>
-                    </div>
-                    <Button type="button" variant="outline" size="sm" class="ml-auto shrink-0" @click="presetDialogOpen = true">
-                        <Bookmark class="size-3.5" aria-hidden="true" />
-                        Preset
-                    </Button>
-                </div>
-
-                <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                    <div class="space-y-1.5 sm:col-span-2">
-                        <Label for="meeting-search">Cari</Label>
-                        <div class="relative">
-                            <Search
-                                class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-                                aria-hidden="true"
-                            />
-                            <Input
-                                id="meeting-search"
-                                v-model="filters.search"
-                                type="search"
-                                placeholder="Judul atau isi dokumen"
-                                class="pl-9 pr-9 [&::-webkit-search-cancel-button]:hidden"
-                            />
-                            <button
-                                v-if="filters.search"
-                                type="button"
-                                class="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm p-1 text-muted-foreground transition-colors duration-fast hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                aria-label="Hapus kata kunci"
-                                @click="filters.search = ''"
-                            >
-                                <X class="size-4" aria-hidden="true" />
-                            </button>
-                        </div>
+            <form class="space-y-3" @submit.prevent="applyFilters">
+                <div class="flex flex-col gap-2 sm:flex-row">
+                    <div class="relative min-w-0 flex-1">
+                        <Search
+                            class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                            aria-hidden="true"
+                        />
+                        <Input
+                            id="meeting-search"
+                            v-model="filters.search"
+                            type="search"
+                            :placeholder="t('common.searchPlaceholder')"
+                            class="h-10 pl-9 pr-9 [&::-webkit-search-cancel-button]:hidden"
+                        />
+                        <button
+                            v-if="filters.search"
+                            type="button"
+                            class="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm p-1 text-muted-foreground transition-colors duration-fast hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            aria-label="Hapus kata kunci"
+                            @click="filters.search = ''"
+                        >
+                            <X class="size-4" aria-hidden="true" />
+                        </button>
                     </div>
 
-                    <div class="space-y-1.5">
-                        <Label for="filter-division">Divisi</Label>
-                        <Select id="filter-division" v-model="filters.division">
-                            <option value="">Semua divisi</option>
-                            <option v-for="division in props.divisions" :key="division.id" :value="String(division.id)">{{ division.name }}</option>
-                        </Select>
-                    </div>
-
-                    <div class="space-y-1.5">
-                        <Label for="filter-topic">Topik</Label>
-                        <Select id="filter-topic" v-model="filters.topic">
-                            <option value="">Semua topik</option>
-                            <option v-for="topic in props.topics" :key="topic.id" :value="String(topic.id)">#{{ topic.name }}</option>
-                        </Select>
-                    </div>
-
-                    <div class="space-y-1.5">
-                        <Label for="filter-document-type">Jenis dokumen</Label>
-                        <Select id="filter-document-type" v-model="filters.document_type">
-                            <option value="">Semua jenis</option>
-                            <option v-for="type in props.documentTypes" :key="type.value" :value="type.value">{{ type.label }}</option>
-                        </Select>
-                    </div>
-
-                    <div class="space-y-1.5">
-                        <Label for="filter-meeting-type">Jenis rapat</Label>
-                        <Select id="filter-meeting-type" v-model="filters.type">
-                            <option value="">Semua jenis rapat</option>
-                            <option v-for="(label, value) in meetingTypeLabels" :key="value" :value="value">{{ label }}</option>
-                        </Select>
-                    </div>
-
-                    <div class="space-y-1.5">
-                        <Label for="filter-status">Status</Label>
-                        <Select id="filter-status" v-model="filters.status">
-                            <option value="">Semua status</option>
-                            <option v-for="(label, value) in statusLabels" :key="value" :value="value">{{ label }}</option>
-                        </Select>
-                    </div>
-
-                    <div class="space-y-1.5 sm:col-span-2">
-                        <Label>Rentang tanggal</Label>
-                        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                            <Input v-model="filters.from" type="date" aria-label="Dari tanggal" />
-                            <Input v-model="filters.to" type="date" aria-label="Sampai tanggal" />
-                        </div>
-                        <div class="flex flex-wrap items-center gap-1.5 pt-1">
-                            <button
-                                type="button"
-                                class="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors duration-fast hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-sm:min-h-11"
-                                @click="setDateRange(6)"
-                            >
-                                7 hari terakhir
-                            </button>
-                            <button
-                                type="button"
-                                class="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors duration-fast hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-sm:min-h-11"
-                                @click="setDateRange(29)"
-                            >
-                                30 hari terakhir
-                            </button>
-                            <button
-                                v-if="filters.from || filters.to"
-                                type="button"
-                                class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium text-primary transition-colors duration-fast hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-sm:min-h-11"
-                                @click="clearDateRange"
-                            >
-                                Hapus tanggal
-                            </button>
-                        </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <Button type="button" variant="outline" class="flex-1 sm:flex-none" :aria-expanded="showFilters" @click="showFilters = !showFilters">
+                            <SlidersHorizontal class="size-4" aria-hidden="true" />
+                            {{ t('common.filter') }}
+                            <span v-if="activeFilterCount" class="rounded-md bg-primary/10 px-1.5 text-[11px] font-semibold text-primary">{{ activeFilterCount }}</span>
+                        </Button>
+                        <Button type="button" variant="outline" class="flex-1 sm:flex-none" @click="presetDialogOpen = true">
+                            <Bookmark class="size-4" aria-hidden="true" />
+                            {{ t('meetings.filters.preset') }}
+                        </Button>
+                        <Button type="submit" variant="outline" class="flex-1 sm:flex-none">
+                            <Search class="size-4" aria-hidden="true" />
+                            {{ t('common.search') }}
+                        </Button>
                     </div>
                 </div>
 
-                <div class="mt-4 flex flex-wrap items-center justify-end gap-2 border-t border-border/60 pt-4">
-                    <Button type="button" variant="outline" @click="resetFilters">Reset</Button>
-                    <Button type="submit">
-                        <Search class="size-4" aria-hidden="true" />
-                        Terapkan filter
-                    </Button>
+                <div v-show="showFilters" class="rounded-xl border border-border/80 bg-surface p-4 md:p-5">
+                    <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                        <div class="space-y-1.5">
+                            <Label for="filter-division">{{ t('meetings.filters.division') }}</Label>
+                            <Select id="filter-division" v-model="filters.division">
+                                <option value="">{{ t('meetings.filters.allDivisions') }}</option>
+                                <option v-for="division in props.divisions" :key="division.id" :value="String(division.id)">{{ division.name }}</option>
+                            </Select>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <Label for="filter-topic">{{ t('meetings.filters.topic') }}</Label>
+                            <Select id="filter-topic" v-model="filters.topic">
+                                <option value="">{{ t('meetings.filters.allTopics') }}</option>
+                                <option v-for="topic in props.topics" :key="topic.id" :value="String(topic.id)">#{{ topic.name }}</option>
+                            </Select>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <Label for="filter-document-type">{{ t('meetings.filters.documentType') }}</Label>
+                            <Select id="filter-document-type" v-model="filters.document_type">
+                                <option value="">{{ t('meetings.filters.allTypes') }}</option>
+                                <option v-for="type in props.documentTypes" :key="type.value" :value="type.value">{{ documentTypeLabels[type.value] ?? type.label }}</option>
+                            </Select>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <Label for="filter-meeting-type">{{ t('meetings.filters.meetingType') }}</Label>
+                            <Select id="filter-meeting-type" v-model="filters.type">
+                                <option value="">{{ t('meetings.filters.allMeetingTypes') }}</option>
+                                <option v-for="(label, value) in meetingTypeLabels" :key="value" :value="value">{{ label }}</option>
+                            </Select>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <Label for="filter-status">{{ t('meetings.filters.status') }}</Label>
+                            <Select id="filter-status" v-model="filters.status">
+                                <option value="">{{ t('meetings.filters.allStatuses') }}</option>
+                                <option v-for="(label, value) in statusLabels" :key="value" :value="value">{{ label }}</option>
+                            </Select>
+                        </div>
+
+                        <div class="space-y-1.5 sm:col-span-2">
+                            <Label>{{ t('meetings.filters.dateRange') }}</Label>
+                            <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                <Input v-model="filters.from" type="date" :aria-label="t('meetings.filters.from')" />
+                                <Input v-model="filters.to" type="date" :aria-label="t('meetings.filters.to')" />
+                            </div>
+                            <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                                <button
+                                    type="button"
+                                    class="inline-flex items-center rounded-lg bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors duration-fast hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-sm:min-h-11"
+                                    @click="setDateRange(6)"
+                                >
+                                    {{ t('meetings.filters.last7') }}
+                                </button>
+                                <button
+                                    type="button"
+                                    class="inline-flex items-center rounded-lg bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors duration-fast hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-sm:min-h-11"
+                                    @click="setDateRange(29)"
+                                >
+                                    {{ t('meetings.filters.last30') }}
+                                </button>
+                                <button
+                                    v-if="filters.from || filters.to"
+                                    type="button"
+                                    class="inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-medium text-primary transition-colors duration-fast hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-sm:min-h-11"
+                                    @click="clearDateRange"
+                                >
+                                    {{ t('meetings.filters.clearDate') }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 flex flex-wrap items-center justify-end gap-2 border-t border-border/60 pt-4">
+                        <Button type="button" variant="outline" @click="resetFilters">{{ t('common.reset') }}</Button>
+                        <Button type="submit">
+                            <Search class="size-4" aria-hidden="true" />
+                            {{ t('meetings.filters.apply') }}
+                        </Button>
+                    </div>
                 </div>
             </form>
 
             <div v-if="activeFilterChips.length" class="flex flex-wrap items-center gap-2">
-                <span class="text-xs font-medium text-subtle-foreground">Filter aktif</span>
+                <span class="text-xs font-medium text-subtle-foreground">{{ t('meetings.activeFilters') }}</span>
                 <button
                     v-for="chip in activeFilterChips"
                     :key="chip.key"
                     type="button"
-                    class="inline-flex items-center gap-1 rounded-full border border-border bg-surface px-2.5 py-1 text-xs text-secondary-foreground transition-colors duration-fast ease-out-soft hover:border-primary/30 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                    class="inline-flex items-center gap-1 rounded-lg border border-border bg-surface px-2.5 py-1 text-xs text-secondary-foreground transition-colors duration-fast ease-out-soft hover:border-primary/30 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                     :aria-label="`Hapus filter ${chip.label}`"
                     @click="clearFilter(chip.key)"
                 >
                     {{ chip.label }}
                     <X class="size-3" aria-hidden="true" />
                 </button>
-                <Button variant="ghost" size="sm" @click="resetFilters">Hapus semua</Button>
+                <Button variant="ghost" size="sm" @click="resetFilters">{{ t('meetings.removeAll') }}</Button>
             </div>
 
             <div class="flex flex-wrap items-end justify-between gap-2">
                 <div>
-                    <h2 class="text-sm font-semibold text-foreground">Daftar dokumen</h2>
+                    <h2 class="text-sm font-semibold text-foreground">{{ t('meetings.listTitle') }}</h2>
                     <p class="text-xs text-muted-foreground">
-                        {{ props.meetings.total }} dokumen{{ activeFilterChips.length ? ' sesuai filter' : '' }}
+                        {{ activeFilterChips.length ? t('meetings.countFiltered', { n: props.meetings.total }) : t('meetings.count', { n: props.meetings.total }) }}
                     </p>
                 </div>
             </div>
@@ -420,18 +434,18 @@ function resetFilters() {
             <EmptyState
                 v-else-if="props.meetings.data.length === 0"
                 :icon="FileText"
-                title="Tidak ada dokumen yang cocok"
-                description="Coba longgarkan filter, atau buat dokumen baru bila Anda memiliki akses notulis."
+                :title="t('meetings.emptyTitle')"
+                :description="t('meetings.emptyBody')"
             >
                 <div class="flex flex-wrap justify-center gap-2">
                     <Button variant="outline" @click="resetFilters">
                         <RotateCcw class="size-4" aria-hidden="true" />
-                        Reset filter
+                        {{ t('common.reset') }} {{ t('common.filter').toLowerCase() }}
                     </Button>
                     <Button v-if="props.canCreate" as-child>
                         <Link :href="route('meetings.create')">
                             <Plus class="size-4" aria-hidden="true" />
-                            Buat dokumen
+                            {{ t('meetings.new') }}
                         </Link>
                     </Button>
                 </div>
@@ -442,6 +456,7 @@ function resetFilters() {
                     v-for="meeting in props.meetings.data"
                     :key="meeting.id"
                     :href="route('meetings.show', meeting.id)"
+                    prefetch
                     class="group flex flex-col gap-3 border-b border-border p-4 transition-colors duration-fast ease-ui last:border-b-0 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:flex-row sm:items-center sm:gap-4 md:p-5"
                 >
                     <div class="hidden w-12 shrink-0 flex-col items-center justify-center rounded-md border border-border bg-muted/40 py-2 sm:flex">
@@ -474,7 +489,7 @@ function resetFilters() {
 
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <p class="text-sm text-muted-foreground">
-                    Menampilkan {{ props.meetings.from ?? 0 }}–{{ props.meetings.to ?? 0 }} dari {{ props.meetings.total }} dokumen
+                    {{ t('common.showing', { from: props.meetings.from ?? 0, to: props.meetings.to ?? 0, total: props.meetings.total }) }}
                 </p>
                 <Pagination :links="props.meetings.links" />
             </div>

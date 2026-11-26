@@ -19,13 +19,19 @@ class ActionItemResponseNotification extends Notification implements ShouldQueue
         public ActionItem $actionItem,
         public ActionItemFeedback $feedback,
         public User $responder,
-    ) {}
+    ) {
+        $this->onQueue('notifications');
+    }
 
     public function via(object $notifiable): array
     {
-        $channels = ['database'];
+        $channels = [];
 
-        if (method_exists($notifiable, 'wantsEmailNotifications') && $notifiable->wantsEmailNotifications()) {
+        if (! method_exists($notifiable, 'wantsInAppNotifications') || $notifiable->wantsInAppNotifications('action_item')) {
+            $channels[] = 'database';
+        }
+
+        if (method_exists($notifiable, 'wantsEmailNotifications') && $notifiable->wantsEmailNotifications('action_item')) {
             $channels[] = 'mail';
         }
 

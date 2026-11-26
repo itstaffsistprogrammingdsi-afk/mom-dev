@@ -70,7 +70,8 @@ class MeetingSignatureTest extends TestCase
         $approver = User::factory()->create(['role' => 'member']);
         $meeting = Meeting::factory()->create([
             'created_by' => $creator->id,
-            'approved_by' => $approver->id,
+            'approved_by' => $creator->id,
+            'approver_id' => $approver->id,
             'confidentiality' => Confidentiality::Open->value,
         ]);
 
@@ -91,6 +92,28 @@ class MeetingSignatureTest extends TestCase
                 'signature' => UploadedFile::fake()->image('creator.png'),
             ])
             ->assertForbidden();
+    }
+
+    public function test_signature_cannot_be_changed_after_meeting_is_locked(): void
+    {
+        Storage::fake('local');
+
+        $creator = User::factory()->create(['role' => 'notulis']);
+        $approver = User::factory()->create(['role' => 'member']);
+        $meeting = Meeting::factory()->create([
+            'created_by' => $creator->id,
+            'approver_id' => $approver->id,
+            'status' => 'locked',
+            'confidentiality' => Confidentiality::Open->value,
+        ]);
+
+        $this->actingAs($approver)
+            ->post(route('meeting-signatures.store', ['meeting' => $meeting, 'role' => 'approver']), [
+                'signature' => UploadedFile::fake()->image('approver.png'),
+            ])
+            ->assertSessionHasErrors('signature');
+
+        $this->assertDatabaseCount('meeting_signatures', 0);
     }
 
     public function test_signature_is_private_and_only_visible_to_meeting_viewers(): void
