@@ -139,6 +139,7 @@ const props = defineProps<{
     };
     users?: { id: number; name: string }[];
     divisions?: Division[];
+    topics?: { id: number; name: string }[];
 }>();
 
 const page = usePage<SharedData>();
@@ -157,6 +158,51 @@ const feedbackPendingStatus = ref<string | null>(null);
 const shareOpen = ref(false);
 const copiedSummaryId = ref<number | null>(null);
 let copyTimer: ReturnType<typeof setTimeout> | null = null;
+
+const decisionForm = useForm({
+    content: '',
+    topic_id: '',
+    decided_at: '',
+});
+const editingDecisionId = ref<number | null>(null);
+
+function resetDecisionForm() {
+    editingDecisionId.value = null;
+    decisionForm.reset();
+    decisionForm.clearErrors();
+}
+
+function editDecision(decision: Decision) {
+    editingDecisionId.value = decision.id;
+    decisionForm.content = decision.content;
+    decisionForm.topic_id = decision.topic?.id ? String(decision.topic.id) : '';
+    decisionForm.decided_at = decision.decided_at ?? '';
+}
+
+function submitDecision() {
+    const options = {
+        preserveScroll: true,
+        onSuccess: () => resetDecisionForm(),
+    };
+
+    if (editingDecisionId.value) {
+        decisionForm.patch(route('decisions.update', editingDecisionId.value), options);
+    } else {
+        decisionForm.post(route('decisions.store', props.meeting.id), options);
+    }
+}
+
+function deleteDecision(decision: Decision) {
+    askConfirm(
+        {
+            title: 'Hapus keputusan?',
+            description: `"${decision.content}" akan dihapus dari dokumen ini.`,
+            label: 'Hapus keputusan',
+            tone: 'danger',
+        },
+        () => router.delete(route('decisions.destroy', decision.id), { preserveScroll: true }),
+    );
+}
 
 const shareForm = useForm({
     recipients: '',
@@ -940,6 +986,46 @@ function restoreVersion(version: Version) {
                             }}</span>
                         </CardHeader>
                         <CardContent>
+                            <form
+                                v-if="canManage"
+                                class="mb-5 space-y-3 rounded-lg border border-border/80 bg-muted/20 p-3"
+                                @submit.prevent="submitDecision"
+                            >
+                                <div class="space-y-1.5">
+                                    <label for="decision-content" class="text-sm font-medium">
+                                        {{ editingDecisionId ? 'Sunting keputusan' : 'Tambah keputusan' }}
+                                    </label>
+                                    <textarea
+                                        id="decision-content"
+                                        v-model="decisionForm.content"
+                                        rows="2"
+                                        required
+                                        placeholder="Tuliskan keputusan rapat..."
+                                        class="w-full rounded-md border border-input bg-card px-3 py-2 text-sm leading-6 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                    />
+                                    <p v-if="decisionForm.errors.content" class="text-xs font-medium text-destructive">
+                                        {{ decisionForm.errors.content }}
+                                    </p>
+                                </div>
+                                <div class="grid gap-2 sm:grid-cols-[minmax(0,1fr)_160px_auto]">
+                                    <Select id="decision-topic" v-model="decisionForm.topic_id" aria-label="Topik keputusan">
+                                        <option value="">Tanpa topik</option>
+                                        <option v-for="topic in props.topics ?? []" :key="topic.id" :value="String(topic.id)">
+                                            #{{ topic.name }}
+                                        </option>
+                                    </Select>
+                                    <Input v-model="decisionForm.decided_at" type="date" aria-label="Tanggal keputusan" />
+                                    <div class="flex gap-2">
+                                        <Button type="submit" size="sm" :loading="decisionForm.processing">
+                                            {{ editingDecisionId ? 'Simpan' : 'Tambah' }}
+                                        </Button>
+                                        <Button v-if="editingDecisionId" type="button" size="sm" variant="outline" @click="resetDecisionForm">
+                                            Batal
+                                        </Button>
+                                    </div>
+                                </div>
+                            </form>
+
                             <p v-if="props.meeting.decisions.length === 0" class="text-sm text-muted-foreground">Belum ada keputusan tercatat.</p>
                             <ol v-else class="relative space-y-4 border-l border-border pl-5">
                                 <li v-for="decision in props.meeting.decisions" :key="decision.id" class="relative">
@@ -951,6 +1037,28 @@ function restoreVersion(version: Version) {
                                     <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                                         <span v-if="decision.topic" class="text-topic">#{{ decision.topic.name }}</span>
                                         <span v-if="decision.decided_at">{{ formatDate(decision.decided_at) }}</span>
+                                    </div>
+                                    <div v-if="canManage" class="mt-2 flex gap-1">
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            class="h-7 px-2 text-xs"
+                                            :aria-label="`Sunting keputusan: ${decision.content}`"
+                                            @click="editDecision(decision)"
+                                        >
+                                            <Pencil class="size-3.5" />
+                                            Sunting
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            class="h-7 px-2 text-xs text-destructive"
+                                            :aria-label="`Hapus keputusan: ${decision.content}`"
+                                            @click="deleteDecision(decision)"
+                                        >
+                                            <Trash2 class="size-3.5" />
+                                            Hapus
+                                        </Button>
                                     </div>
                                 </li>
                             </ol>

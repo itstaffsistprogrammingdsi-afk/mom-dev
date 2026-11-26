@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\CollabTokenController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DecisionController;
 use App\Http\Controllers\DivisionController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\MeetingAiController;
@@ -105,6 +106,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('orang/{user}', [PeopleController::class, 'show'])->name('people.show');
 
     Route::get('tugas', [ActionItemController::class, 'index'])->name('action-items.index');
+    Route::post('notulen/{meeting}/keputusan', [DecisionController::class, 'store'])->name('decisions.store');
+    Route::patch('keputusan/{decision}', [DecisionController::class, 'update'])->name('decisions.update');
+    Route::delete('keputusan/{decision}', [DecisionController::class, 'destroy'])->name('decisions.destroy');
+
     Route::post('notulen/{meeting}/tugas', [ActionItemController::class, 'store'])->name('action-items.store');
     Route::patch('tugas/{actionItem}', [ActionItemController::class, 'update'])->name('action-items.update');
     Route::delete('tugas/{actionItem}', [ActionItemController::class, 'destroy'])->name('action-items.destroy');

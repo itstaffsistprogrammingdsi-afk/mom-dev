@@ -241,6 +241,7 @@ class MeetingController extends Controller
             ],
             'users' => User::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'divisions' => Division::query()->orderBy('name')->get(['id', 'name']),
+            'topics' => Topic::query()->where('status', 'active')->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
