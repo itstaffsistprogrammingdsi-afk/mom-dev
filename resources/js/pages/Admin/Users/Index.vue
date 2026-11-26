@@ -213,7 +213,7 @@ function updateUser(user: AdminUser, field: 'role' | 'division_id' | 'is_active'
                                     type="button"
                                     class="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2"
                                     :aria-pressed="user.is_active"
-                                    :aria-label="`Ubah status ${user.name}`"
+                                    :aria-label="`Ubah status ${user.name} (${user.is_active ? 'Aktif' : 'Nonaktif'})`"
                                     @click="updateUser(user, 'is_active', !user.is_active)"
                                 >
                                     <Badge :variant="user.is_active ? 'success' : 'neutral'">

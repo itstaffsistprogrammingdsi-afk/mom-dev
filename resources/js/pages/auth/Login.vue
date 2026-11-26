@@ -79,7 +79,6 @@ onBeforeUnmount(() => {
                         type="email"
                         required
                         autofocus
-                        tabindex="1"
                         autocomplete="username"
                         placeholder="nama@perusahaan.com"
                         :aria-invalid="!!form.errors.email"
@@ -98,7 +97,6 @@ onBeforeUnmount(() => {
                         v-model="form.password"
                         :type="showPassword ? 'text' : 'password'"
                         required
-                        tabindex="2"
                         autocomplete="current-password"
                         placeholder="Masukkan kata sandi"
                         :aria-invalid="!!form.errors.password"
@@ -120,16 +118,16 @@ onBeforeUnmount(() => {
 
             <div class="form-options">
                 <label class="remember-control">
-                    <input id="remember" v-model="form.remember" type="checkbox" tabindex="3" />
+                    <input id="remember" v-model="form.remember" type="checkbox" />
                     <span class="custom-checkbox" aria-hidden="true">
                         <svg viewBox="0 0 16 16"><path d="m3 8 3.1 3.1L13 4.5" /></svg>
                     </span>
                     <span>Ingat saya</span>
                 </label>
-                <Link v-if="props.canResetPassword" :href="route('password.request')" class="text-link" tabindex="5"> Lupa password? </Link>
+                <Link v-if="props.canResetPassword" :href="route('password.request')" class="text-link"> Lupa password? </Link>
             </div>
 
-            <button type="submit" class="primary-button" :class="{ 'is-loading': form.processing }" :disabled="form.processing" tabindex="4">
+            <button type="submit" class="primary-button" :class="{ 'is-loading': form.processing }" :disabled="form.processing">
                 <span class="button-label">Masuk</span>
                 <LogIn class="button-arrow" aria-hidden="true" />
                 <span class="button-spinner" aria-hidden="true"></span>

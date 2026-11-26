@@ -887,12 +887,13 @@ function restoreVersion(version: Version) {
                                 >
                                     <Button size="sm" @click="approveSummary(summary)">Setujui</Button>
                                     <Button size="sm" variant="outline" @click="rejectSummary(summary)">Tolak</Button>
-                                    <Button
-                                        v-if="summary.content.action_items?.length"
-                                        size="sm"
-                                        variant="outline"
-                                        @click="applySummaryActions(summary)"
-                                    >
+                                </div>
+
+                                <div
+                                    v-if="summary.status === 'approved' && summary.generation_status === 'completed' && canManage && summary.content.action_items?.length"
+                                    class="mt-4"
+                                >
+                                    <Button size="sm" variant="outline" @click="applySummaryActions(summary)">
                                         Terapkan action item
                                     </Button>
                                 </div>
@@ -1283,28 +1284,28 @@ function restoreVersion(version: Version) {
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <dl class="space-y-3 text-sm">
+                            <div class="space-y-3 text-sm">
                                 <div class="flex gap-3">
                                     <CalendarClock class="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                                     <div class="min-w-0">
-                                        <dt class="text-xs text-muted-foreground">
+                                        <p class="text-xs text-muted-foreground">
                                             {{ props.meeting.document_type === 'meeting' ? 'Jadwal rapat' : 'Tanggal dokumen' }}
-                                        </dt>
-                                        <dd class="mt-0.5">{{ formatDateTime(props.meeting.scheduled_at) }}</dd>
+                                        </p>
+                                        <p class="mt-0.5">{{ formatDateTime(props.meeting.scheduled_at) }}</p>
                                     </div>
                                 </div>
                                 <div v-if="props.meeting.location" class="flex gap-3">
                                     <MapPin class="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                                     <div class="min-w-0">
-                                        <dt class="text-xs text-muted-foreground">Lokasi</dt>
-                                        <dd class="mt-0.5">{{ props.meeting.location }}</dd>
+                                        <p class="text-xs text-muted-foreground">Lokasi</p>
+                                        <p class="mt-0.5">{{ props.meeting.location }}</p>
                                     </div>
                                 </div>
                                 <div v-if="props.meeting.meeting_link" class="flex gap-3">
                                     <ExternalLink class="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                                     <div class="min-w-0">
-                                        <dt class="text-xs text-muted-foreground">Tautan rapat</dt>
-                                        <dd class="mt-0.5">
+                                        <p class="text-xs text-muted-foreground">Tautan rapat</p>
+                                        <p class="mt-0.5">
                                             <a
                                                 :href="props.meeting.meeting_link"
                                                 target="_blank"
@@ -1313,31 +1314,31 @@ function restoreVersion(version: Version) {
                                             >
                                                 Buka tautan
                                             </a>
-                                        </dd>
+                                        </p>
                                     </div>
                                 </div>
                                 <div class="flex gap-3">
                                     <UserRound class="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                                     <div class="min-w-0">
-                                        <dt class="text-xs text-muted-foreground">
+                                        <p class="text-xs text-muted-foreground">
                                             {{ props.meeting.document_type === 'meeting' ? 'Notulis' : 'Pembuat' }}
-                                        </dt>
-                                        <dd class="mt-0.5">{{ props.meeting.creator?.name ?? '-' }}</dd>
+                                        </p>
+                                        <p class="mt-0.5">{{ props.meeting.creator?.name ?? '-' }}</p>
                                     </div>
                                 </div>
                                 <div>
-                                    <dt class="text-xs text-muted-foreground">Divisi</dt>
-                                    <dd class="mt-0.5">{{ props.meeting.division?.name ?? 'Tanpa divisi' }}</dd>
+                                    <p class="text-xs text-muted-foreground">Divisi</p>
+                                    <p class="mt-0.5">{{ props.meeting.division?.name ?? 'Tanpa divisi' }}</p>
                                 </div>
                                 <div v-if="props.meeting.template">
-                                    <dt class="text-xs text-muted-foreground">Template</dt>
-                                    <dd class="mt-0.5">{{ props.meeting.template.name }}</dd>
+                                    <p class="text-xs text-muted-foreground">Template</p>
+                                    <p class="mt-0.5">{{ props.meeting.template.name }}</p>
                                 </div>
                                 <div>
-                                    <dt class="text-xs text-muted-foreground">Kerahasiaan</dt>
-                                    <dd class="mt-0.5">{{ confidentialityLabels[props.meeting.confidentiality] }}</dd>
+                                    <p class="text-xs text-muted-foreground">Kerahasiaan</p>
+                                    <p class="mt-0.5">{{ confidentialityLabels[props.meeting.confidentiality] }}</p>
                                 </div>
-                            </dl>
+                            </div>
                         </CardContent>
                     </Card>
 

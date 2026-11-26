@@ -19,7 +19,7 @@ export const documentTypeClasses: Record<string, string> = {
     meeting: 'bg-person-surface text-person',
     proposal: 'bg-topic-surface text-topic',
     brochure: 'bg-division-surface text-division',
-    report: 'bg-success/10 text-success',
+    report: 'bg-success/10 text-success-strong',
     other: 'bg-muted text-muted-foreground',
 };
 
@@ -37,7 +37,7 @@ export const confidentialityLabels: Record<string, string> = {
 };
 
 export const confidentialityClasses: Record<string, string> = {
-    open: 'bg-success/10 text-success',
+    open: 'bg-success/10 text-success-strong',
     division: 'bg-person-surface text-person',
     restricted: 'bg-division-surface text-division',
     secret: 'bg-destructive/10 text-destructive',
@@ -45,7 +45,7 @@ export const confidentialityClasses: Record<string, string> = {
 
 export const statusClasses: Record<string, string> = {
     draft: 'bg-muted text-muted-foreground',
-    final: 'bg-success/10 text-success',
+    final: 'bg-success/10 text-success-strong',
     locked: 'bg-secondary text-secondary-foreground',
 };
 
@@ -59,7 +59,7 @@ export const actionStatusLabels: Record<string, string> = {
 export const actionStatusClasses: Record<string, string> = {
     new: 'bg-muted text-muted-foreground',
     in_progress: 'bg-person-surface text-person',
-    done: 'bg-success/10 text-success',
+    done: 'bg-success/10 text-success-strong',
     cancelled: 'bg-secondary text-secondary-foreground',
 };
 

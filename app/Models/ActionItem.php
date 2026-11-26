@@ -151,6 +151,7 @@ class ActionItem extends Model
 
             if ($paths !== []) {
                 Storage::disk('public')->delete($paths);
+                Storage::disk('local')->delete($paths);
             }
         });
     }

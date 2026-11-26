@@ -50,18 +50,30 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('meeting-signatures.destroy');
     Route::get('tanda-tangan/{signature}', [MeetingSignatureController::class, 'show'])->name('meeting-signatures.show');
 
-    Route::post('notulen/{meeting}/lampiran', [AttachmentController::class, 'store'])->name('attachments.store');
-    Route::get('lampiran/{attachment}', [AttachmentController::class, 'download'])->name('attachments.download');
+    Route::post('notulen/{meeting}/lampiran', [AttachmentController::class, 'store'])
+        ->middleware('throttle:30,1')
+        ->name('attachments.store');
+    Route::get('lampiran/{attachment}', [AttachmentController::class, 'download'])
+        ->middleware('throttle:120,1')
+        ->name('attachments.download');
     Route::delete('lampiran/{attachment}', [AttachmentController::class, 'destroy'])->name('attachments.destroy');
 
-    Route::get('notulen/{meeting}/ekspor/pdf', [MeetingExportController::class, 'pdf'])->name('meetings.export.pdf');
-    Route::get('notulen/{meeting}/ekspor/word', [MeetingExportController::class, 'docx'])->name('meetings.export.word');
+    Route::get('notulen/{meeting}/ekspor/pdf', [MeetingExportController::class, 'pdf'])
+        ->middleware('throttle:30,1')
+        ->name('meetings.export.pdf');
+    Route::get('notulen/{meeting}/ekspor/word', [MeetingExportController::class, 'docx'])
+        ->middleware('throttle:30,1')
+        ->name('meetings.export.word');
     Route::post('notulen/{meeting}/bagikan', [MeetingShareController::class, 'send'])
         ->middleware('throttle:20,1')
         ->name('meetings.share');
 
-    Route::post('notulen/{meeting}/ai/resume', [MeetingAiController::class, 'generate'])->name('meetings.ai.generate');
-    Route::get('notulen/{meeting}/ai/resume/status', [MeetingAiController::class, 'status'])->name('meetings.ai.status');
+    Route::post('notulen/{meeting}/ai/resume', [MeetingAiController::class, 'generate'])
+        ->middleware('throttle:10,1')
+        ->name('meetings.ai.generate');
+    Route::get('notulen/{meeting}/ai/resume/status', [MeetingAiController::class, 'status'])
+        ->middleware('throttle:120,1')
+        ->name('meetings.ai.status');
     Route::post('ai-summaries/{aiSummary}/approve', [MeetingAiController::class, 'approve'])->name('ai-summaries.approve');
     Route::post('ai-summaries/{aiSummary}/reject', [MeetingAiController::class, 'reject'])->name('ai-summaries.reject');
     Route::patch('ai-summaries/{aiSummary}', [MeetingAiController::class, 'update'])->name('ai-summaries.update');
@@ -101,7 +113,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('notifikasi/baca-semua', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
     Route::post('notifikasi/{notification}/baca', [NotificationController::class, 'markRead'])->name('notifications.read');
 
-    Route::post('collab/token/{meeting}', CollabTokenController::class)->name('collab.token');
+    Route::post('collab/token/{meeting}', CollabTokenController::class)
+        ->middleware('throttle:30,1')
+        ->name('collab.token');
 
     Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
         Route::get('divisi', [AdminDivisionController::class, 'index'])->name('divisions.index');

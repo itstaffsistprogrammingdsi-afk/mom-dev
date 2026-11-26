@@ -398,6 +398,13 @@ const editor = useEditor({
               ]
             : []),
     ],
+    editorProps: {
+        attributes: {
+            role: 'textbox',
+            'aria-multiline': 'true',
+            'aria-label': 'Isi notulen',
+        },
+    },
     onUpdate: ({ editor: instance }) => {
         emit('update:modelValue', instance.getJSON());
         updateWordCount();

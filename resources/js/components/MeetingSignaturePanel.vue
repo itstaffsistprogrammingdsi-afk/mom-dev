@@ -60,7 +60,7 @@ function remove(role: 'creator' | 'approver'): void {
                 </div>
                 <span
                     v-if="props.signatures.creator"
-                    class="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success"
+                    class="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success-strong"
                 >
                     <CheckCircle2 class="size-3.5" aria-hidden="true" />
                     Ditandatangani
@@ -110,7 +110,7 @@ function remove(role: 'creator' | 'approver'): void {
                 </div>
                 <span
                     v-if="props.signatures.approver"
-                    class="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success"
+                    class="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success-strong"
                 >
                     <CheckCircle2 class="size-3.5" aria-hidden="true" />
                     Ditandatangani
