@@ -97,10 +97,11 @@ class GoogleAuthController extends Controller
             return redirect()->route('login')->with('error', 'Domain email Anda tidak diizinkan untuk masuk.');
         }
 
-        $user = User::query()
-            ->where('google_id', $profile['id'] ?? null)
-            ->orWhere('email', $email)
-            ->first();
+        $googleId = $profile['id'] ?? null;
+
+        $user = filled($googleId)
+            ? User::query()->where('google_id', $googleId)->orWhere('email', $email)->first()
+            : User::query()->where('email', $email)->first();
 
         if ($user && ! $user->is_active) {
             return redirect()->route('login')->with('error', 'Akun Anda tidak aktif. Hubungi administrator.');
