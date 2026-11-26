@@ -17,6 +17,12 @@ class MeetingSignatureController extends Controller
         $role = $this->validatedRole($role);
         $this->authorize($role === MeetingSignature::ROLE_CREATOR ? 'signCreator' : 'signApprover', $meeting);
 
+        if ($meeting->isLocked()) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'signature' => 'Tanda tangan tidak dapat diubah pada notulen yang terkunci.',
+            ]);
+        }
+
         $validated = $request->validate([
             'signature' => ['required', 'image', 'mimes:png,jpg,jpeg,webp', 'max:2048'],
         ]);
@@ -55,6 +61,12 @@ class MeetingSignatureController extends Controller
     {
         $role = $this->validatedRole($role);
         $this->authorize($role === MeetingSignature::ROLE_CREATOR ? 'signCreator' : 'signApprover', $meeting);
+
+        if ($meeting->isLocked()) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'signature' => 'Tanda tangan tidak dapat diubah pada notulen yang terkunci.',
+            ]);
+        }
 
         $signature = $meeting->signatures()->where('role', $role)->first();
 
